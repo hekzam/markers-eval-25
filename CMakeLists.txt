@@ -29,8 +29,13 @@ set(SRC
     src/expl_pars.cpp
 )
 
+set(SRC_2
+    src/Matt_parser.cpp
+)
+
 # Create the executable
 add_executable(parser ${SRC})
+add_executable(parser2 ${SRC_2})
 
 # Link the dependencies
 target_link_libraries(parser
