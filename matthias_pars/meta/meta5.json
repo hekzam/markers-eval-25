@@ -1,0 +1,98 @@
+{
+    "b1": {
+        "fill-color": "#0000ff",
+        "height": 6.942666666666667,
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.25,
+        "width": 6.942666666666667,
+        "x": 193.548,
+        "y": 279.48466666666667
+    },
+    "b2": {
+        "fill-color": "#0000ff",
+        "height": 6.942666666666667,
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.25,
+        "width": 6.942666666666667,
+        "x": 9.567333333333334,
+        "y": 279.48466666666667
+    },
+    "b3": {
+        "fill-color": "#0000ff",
+        "height": 11.345333333333333,
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.25,
+        "width": 11.176,
+        "x": 27.939999999999998,
+        "y": 240.87666666666667
+    },
+    "b4": {
+        "fill-color": "#0000ff",
+        "height": 11.006666666666666,
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.25,
+        "width": 11.006666666666666,
+        "x": 100.24533333333333,
+        "y": 240.792
+    },
+    "b5": {
+        "fill-color": "#0000ff",
+        "height": 6.942666666666667,
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.25,
+        "width": 6.942666666666667,
+        "x": 193.548,
+        "y": 9.567333333333334
+    },
+    "b6": {
+        "fill-color": "#0000ff",
+        "height": 6.942666666666667,
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.25,
+        "width": 6.942666666666667,
+        "x": 9.567333333333334,
+        "y": 9.567333333333334
+    },
+    "marker circle bl page1": {
+        "diameter": 6.858,
+        "fill-color": "#000000",
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.0,
+        "x": 12.911666666666667,
+        "y": 12.996333333333332
+    },
+    "marker circle br page1": {
+        "diameter": 6.858,
+        "fill-color": "#000000",
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.0,
+        "x": 12.911666666666667,
+        "y": 12.996333333333332
+    },
+    "marker circle tl page1": {
+        "diameter": 6.858,
+        "fill-color": "#000000",
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.0,
+        "x": 12.911666666666667,
+        "y": 12.996333333333332
+    },
+    "marker circle tr page1": {
+        "diameter": 6.858,
+        "fill-color": "#000000",
+        "page": 1,
+        "stroke-color": "#000000",
+        "stroke-width": 0.0,
+        "x": 12.911666666666667,
+        "y": 12.996333333333332
+    }
+}
