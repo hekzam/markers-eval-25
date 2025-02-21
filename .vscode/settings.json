@@ -1,0 +1,5 @@
+{
+    "cmake.debugConfig": {
+        "args": ["../output", "../boxes.json", "../typst-lib/copies/qrcode.pdf"]
+    }
+}

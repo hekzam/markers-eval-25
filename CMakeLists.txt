@@ -35,7 +35,7 @@ set(SRC_2
 
 # Create the executable
 add_executable(parser ${SRC})
-add_executable(parser2 ${SRC_2})
+# add_executable(parser2 ${SRC_2})
 
 # Link the dependencies
 target_link_libraries(parser

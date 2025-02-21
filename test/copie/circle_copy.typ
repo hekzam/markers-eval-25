@@ -1,4 +1,4 @@
-#import "../lib.typ": rect-box, gen-copies
+#import "../circle.typ": rect-box, gen-copies
 #let bcol = json("./input-fill-colors.json")
 #let f-color = white
 #let copy-two-pages = int(sys.inputs.at("copy-two-pages", default: "0")) == 1
