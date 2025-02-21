@@ -174,31 +174,6 @@ void get_affine_transform(
   affine_transform = cv::getAffineTransform(src, dst);
 }
 
-int identify_corner_points(
-  cv::Mat img,
-  const std::string &content_hash,
-  std::vector<cv::Point2f> &corner_points,
-  std::vector<DetectedBarcode*> &corner_barcodes
-) {
-  corner_points.resize(4);
-  corner_barcodes.resize(4);
-  int found_mask = 0x00;
-
-  // Detect circles
-  std::vector<cv::Point2f> circles;
-  detect_circles(img, circles, 6.0f, 1.0f); // 6 mm diameter with 1 mm tolerance
-
-  // Assuming the circles are the corners in the order: TL, TR, BL, BR
-  if (circles.size() >= 4) {
-    corner_points[TOP_LEFT] = circles[0];
-    corner_points[TOP_RIGHT] = circles[1];
-    corner_points[BOTTOM_LEFT] = circles[2];
-    corner_points[BOTTOM_RIGHT] = circles[3];
-    found_mask = TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF;
-  }
-
-  return found_mask;
-}
 int identify_corner_barcodes(
   std::vector<DetectedBarcode> & barcodes,
   const std::string & content_hash,
@@ -278,27 +253,6 @@ void detect_barcodes(cv::Mat img, std::vector<DetectedBarcode> & barcodes) {
   }
 }
 
-void detect_circles(cv::Mat img, std::vector<cv::Point2f> &circles, float expected_diameter_mm, float tolerance_mm) {
-  circles.clear();
-
-  // Convert expected diameter from mm to pixels
-  float expected_diameter_px = (expected_diameter_mm / 25.4f) * img.cols; // Assuming 300 DPI
-
-  // Detect circles using HoughCircles
-  std::vector<cv::Vec3f> detected_circles;
-  cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 200, 20, 0, 0);
-
-  for (const auto &circle : detected_circles) {
-    float radius = circle[2];
-    float diameter = 2 * radius;
-
-    // Check if the diameter is within the expected range
-    if (std::abs(diameter - expected_diameter_px) <= tolerance_mm) {
-      circles.emplace_back(cv::Point2f(circle[0], circle[1]));
-    }
-  }
-}
-
 int main(int argc, char *argv[]) {
   if (argc < 4) {
     fprintf(stderr, "usage: parser OUTPUT_DIR ATOMIC_BOXES IMAGE...\n");
@@ -367,15 +321,7 @@ int main(int argc, char *argv[]) {
 
     std::vector<cv::Point2f> corner_points;
     std::vector<DetectedBarcode*> corner_barcodes;
-    int found_corner_mask;
-
-    // Utilisez soit identify_corner_barcodes soit identify_corner_points
-    bool use_qr_codes = false; // Définir cette variable en fonction de la logique
-    if (use_qr_codes) {
-      found_corner_mask = identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
-    } else {
-      found_corner_mask = identify_corner_points(img, expected_content_hash, corner_points, corner_barcodes);
-    }
+    int found_corner_mask = identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
 
     // TODO: fix ugly code to read copy number and page number. assumes "hzbl,COPYNUMBER,PAGENUMBER"
     const char * bl_qrcode_str = corner_barcodes[BOTTOM_LEFT]->content.c_str();
