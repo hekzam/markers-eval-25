@@ -1,5 +1,5 @@
 {
     "cmake.debugConfig": {
-        "args": ["../output", "../original_boxes.json", "../copies/original.pdf"]
+        "args": ["../output", "../original_boxes.json", "../copies/original.png"]
     }
 }

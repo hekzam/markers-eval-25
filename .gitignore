@@ -34,3 +34,5 @@
 build/*
 *.pdf
 *.json
+copies/*
+output/*

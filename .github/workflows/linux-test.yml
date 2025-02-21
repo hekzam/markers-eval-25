@@ -1,0 +1,23 @@
+name: Linux Compile
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get install cmake ninja-build
+      - name: Build
+        run: |
+          cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-cmake -j
+      - name: test
+        run: |
+          ./create-copie.sh
+          ./build-cmake/parser output/ original_boxes.json copies/original.png
