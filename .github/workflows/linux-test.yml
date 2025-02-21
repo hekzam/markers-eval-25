@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt-get install cmake ninja-build libopencv-dev nlohmann-json3-dev
+        run: sudo apt-get install cmake ninja-build libopencv-dev nlohmann-json3-dev snapd && sudo snap install typst
       - name: Build
         run: |
           cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release
