@@ -11,26 +11,21 @@
 
 #include <ZXing/ReadBarcode.h>
 
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
-
-enum Corner { TOP_LEFT = 0x00, TOP_RIGHT = 0x01, BOTTOM_LEFT = 0x02, BOTTOM_RIGHT = 0x03 };
+#include <common.h>
+#include "utils/json_helper.h"
+#include <memory>
 
 enum CornerBF { TOP_LEFT_BF = 0x01, TOP_RIGHT_BF = 0x02, BOTTOM_LEFT_BF = 0x04, BOTTOM_RIGHT_BF = 0x08 };
+
+struct Metadata {
+    std::string name;
+    int page;
+    int id;
+};
 
 struct DetectedBarcode {
     std::string content;
     std::vector<cv::Point2f> bounding_box;
-};
-
-struct AtomicBox {
-    std::string id;
-    int page;
-    float x;
-    float y;
-    float width;
-    float height;
 };
 
 void parse_atomic_boxes(const json& content, std::vector<AtomicBox>& boxes) {
@@ -47,9 +42,10 @@ void parse_atomic_boxes(const json& content, std::vector<AtomicBox>& boxes) {
     }
 }
 
-void differentiate_atomic_boxes(std::vector<AtomicBox>& boxes, std::vector<AtomicBox*>& markers,
-                                std::vector<AtomicBox*>& corner_markers,
-                                std::vector<std::vector<AtomicBox*>>& user_boxes_per_page) {
+void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
+                                std::vector<std::shared_ptr<AtomicBox>>& markers,
+                                std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
+                                std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page) {
     markers.clear();
     corner_markers.resize(4);
     user_boxes_per_page.clear();
@@ -59,28 +55,28 @@ void differentiate_atomic_boxes(std::vector<AtomicBox>& boxes, std::vector<Atomi
     int max_page = 1;
 
     for (const auto& box : boxes) {
-        max_page = std::max(max_page, box.page);
+        max_page = std::max(max_page, box->page);
     }
     user_boxes_per_page.resize(max_page);
 
-    for (AtomicBox& box : boxes) {
-        if (box.id.find("marker barcode ") == 0) {
-            markers.emplace_back(&box);
+    for (auto box : boxes) {
+        if (box->id.find("marker barcode ") == 0) {
+            markers.emplace_back(box);
         } else {
-            user_boxes_per_page.at(box.page - 1).emplace_back(&box);
+            user_boxes_per_page.at(box->page - 1).emplace_back(box);
         }
     }
 
     int corner_mask = 0;
-    for (auto* box : markers) {
+    for (auto box : markers) {
         int corner = -1;
-        if (box->id == "marker barcode tl page1")
+        if (box->id.rfind("marker barcode tl", 0) == 0)
             corner = TOP_LEFT;
-        else if (box->id == "marker barcode tr page1")
+        else if (box->id.rfind("marker barcode tr", 0) == 0)
             corner = TOP_RIGHT;
-        else if (box->id == "marker barcode bl page1")
+        else if (box->id.rfind("marker barcode bl", 0) == 0)
             corner = BOTTOM_LEFT;
-        else if (box->id == "marker barcode br page1")
+        else if (box->id.rfind("marker barcode br", 0) == 0)
             corner = BOTTOM_RIGHT;
 
         if (corner != -1) {
@@ -102,22 +98,41 @@ cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img
     };
 }
 
-void compute_dst_corner_points(const std::vector<AtomicBox*>& corner_markers, const cv::Point2f& src_img_size,
-                               const cv::Point2f& dst_img_size, std::vector<cv::Point2f>& corner_points) {
+std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
+                                                    const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
+    std::vector<cv::Point2f> corner_points;
     corner_points.resize(4);
     for (int corner = 0; corner < 4; ++corner) {
-        auto* box = corner_markers[corner];
-        const std::vector<cv::Point2f> bounding_box = { cv::Point2f{ box->x, box->y },
-                                                        cv::Point2f{ box->x + box->width, box->y },
-                                                        cv::Point2f{ box->x + box->width, box->y + box->height },
-                                                        cv::Point2f{ box->x, box->y + box->height } };
+        auto marker = corner_markers[corner];
+        const std::vector<cv::Point2f> marker_bounding_box = {
+            cv::Point2f{ marker->x, marker->y }, cv::Point2f{ marker->x + marker->width, marker->y },
+            cv::Point2f{ marker->x + marker->width, marker->y + marker->height },
+            cv::Point2f{ marker->x, marker->y + marker->height }
+        };
+
+        // compute the center of the marker
         cv::Mat mean_mat;
-        cv::reduce(bounding_box, mean_mat, 1, cv::REDUCE_AVG);
+        cv::reduce(marker_bounding_box, mean_mat, 1, cv::REDUCE_AVG);
         cv::Point2f mean_point{ mean_mat.at<float>(0, 0), mean_mat.at<float>(0, 1) };
         // printf("corner[%d] mean point: (%f, %f)\n", corner, mean_point.x, mean_point.y);
 
         corner_points[corner] = coord_scale(mean_point, src_img_size, dst_img_size);
     }
+    return corner_points;
+}
+
+// TODO: fix ugly code to read copy number and page number. assumes "hzbl,COPYNUMBER,PAGENUMBER"
+Metadata parse_metadata(std::string content) {
+    const char* bl_qrcode_str = content.c_str();
+    char* parse_ptr = nullptr;
+    int copy = strtol(bl_qrcode_str + 5, &parse_ptr, 10);
+    int page = strtol(parse_ptr + 1, NULL, 10);
+    Metadata metadata;
+    metadata.name = "";
+    metadata.page = page;
+    metadata.id = copy;
+
+    return metadata;
 }
 
 void get_affine_transform(int found_corner_mask, const std::vector<cv::Point2f>& expected_corner_points,
@@ -198,15 +213,15 @@ int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, const std::
     return found_mask;
 }
 
-void detect_barcodes(cv::Mat img, std::vector<DetectedBarcode>& barcodes) {
-    barcodes.clear();
+std::vector<DetectedBarcode> detect_barcodes(cv::Mat img) {
+    std::vector<DetectedBarcode> barcodes = {};
 
     if (img.type() != CV_8U)
         throw std::invalid_argument(
             "img has type != CV_8U while it should contain luminance information on 8-bit unsigned integers");
 
     if (img.cols < 2 || img.rows < 2)
-        return;
+        return {};
 
     auto iv =
         ZXing::ImageView(reinterpret_cast<const uint8_t*>(img.ptr()), img.cols, img.rows, ZXing::ImageFormat::Lum);
@@ -223,6 +238,8 @@ void detect_barcodes(cv::Mat img, std::vector<DetectedBarcode>& barcodes) {
         }
         barcodes.emplace_back(barcode);
     }
+
+    return barcodes;
 }
 
 int main(int argc, char* argv[]) {
@@ -255,27 +272,11 @@ int main(int argc, char* argv[]) {
 
     const std::string expected_content_hash = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=";
 
-    std::vector<AtomicBox> atomic_boxes;
-    std::vector<AtomicBox*> markers;
-    std::vector<AtomicBox*> corner_markers;
-    std::vector<std::vector<AtomicBox*>> user_boxes_per_page;
-    parse_atomic_boxes(atomic_boxes_json, atomic_boxes);
+    auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
+    std::vector<std::shared_ptr<AtomicBox>> markers;
+    std::vector<std::shared_ptr<AtomicBox>> corner_markers;
+    std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
     differentiate_atomic_boxes(atomic_boxes, markers, corner_markers, user_boxes_per_page);
-
-    /*printf("there are %lu boxes\n", atomic_boxes.size());
-    for (auto * marker : markers) {
-      printf("marker: %s %d\n", marker->id.c_str(), marker->page);
-    }
-    for (auto * marker : corner_markers) {
-      printf("corner marker: %s %d\n", marker->id.c_str(), marker->page);
-    }
-
-    for (unsigned page = 0; page < user_boxes_per_page.size(); ++page) {
-      printf("user boxes of page %u\n", page+1);
-      for (auto * box : user_boxes_per_page[page]) {
-        printf("  box: %s %d\n", box->id.c_str(), box->page);
-      }
-    }*/
 
     const cv::Point2f src_img_size{ 210, 297 }; // TODO: do not assume A4
 
@@ -286,21 +287,16 @@ int main(int argc, char* argv[]) {
         // printf("dst_img_size: (%f, %f)\n", dst_img_size.x, dst_img_size.y);
 
         std::vector<cv::Point2f> dst_corner_points;
-        compute_dst_corner_points(corner_markers, src_img_size, dst_img_size, dst_corner_points);
+        dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
 
-        std::vector<DetectedBarcode> barcodes;
-        detect_barcodes(img, barcodes);
+        auto barcodes = detect_barcodes(img);
 
         std::vector<cv::Point2f> corner_points;
         std::vector<DetectedBarcode*> corner_barcodes;
         int found_corner_mask =
             identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
 
-        // TODO: fix ugly code to read copy number and page number. assumes "hzbl,COPYNUMBER,PAGENUMBER"
-        const char* bl_qrcode_str = corner_barcodes[BOTTOM_LEFT]->content.c_str();
-        char* parse_ptr = nullptr;
-        int copy = strtol(bl_qrcode_str + 5, &parse_ptr, 10);
-        int page = strtol(parse_ptr + 1, NULL, 10);
+        auto metadata = parse_metadata(corner_barcodes[BOTTOM_LEFT]->content);
 
         cv::Mat affine_transform;
         get_affine_transform(found_corner_mask, dst_corner_points, corner_points, affine_transform);
@@ -311,7 +307,7 @@ int main(int argc, char* argv[]) {
         cv::Mat calibrated_img_col;
         cv::cvtColor(calibrated_img, calibrated_img_col, cv::COLOR_GRAY2BGR);
 
-        for (auto* box : user_boxes_per_page[page - 1]) {
+        for (auto box : user_boxes_per_page[metadata.page - 1]) {
             const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y + box->height },
@@ -342,7 +338,8 @@ int main(int argc, char* argv[]) {
             cv::Mat subimg = calibrated_img(rows, cols);
 
             char* output_img_fname = nullptr;
-            int nb = asprintf(&output_img_fname, "%s/subimg/raw-%d-%s.png", output_dir.c_str(), copy, box->id.c_str());
+            int nb = asprintf(&output_img_fname, "%s/subimg/raw-%d-%s.png", output_dir.c_str(), metadata.id,
+                              box->id.c_str());
             (void) nb;
             printf("box fname: %s\n", output_img_fname);
             cv::imwrite(output_img_fname, subimg);
@@ -352,7 +349,7 @@ int main(int argc, char* argv[]) {
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(0, 0, 255), 2);
         }
 
-        for (auto* box : corner_markers) {
+        for (auto box : corner_markers) {
             if (strncmp("marker barcode br", box->id.c_str(), 17) == 0)
                 break;
 

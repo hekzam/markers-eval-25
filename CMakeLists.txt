@@ -29,13 +29,20 @@ set(SRC
     src/expl_pars.cpp
 )
 
-set(SRC_2
-    src/Matt_parser.cpp
+file(GLOB_RECURSE UTILS_SRC src/utils/*.cpp)
+file(GLOB_RECURSE PARSER_SRC src/parser/*.cpp)
+
+set(INCLUDE_DIRS
+    src
+    src/utils
+    src/parser
+    "include"
 )
 
+include_directories(parser PRIVATE ${INCLUDE_DIRS})
+
 # Create the executable
-add_executable(parser ${SRC})
-# add_executable(parser2 ${SRC_2})
+add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
 
 # Link the dependencies
 target_link_libraries(parser
