@@ -78,12 +78,12 @@
           column-gutter: 1fr,
           {
             let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.aztec(("hztl", exam-id).join(sep), height: barcode-height)
+            let barcode = tiaoma.qrcode(("hztl", exam-id).join(sep), height: barcode-height)
             rect-box("marker barcode tl", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
           },
           {
             let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.aztec(("hztr", exam-id).join(sep), height: barcode-height)
+            let barcode = tiaoma.qrcode(("hztr", exam-id).join(sep), height: barcode-height)
             rect-box("marker barcode tr", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
           },
         )
@@ -99,7 +99,7 @@
           {
             let copy-i = copy-counter.get().at(0)
             let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.aztec(("hzbl", str(copy-i), str(page-i)).join(sep), height: barcode-height)
+            let barcode = tiaoma.qrcode(("hzbl", str(copy-i), str(page-i)).join(sep), height: barcode-height)
             rect-box("marker barcode bl", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
           },
           {
@@ -118,7 +118,7 @@
           {
             let copy-i = copy-counter.get().at(0)
             let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.aztec(("hzbr", str(copy-i), str(page-i), exam-content-hash, exam-id).join(sep), height: barcode-height)
+            let barcode = tiaoma.qrcode(("hzbr", str(copy-i), str(page-i), exam-content-hash, exam-id).join(sep), height: barcode-height)
             rect-box("marker barcode br", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
           },
         )
