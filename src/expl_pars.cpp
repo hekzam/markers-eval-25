@@ -121,16 +121,34 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
     return corner_points;
 }
 
-// TODO: fix ugly code to read copy number and page number. assumes "hzbl,COPYNUMBER,PAGENUMBER"
+/**
+ * @brief Split a string by a delimiter
+ *
+ * @param s
+ * @param delimiter
+ * @return std::vector<std::string>
+ */
+std::vector<std::string> split(std::string s, std::string delimiter) {
+    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+    std::string token;
+    std::vector<std::string> res;
+
+    while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+        token = s.substr(pos_start, pos_end - pos_start);
+        pos_start = pos_end + delim_len;
+        res.push_back(token);
+    }
+
+    res.push_back(s.substr(pos_start));
+    return res;
+}
+
 Metadata parse_metadata(std::string content) {
-    const char* bl_qrcode_str = content.c_str();
-    char* parse_ptr = nullptr;
-    int copy = strtol(bl_qrcode_str + 5, &parse_ptr, 10);
-    int page = strtol(parse_ptr + 1, NULL, 10);
+    auto tokens = split(content, ",");
     Metadata metadata;
-    metadata.name = "";
-    metadata.page = page;
-    metadata.id = copy;
+    metadata.name = tokens[0];
+    metadata.page = std::strtoul(tokens[2].c_str(), nullptr, 10);
+    metadata.id = std::strtoul(tokens[1].c_str(), nullptr, 10);
 
     return metadata;
 }
