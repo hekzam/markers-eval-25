@@ -57,3 +57,10 @@ target_link_libraries(parser
         ZXing::ZXing
         nlohmann_json::nlohmann_json
 )
+
+target_link_libraries(benchmark
+    PRIVATE
+        ${OpenCV_LIBS}
+        ZXing::ZXing
+        nlohmann_json::nlohmann_json
+)
