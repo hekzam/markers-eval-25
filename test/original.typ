@@ -39,6 +39,14 @@
   })
 }
 
+// New helper function to generate QR codes.
+#let generate-qr-code(label, parts, height) = {
+  let sep = ","
+  let code = parts.join(sep)
+  let qr = tiaoma.qrcode(code, height: height)
+  rect-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: qr)
+}
+
 #let finalize-states() = context [
   #metadata(atomic-boxes.final()) <atomic-boxes>
   #metadata(page-state.final()) <page>
@@ -77,14 +85,11 @@
           columns: 2,
           column-gutter: 1fr,
           {
-            let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.qrcode(("hztl", exam-id).join(sep), height: barcode-height)
-            rect-box("marker barcode tl", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
+            // Call the helper for top-left QR.
+            generate-qr-code("tl", ("hztl", exam-id), barcode-height)
           },
           {
-            let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.qrcode(("hztr", exam-id).join(sep), height: barcode-height)
-            rect-box("marker barcode tr", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
+            generate-qr-code("tr", ("hztr", exam-id), barcode-height)
           },
         )
       } else []
@@ -99,8 +104,7 @@
           {
             let copy-i = copy-counter.get().at(0)
             let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.qrcode(("hzbl", str(copy-i), str(page-i)).join(sep), height: barcode-height)
-            rect-box("marker barcode bl", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
+            generate-qr-code("bl", ("hzbl", str(copy-i), str(page-i)), barcode-height)
           },
           {
             grid(
@@ -118,8 +122,7 @@
           {
             let copy-i = copy-counter.get().at(0)
             let page-i = counter(page).get().at(0)
-            let barcode = tiaoma.qrcode(("hzbr", str(copy-i), str(page-i), exam-content-hash, exam-id).join(sep), height: barcode-height)
-            rect-box("marker barcode br", barcode-height, barcode-height, stroke-width: 0mm, inner-content: barcode)
+            generate-qr-code("br", ("hzbr", str(copy-i), str(page-i), exam-content-hash, exam-id), barcode-height)
           },
         )
         v(margin-y)
