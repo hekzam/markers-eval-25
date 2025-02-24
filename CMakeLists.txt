@@ -29,6 +29,10 @@ set(SRC
     src/expl_pars.cpp
 )
 
+set(SRC_BENCH
+    src/benchmark.cpp
+)
+
 file(GLOB_RECURSE UTILS_SRC src/utils/*.cpp)
 file(GLOB_RECURSE PARSER_SRC src/parser/*.cpp)
 
@@ -40,9 +44,11 @@ set(INCLUDE_DIRS
 )
 
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
+include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
+add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
 
 # Link the dependencies
 target_link_libraries(parser
