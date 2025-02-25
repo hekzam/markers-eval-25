@@ -1,5 +1,5 @@
 #import "@preview/tiaoma:0.2.1"
-#import "../rect.typ": rect-box
+#import "../rect.typ": gen-box
 
 // ----------------------------------------------------------------
 // Génère un marker à partir des données fournies et l'encapsule dans une boîte.
@@ -27,5 +27,5 @@
       error("Type de marqueur inconnu: " + type)
     }
   )
-  rect-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: marker)
+  gen-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: marker)
 }

@@ -13,7 +13,7 @@
 // Returns:
 // - Une boîte rectangulaire avec les propriétés spécifiées.
 // ----------------------------------------------------------------
-#let rect-box(id, width, height, fill-color: white, stroke-width: 0.25mm, stroke-color: black, inner-content: []) = {
+#let gen-box(id, width, height, fill-color: white, stroke-width: 0.25mm, stroke-color: black, inner-content: []) = {
   assert.eq(type(fill-color), color, message: "fill-color must be a color")
   assert.eq(rgb(fill-color).components().at(3), 100%, message: "fill-color must be fully opaque (no alpha or alpha=100%)")
   assert.eq(type(stroke-color), color, message: "stroke-color must be a color")

@@ -1,6 +1,7 @@
-rm -rf ./copies/*
-rm -rf ./output/*
 #!/bin/bash
+
+rm -r ./copies/*
+rm -r ./output/*
 
 # Options communes aux deux commandes
 common_args=(--input marker-type="aztec" --input marker-height=6 --input nb-copies=1 --input exam-id="test1")
