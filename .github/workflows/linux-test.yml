@@ -20,4 +20,3 @@ jobs:
       - name: test
         run: |
           ./create-copie.sh
-          ./build-cmake/parser output/ original_boxes.json copies/original.png

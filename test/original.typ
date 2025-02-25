@@ -39,24 +39,23 @@
   })
 }
 
-// New helper function to generate QR codes.
-#let generate-qr-code(label, parts, height) = {
-  let sep = ","
-  let code = parts.join(sep)
-  let qr = tiaoma.qrcode(code, height: height)
-  rect-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: qr)
-}
-
 #let finalize-states() = context [
   #metadata(atomic-boxes.final()) <atomic-boxes>
   #metadata(page-state.final()) <page>
 ]
 
+// New helper function to generate barcode boxes.
+#let generate-barcode(label, parts, height) = {
+  let sep = ","
+  let barcode = tiaoma.qrcode(parts.join(sep), height: height)
+  rect-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: barcode)
+}
+
 #let gen-copies(
   exam-id, copy-content, exam-content-hash: "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=",
   nb-copies: 1, duplex-printing: true,
-  page-width: 210mm, page-height: 297mm, barcode-height: 12.5mm,
-  margin-x: 10mm, margin-y: 10mm, barcode-content-gutter: 2.5mm,
+  page-width: 210mm, page-height: 297mm, barcode-height: 6mm,
+  margin-x: 10mm, margin-y: 0mm, barcode-content-gutter: 2.5mm,
 ) = {
   assert.eq(type(exam-id), str, message: "exam-id must be a string")
   assert(not exam-id.contains(","), message: "exam-id cannot contain comma ','")
@@ -67,7 +66,7 @@
   assert.eq(type(margin-y), length, message: "margin-y must be a length")
   assert.eq(type(barcode-content-gutter), length, message: "barcode-content-gutter must be a length")
 
-  let sep = ","
+  let sep = ","  // no longer needed for barcode as handled by generate-barcode
 
   set page(
     width: page-width,
@@ -85,11 +84,11 @@
           columns: 2,
           column-gutter: 1fr,
           {
-            // Call the helper for top-left QR.
-            generate-qr-code("tl", ("hztl", exam-id), barcode-height)
+            // Replaced duplicate barcode generation with helper call.
+            generate-barcode("tl", ("hztl", exam-id), barcode-height)
           },
           {
-            generate-qr-code("tr", ("hztr", exam-id), barcode-height)
+            generate-barcode("tr", ("hztr", exam-id), barcode-height)
           },
         )
       } else []
@@ -104,7 +103,7 @@
           {
             let copy-i = copy-counter.get().at(0)
             let page-i = counter(page).get().at(0)
-            generate-qr-code("bl", ("hzbl", str(copy-i), str(page-i)), barcode-height)
+            generate-barcode("bl", ("hzbl", str(copy-i), str(page-i)), barcode-height)
           },
           {
             grid(
@@ -122,7 +121,7 @@
           {
             let copy-i = copy-counter.get().at(0)
             let page-i = counter(page).get().at(0)
-            generate-qr-code("br", ("hzbr", str(copy-i), str(page-i), exam-content-hash, exam-id), barcode-height)
+            generate-barcode("br", ("hzbr", str(copy-i), str(page-i), exam-content-hash, exam-id), barcode-height)
           },
         )
         v(margin-y)
