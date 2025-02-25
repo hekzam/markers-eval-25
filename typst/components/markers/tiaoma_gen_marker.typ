@@ -19,6 +19,10 @@
       tiaoma.qrcode(data, height: height)
     } else if type == "aztec" {
       tiaoma.aztec(data, height: height)
+    } else if type == "datamatrix" {
+      tiaoma.data-matrix(data, height: height)
+    } else if type == "pdf417-comp" {
+      tiaoma.pdf417-comp(data, height: height)
     } else {
       error("Type de marqueur inconnu: " + type)
     }
