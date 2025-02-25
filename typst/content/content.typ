@@ -1,25 +1,17 @@
-#import "../original.typ": rect-box, gen-copies
-#let bcol = json("./input-fill-colors.json")
-#let f-color = white
-#let copy-two-pages = int(sys.inputs.at("copy-two-pages", default: "0")) == 1
+#import "../components/rect.typ": rect-box
+#let bcol = json("../style/input-fill-colors.json")
 
-#let copy-content = [
+// Contenu de la copie d'examen.
+#let content = [
   #set align(left+top)
 
   = Exercise 1
   #rect-box("b0", 5cm, 1cm, fill-color: color.rgb(bcol.at("b0")))
-
   #box(rect-box("b0i", 8cm, 2.5cm, fill-color: color.rgb(bcol.at("b0i"))))
-
   #rect-box("b1", 100%, 1cm, fill-color: color.rgb(bcol.at("b1")))
-
-  #if copy-two-pages {
-    pagebreak()
-  }
 
   = Exercise 2
   #rect-box("b2", 5cm, 1cm, fill-color: color.rgb(bcol.at("b2")))
-
   #box(rect-box("b2i", 8cm, 2.5cm, fill-color: color.rgb(bcol.at("b2i"))))
 
   = Exercise 3
@@ -33,10 +25,3 @@
   Here is some dummy code:
   #box("def placeholder():\n    print(\"Placeholder function executed\")\n    return \"result\"\n\nprint(placeholder())")
 ]
-
-#let mt = sys.inputs.at("marker-type", default: "qrcode")
-#let mh = float(sys.inputs.at("marker-height", default: "10")) * 1mm
-#let n = int(sys.inputs.at("nb-copies", default: "1"))
-#let d = int(sys.inputs.at("duplex-printing", default: "0")) == 1
-
-#gen-copies("basic", copy-content, nb-copies: n, duplex-printing: d, marker-type: mt, marker-height: mh)
