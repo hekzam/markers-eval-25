@@ -28,6 +28,9 @@ find_package(nlohmann_json REQUIRED)
 set(SRC
     src/expl_pars.cpp
 )
+set(SRC_expl_bench
+    src/example.cpp
+)
 
 set(SRC_BENCH
     src/benchmark.cpp
@@ -42,13 +45,14 @@ set(INCLUDE_DIRS
     src/parser
     "include"
 )
-
+include_directories( example PRIVATE ${INCLUDE_DIRS})
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
 include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
+add_executable(example ${SRC_expl_bench} ${UTILS_SRC} ${PARSER_SRC})
 
 # Link the dependencies
 target_link_libraries(parser
