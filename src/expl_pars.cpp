@@ -14,6 +14,7 @@
 #include <common.h>
 #include "utils/json_helper.h"
 #include <memory>
+#include "string_helper.h"
 
 enum CornerBF { TOP_LEFT_BF = 0x01, TOP_RIGHT_BF = 0x02, BOTTOM_LEFT_BF = 0x04, BOTTOM_RIGHT_BF = 0x08 };
 
@@ -119,28 +120,6 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
         corner_points[corner] = coord_scale(mean_point, src_img_size, dst_img_size);
     }
     return corner_points;
-}
-
-/**
- * @brief Split a string by a delimiter
- *
- * @param s
- * @param delimiter
- * @return std::vector<std::string>
- */
-std::vector<std::string> split(std::string s, std::string delimiter) {
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-    std::string token;
-    std::vector<std::string> res;
-
-    while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
-        token = s.substr(pos_start, pos_end - pos_start);
-        pos_start = pos_end + delim_len;
-        res.push_back(token);
-    }
-
-    res.push_back(s.substr(pos_start));
-    return res;
 }
 
 Metadata parse_metadata(std::string content) {
