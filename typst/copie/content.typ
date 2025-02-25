@@ -34,7 +34,9 @@
   #box("def placeholder():\n    print(\"Placeholder function executed\")\n    return \"result\"\n\nprint(placeholder())")
 ]
 
+#let mt = sys.inputs.at("marker-type", default: "qrcode")
+#let mh = float(sys.inputs.at("marker-height", default: "10")) * 1mm
 #let n = int(sys.inputs.at("nb-copies", default: "1"))
 #let d = int(sys.inputs.at("duplex-printing", default: "0")) == 1
 
-#gen-copies("basic", copy-content, nb-copies: n, duplex-printing: d)
+#gen-copies("basic", copy-content, nb-copies: n, duplex-printing: d, marker-type: mt, marker-height: mh)
