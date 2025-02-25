@@ -2,16 +2,13 @@
 
 // ----------------------------------------------------------------
 // Crée une boîte rectangulaire avec un identifiant unique et des propriétés spécifiques.
-// Parameters:
 // - id: Identifiant unique de la boîte.
 // - width: Largeur de la boîte.
 // - height: Hauteur de la boîte.
-// - fill-color: Couleur de remplissage (valeur par défaut "white").
-// - stroke-width: Épaisseur du trait (valeur par défaut 0.25mm).
-// - stroke-color: Couleur du trait (valeur par défaut "black").
-// - inner-content: Contenu à afficher à l'intérieur de la boîte (valeur par défaut []).
-// Returns:
-// - Une boîte rectangulaire avec les propriétés spécifiées.
+// - fill-color: Couleur de remplissage.
+// - stroke-width: Épaisseur du trait.
+// - stroke-color: Couleur du trait.
+// - inner-content: Contenu à afficher à l'intérieur de la boîte.
 // ----------------------------------------------------------------
 #let gen-box(id, width, height, fill-color: white, stroke-width: 0.25mm, stroke-color: black, inner-content: []) = {
   assert.eq(type(fill-color), color, message: "fill-color must be a color")

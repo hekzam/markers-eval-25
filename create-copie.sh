@@ -1,5 +1,3 @@
-#!/bin/bash
-
 rm -r ./copies/*
 rm -r ./output/*
 

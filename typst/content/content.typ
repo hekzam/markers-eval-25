@@ -1,4 +1,4 @@
-#import "../components/rect.typ": gen-box
+#import "../components/container.typ": gen-box
 #let bcol = json("../style/input-fill-colors.json")
 
 // Contenu de la copie d'examen.

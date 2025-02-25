@@ -1,16 +1,13 @@
-#import "../common/global_variables.typ": atomic-boxes, copy-counter
+#import "../../common/global_variables.typ": atomic-boxes, copy-counter
 
 // ----------------------------------------------------------------
 // Crée une boîte circulaire avec un identifiant unique et des propriétés spécifiques.
-// Parameters:
 // - id: Identifiant unique de la boîte.
 // - diameter: Diamètre de la boîte.
-// - fill-color: Couleur de remplissage (valeur par défaut "white").
-// - stroke-width: Épaisseur du trait (valeur par défaut 0.25mm).
-// - stroke-color: Couleur du trait (valeur par défaut "black").
-// - inner-content: Contenu à afficher à l'intérieur de la boîte (valeur par défaut []).
-// Returns:
-// - Une boîte circulaire avec les propriétés spécifiées.
+// - fill-color: Couleur de remplissage.
+// - stroke-width: Épaisseur du trait.
+// - stroke-color: Couleur du trait.
+// - inner-content: Contenu à afficher à l'intérieur de la boîte.
 // ----------------------------------------------------------------
 #let circle-box(id, diameter, fill-color: white, stroke-width: 0.25mm, stroke-color: black, inner-content: []) = {
   assert.eq(type(fill-color), color, message: "fill-color must be a color")
