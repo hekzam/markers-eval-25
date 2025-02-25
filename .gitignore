@@ -35,5 +35,6 @@ build/*
 build-*/
 *.pdf
 *.json
+!typst/style/*.json
 copies/*
 output/*
