@@ -27,5 +27,5 @@
       error("Type de marqueur inconnu: " + type)
     }
   )
-  rect-box("marker " + label, height, height, stroke-width: 0mm, inner-content: marker)
+  rect-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: marker)
 }

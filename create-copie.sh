@@ -14,4 +14,4 @@ typst compile --root "$root" "$doc" "./copies/copy.png" "${common_args[@]}" --pp
 typst query --one --field value --root "$root" "$doc" '<atomic-boxes>' "${common_args[@]}" --pretty > original_boxes.json
 
 # Commande de parsing
-#./build-cmake/parser output/ original_boxes.json copies/copy.png
+./build-cmake/parser output/ original_boxes.json copies/copy.png
