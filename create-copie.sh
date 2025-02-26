@@ -3,7 +3,7 @@ rm -r ./output/*
 
 # Options communes aux deux commandes
 common_args=(--input marker-type="aztec" --input marker-height=6 --input nb-copies=1 --input exam-id="test1")
-doc="typst/copy.typ"
+doc="typst/copy_4_barcodes.typ"
 root="."
 
 # Commande de compilation
