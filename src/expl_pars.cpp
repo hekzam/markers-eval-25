@@ -123,6 +123,20 @@ std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_poi
     return raster_points;
 }
 
+cv::Mat redress_image(cv::Mat img, Metadata& meta, std::vector<std::shared_ptr<AtomicBox>> corner_markers,
+                      const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
+    auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
+
+    auto affine_transform = main_qrcode(img, meta, dst_corner_points);
+
+    cv::Mat calibrated_img = img;
+    warpAffine(img, calibrated_img, affine_transform, calibrated_img.size(), cv::INTER_LINEAR);
+
+    cv::Mat calibrated_img_col;
+    cv::cvtColor(calibrated_img, calibrated_img_col, cv::COLOR_GRAY2BGR);
+    return calibrated_img_col;
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 4) {
         fprintf(stderr, "usage: parser OUTPUT_DIR ATOMIC_BOXES IMAGE...\n");
@@ -164,19 +178,10 @@ int main(int argc, char* argv[]) {
         const cv::Point2f dst_img_size(img.cols, img.rows);
         // TODO: use min and max for 90 ° rotate if needed
         // printf("dst_img_size: (%f, %f)\n", dst_img_size.x, dst_img_size.y);
-
-        auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
-
         Metadata meta;
-        auto affine_transform = main_qrcode(img, meta, dst_corner_points);
+        auto calibrated_img_col = redress_image(img, meta, corner_markers, src_img_size, dst_img_size);
 
-        cv::Mat calibrated_img = img;
-        warpAffine(img, calibrated_img, affine_transform, calibrated_img.size(), cv::INTER_LINEAR);
-
-        cv::Point2f dimension(calibrated_img.cols, calibrated_img.rows);
-
-        cv::Mat calibrated_img_col;
-        cv::cvtColor(calibrated_img, calibrated_img_col, cv::COLOR_GRAY2BGR);
+        cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
         for (auto box : user_boxes_per_page[meta.page - 1]) {
             const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
@@ -199,7 +204,7 @@ int main(int argc, char* argv[]) {
             cv::Range rows(min_y, max_y);
             cv::Range cols(min_x, max_x);
             // printf("%d,%s: (%d,%d) -> (%d,%d)\n", copy, box->id.c_str(), min_x, min_y, max_x, max_y);
-            cv::Mat subimg = calibrated_img(rows, cols);
+            cv::Mat subimg = calibrated_img_col(rows, cols);
 
             char* output_img_fname = nullptr;
             int nb =
