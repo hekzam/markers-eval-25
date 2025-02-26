@@ -22,3 +22,7 @@ std::vector<std::string> split(std::string s, std::string delimiter) {
     res.push_back(s.substr(pos_start));
     return res;
 }
+
+bool starts_with(std::string s, std::string prefix) {
+    return s.rfind(prefix, 0) == 0;
+}
