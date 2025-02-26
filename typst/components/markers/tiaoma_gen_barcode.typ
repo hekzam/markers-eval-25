@@ -8,7 +8,7 @@
 // - height: La hauteur (et largeur) de la boîte.
 // - type: Type de barcode (valeur par défaut "qrcode").
 // ----------------------------------------------------------------
-#let generate-barcode(label, parts, height, type: "qrcode") = {
+#let barcode(label, parts, width, height, type: "qrcode") = {
   let sep = ","
   let data = parts.join(sep)
   let barcode = (

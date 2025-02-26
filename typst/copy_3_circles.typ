@@ -2,7 +2,7 @@
 #import "common/global_variables.typ": copy-counter, generating-content
 #import "common/utils.typ": check-type, get-indexes
 #import "common/gen_copy_common.typ": process-copies-with-pagination
-#import "components/markers/tiaoma_gen_barcode.typ": generate-barcode
+#import "components/markers/tiaoma_gen_barcode.typ": barcode
 #import "components/markers/circle.typ": circle-box
 
 #let EXAM-CONTENT-HASH = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4="
@@ -59,7 +59,7 @@
       },
       {
         let (copy-i, page-i) = get-indexes()
-        generate-barcode("br", ("hzbr", str(copy-i), str(page-i), EXAM-CONTENT-HASH, exam-id), barcode-height, type: barcode-type)
+        barcode("br", ("hzbr", str(copy-i), str(page-i), EXAM-CONTENT-HASH, exam-id), barcode-height, barcode-height, type: barcode-type)
       },
     )
     v(MARGIN_Y)

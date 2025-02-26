@@ -3,7 +3,7 @@ rm -r ./output/*
 
 # Options communes aux deux commandes
 args=(--input barcode-type="aztec" --input barcode-height=10 --input circle-diameter=3 --input nb-copies=1 --input exam-id="test1")
-doc="copy-3-filled-circles-rb-barcode.typ"
+doc="copy_4_circles.typ"
 root="."
 
 # Commande de compilation
