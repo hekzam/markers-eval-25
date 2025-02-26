@@ -3,16 +3,15 @@
 #import "common/utils.typ": check-type, get-indexes
 #import "common/gen_copy_common.typ": process-copies-with-pagination
 #import "components/markers/tiaoma_gen_barcode.typ": generate-barcode
+#import "components/markers/circle.typ": circle-box
 
 #let EXAM-CONTENT-HASH = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4="
 
 // ----------------------------------------------------------------
-// Génère un en-tête de page avec des barcodes.
-// - exam-id: Identifiant unique de l'examen.
-// - barcode-type: Type de barcode à utiliser.
-// - barcode-height: Hauteur du barcode.
+// Génère un en-tête de page avec des cercles.
+// - circle-diameter: Diamètre du cercle.
 // ----------------------------------------------------------------
-#let header = (exam-id, barcode-type, barcode-height) => {
+#let header = (circle-diameter) => {
   set align(top)
   context if generating-content.get() {
     v(MARGIN_Y)
@@ -20,30 +19,30 @@
       columns: 2,
       column-gutter: 1fr,
       {
-        generate-barcode("tl", ("hztl", exam-id), barcode-height, type: barcode-type)
+        circle-box("hztl", circle-diameter)
       },
       {
-        generate-barcode("tr", ("hztr", exam-id), barcode-height, type: barcode-type)
-      },
+        circle-box("hztr", circle-diameter)
+      }
     )
   } else []
 }
 
 // ----------------------------------------------------------------
-// Génère un pied de page avec des barcodes.
+// Génère un pied de page avec un cercle à gauche et un barcode à droite.
+// - circle-diameter: Diamètre du cercle.
 // - exam-id: Identifiant unique de l'examen.
 // - barcode-type: Type de barcode à utiliser.
 // - barcode-height: Hauteur du barcode.
 // ----------------------------------------------------------------
-#let footer = (exam-id, barcode-type, barcode-height) => {
+#let footer = (circle-diameter, exam-id, barcode-type, barcode-height) => {
   set align(bottom)
   context if generating-content.get() {
     grid(
       columns: 3,
       column-gutter: 1fr,
       {
-        let (copy-i, page-i) = get-indexes()
-        generate-barcode("bl", ("hzbl", str(copy-i), str(page-i), exam-id), barcode-height, type: barcode-type)
+        circle-box("hzbl", circle-diameter)
       },
       {
         grid(
@@ -78,12 +77,14 @@
 // ----------------------------------------------------------------
 #let gen-copies(
   exam-id, nb-copies: 1, duplex-printing: true,
+  circle-diameter: 2mm,
   barcode-type: "qrcode", barcode-height: 6mm, barcode-content-gutter: 2.5mm
 ) = {
   check-type(exam-id, str, "exam-id must be a string")
   assert(not exam-id.contains(","), message: "exam-id cannot contain comma ','")
   check-type(nb-copies, int, "nb-copies must be an integer")
   check-type(duplex-printing, bool, "duplex-printing must be a boolean")
+  check-type(circle-diameter, length, "circle-diameter must be a length")
   check-type(barcode-type, str, "barcode-type must be a string")
   check-type(barcode-height, length, "barcode-height must be a length")
   check-type(barcode-content-gutter, length, "barcode-content-gutter must be a length")
@@ -96,9 +97,9 @@
       y: MARGIN_Y + barcode-height + barcode-content-gutter,
     ),
     header-ascent: 0mm,
-    header: { header(exam-id, barcode-type, barcode-height) },
+    header: { header(circle-diameter) },
     footer-descent: 0mm,
-    footer: { footer(exam-id, barcode-type, barcode-height) },
+    footer: { footer(circle-diameter, exam-id, barcode-type, barcode-height) },
   )
 
   process-copies-with-pagination(nb-copies, duplex-printing)
@@ -107,8 +108,9 @@
 // Paramètres utilisateur spécifiés en entrée.
 #let b-t = sys.inputs.at("barcode-type", default: "qrcode")
 #let b-h = float(sys.inputs.at("barcode-height", default: "10")) * 1mm
+#let c-d = float(sys.inputs.at("circle-diameter", default: "6")) * 1mm
 #let n-c = int(sys.inputs.at("nb-copies", default: "1"))
 #let d-p = int(sys.inputs.at("duplex-printing", default: "0")) == 1
 
 // Génère les copies
-#gen-copies("basic", nb-copies: n-c, duplex-printing: d-p, barcode-type: b-t, barcode-height: b-h)
+#gen-copies("basic", nb-copies: n-c, duplex-printing: d-p, circle-diameter: c-d, barcode-type: b-t, barcode-height: b-h)

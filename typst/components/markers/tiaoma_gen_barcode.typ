@@ -2,16 +2,16 @@
 #import "../container.typ": gen-box
 
 // ----------------------------------------------------------------
-// Génère un marker à partir des données fournies et l'encapsule dans une boîte.
+// Génère un barcode à partir des données fournies et l'encapsule dans une boîte.
 // - label: Un identifiant ou une étiquette pour la boîte.
 // - parts: Une liste de chaînes représentant les données stockées dans le code-barre.
 // - height: La hauteur (et largeur) de la boîte.
-// - type: Type de marqueur (valeur par défaut "qrcode").
+// - type: Type de barcode (valeur par défaut "qrcode").
 // ----------------------------------------------------------------
-#let generate-marker(label, parts, height, type: "qrcode") = {
+#let generate-barcode(label, parts, height, type: "qrcode") = {
   let sep = ","
   let data = parts.join(sep)
-  let marker = (
+  let barcode = (
     if type == "qrcode" {
       tiaoma.qrcode(data, height: height)
     } else if type == "aztec" {
@@ -21,8 +21,8 @@
     } else if type == "pdf417-comp" {
       tiaoma.pdf417-comp(data, height: height)
     } else {
-      error("Type de marqueur inconnu: " + type)
+      error("Type de barcode inconnu: " + type)
     }
   )
-  gen-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: marker)
+  gen-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: barcode)
 }

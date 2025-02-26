@@ -9,14 +9,13 @@
 // - stroke-color: Couleur du trait.
 // - inner-content: Contenu à afficher à l'intérieur de la boîte.
 // ----------------------------------------------------------------
-#let circle-box(id, diameter, fill-color: white, stroke-width: 0.25mm, stroke-color: black, inner-content: []) = {
+#let circle-box(id, diameter, fill-color: black, stroke-width: 0.25mm, stroke-color: black, inner-content: []) = {
   assert.eq(type(fill-color), color, message: "fill-color must be a color")
   assert.eq(rgb(fill-color).components().at(3), 100%, message: "fill-color must be fully opaque (no alpha or alpha=100%)")
   assert.eq(type(stroke-color), color, message: "stroke-color must be a color")
   assert.eq(rgb(stroke-color).components().at(3), 100%, message: "stroke-color must be fully opaque (no alpha or alpha=100%)")
   assert.eq(type(stroke-width), length, message: "stroke must be a length")
 
-  set align(left+top)
   circle(radius: diameter / 2, fill: fill-color, stroke: stroke-width + stroke-color, {
     context if copy-counter.get().at(0) == 0 {
       layout(size => {
