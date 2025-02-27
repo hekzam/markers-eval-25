@@ -11,6 +11,7 @@ typst compile --root "$root" "typst/$doc" "./copies/copy.png" "${args[@]}" --ppi
 
 # Commande de requête
 typst query --one --field value --root "$root" "typst/$doc" '<atomic-boxes>' "${args[@]}" --pretty > original_boxes.json
+typst query --one --field value --root "$root" "typst/$doc" '<page>' "${args[@]}" --pretty > page.json
 
 # Commande de parsing
 # ./build-cmake/parser output/ original_boxes.json copies/copy.png
