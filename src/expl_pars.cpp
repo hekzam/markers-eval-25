@@ -19,6 +19,15 @@
 
 enum CornerBF { TOP_LEFT_BF = 0x01, TOP_RIGHT_BF = 0x02, BOTTOM_LEFT_BF = 0x04, BOTTOM_RIGHT_BF = 0x08 };
 
+/**
+ * @brief Analyse un objet JSON pour extraire les informations des AtomicBox et les stocker dans un vecteur.
+ *
+ * La fonction parcourt chaque élément du contenu JSON, crée une instance d'AtomicBox avec les attributs extraits,
+ * et ajoute cette instance dans le vecteur passé par référence.
+ *
+ * @param content Objet JSON contenant les descriptions des AtomicBox. Chaque clé représente l'identifiant de la box.
+ * @param boxes Vecteur dans lequel les AtomicBox analysées seront stockées.
+ */
 void parse_atomic_boxes(const json& content, std::vector<AtomicBox>& boxes) {
     for (const auto& [key, value] : content.items()) {
         AtomicBox box;
@@ -33,6 +42,25 @@ void parse_atomic_boxes(const json& content, std::vector<AtomicBox>& boxes) {
     }
 }
 
+/**
+ * @brief Différencie les AtomicBox en les classant par type et page.
+ *
+ * La fonction sépare les boîtes en trois catégories :
+ * - Les marqueurs généraux (markers) dont l'identifiant commence par "marker barcode ".
+ * - Les marqueurs de coin (corner_markers) pour lesquels l'identifiant contient les suffixes tl, tr, bl, br.
+ * - Les boîtes utilisateur (user_boxes_per_page), regroupées par numéro de page.
+ *
+ * Un contrôle est effectué pour s'assurer que tous les marqueurs de coin sont présents. En cas d'absence,
+ * une exception std::invalid_argument est levée.
+ *
+ * @param boxes Vecteur de pointeurs partagés sur les AtomicBox à différencier.
+ * @param markers Vecteur de pointeurs partagés où seront stockés les marqueurs généraux.
+ * @param corner_markers Vecteur de pointeurs partagés (de taille 4) où chaque index correspond à un coin :
+ *        TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT.
+ * @param user_boxes_per_page Vecteur de vecteurs de pointeurs partagés qui regroupe les boîtes utilisateur par page.
+ *
+ * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants dans la description JSON.
+ */
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
                                 std::vector<std::shared_ptr<AtomicBox>>& markers,
                                 std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
@@ -80,7 +108,17 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
         throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
 }
 
-// 2d coordinate transformation (scale), assuming the two are (0,0)-based
+/**
+ * @brief Redimensionne une coordonnée d'une image source vers une image destination.
+ *
+ * Cette fonction prend une coordonnée dans l'image source et la redimensionne proportionnellement
+ * à l'image de destination.
+ *
+ * @param src_coord Coordonnée à redimensionner.
+ * @param src_img_size Taille de l'image source (largeur, hauteur).
+ * @param dst_img_size Taille de l'image destination (largeur, hauteur).
+ * @return cv::Point2f Coordonnée redimensionnée dans l'image destination.
+ */
 cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img_size,
                         const cv::Point2f& dst_img_size) {
     return cv::Point2f{
@@ -89,6 +127,18 @@ cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img
     };
 }
 
+/**
+ * @brief Calcule le centre des marqueurs de coin.
+ *
+ * Pour chaque marqueur de coin fourni, la fonction calcule le centre de sa boîte englobante
+ * en réduisant la matrice contenant les coordonnées, puis applique une transformation de redimensionnement
+ * pour adapter ce centre aux dimensions de l'image destination.
+ *
+ * @param corner_markers Vecteur de pointeurs partagés sur les marqueurs de coin (AtomicBox) dans l'image source.
+ * @param src_img_size Taille de l'image source (largeur, hauteur).
+ * @param dst_img_size Taille de l'image destination (largeur, hauteur).
+ * @return std::vector<cv::Point2f> Vecteur contenant les points centraux des marqueurs redimensionnés.
+ */
 std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
                                                     const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
     std::vector<cv::Point2f> corner_points;
@@ -112,6 +162,17 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
     return corner_points;
 }
 
+/**
+ * @brief Convertit un ensemble de points en coordonnées flottantes vers des coordonnées raster (entiers).
+ *
+ * La fonction redimensionne chaque point en fonction de la transformation entre l'image source et l'image destination,
+ * puis convertit les coordonnées flottantes en coordonnées entières arrondies.
+ *
+ * @param vec_points Vecteur de points en coordonnées flottantes.
+ * @param src_img_size Taille de l'image source (largeur, hauteur).
+ * @param dst_img_size Taille de l'image destination (largeur, hauteur).
+ * @return std::vector<cv::Point> Vecteur de points en coordonnées raster (entiers).
+ */
 std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_points, const cv::Point2f& src_img_size,
                                          const cv::Point2f& dst_img_size) {
     std::vector<cv::Point> raster_points;
@@ -123,6 +184,20 @@ std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_poi
     return raster_points;
 }
 
+/**
+ * @brief Redresse et calibre une image en fonction des marqueurs de coin.
+ *
+ * La fonction calcule les centres des marqueurs à partir des boîtes des coins, puis applique
+ * une transformation affine (via la fonction main_qrcode) pour redresser l'image.
+ * Ensuite, l'image redressée est convertie en couleur BGR.
+ *
+ * @param img Image en niveaux de gris à redresser.
+ * @param meta Métadonnées associées à l'image.
+ * @param corner_markers Vecteur de pointeurs partagés sur les marqueurs de coin (AtomicBox).
+ * @param src_img_size Taille de l'image source (largeur, hauteur).
+ * @param dst_img_size Taille de l'image destination (largeur, hauteur).
+ * @return cv::Mat Image redressée et convertie en couleur BGR.
+ */
 cv::Mat redress_image(cv::Mat img, Metadata& meta, std::vector<std::shared_ptr<AtomicBox>> corner_markers,
                       const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
     auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
@@ -143,14 +218,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // create output directory if needed
+    // Création du répertoire de sortie
     std::filesystem::path output_dir{ argv[1] };
     std::filesystem::create_directories(output_dir);
 
     std::filesystem::path subimg_output_dir = output_dir.string() + std::string("/subimg");
     std::filesystem::create_directories(subimg_output_dir);
 
-    // read atomic boxes info
+    // Lecture du fichier de description des AtomicBox
     std::ifstream atomic_boxes_file(argv[2]);
     if (!atomic_boxes_file.is_open()) {
         fprintf(stderr, "could not open file '%s'\n", argv[2]);
@@ -200,7 +275,7 @@ int main(int argc, char* argv[]) {
                 max_y = std::max(max_y, v.y);
             }
 
-            // extract box content into file
+            // Extraire la sous-image de la boîte utilisateur
             cv::Range rows(min_y, max_y);
             cv::Range cols(min_x, max_x);
             // printf("%d,%s: (%d,%d) -> (%d,%d)\n", copy, box->id.c_str(), min_x, min_y, max_x, max_y);
@@ -214,7 +289,7 @@ int main(int argc, char* argv[]) {
             cv::imwrite(output_img_fname, subimg);
             free(output_img_fname);
 
-            // draw polylines on the output image file
+            // Déssiner les contours de la boîte utilisateur
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(0, 0, 255), 2);
         }
 
