@@ -1,6 +1,6 @@
 {
     "cmake.debugConfig": {
-        "args": ["../output", "../original_boxes.json", "../copies/original.png"]
+        "args": ["../output", "../original_boxes.json", "../copies/copy.png"]
     },
     "files.associations": {
         "string": "cpp",
@@ -81,6 +81,7 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "filesystem": "cpp"
     }
 }
