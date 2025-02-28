@@ -46,5 +46,7 @@ input_pdf_path = script_dir / '../../copies/original.png'
 num_spots = 5
 
 for i in range(1, 11):
-    output_pdf_path = output_dir / f'output_{i}.pdf'
+    output_pdf_path = output_dir / f'output_{i}.png'
     add_defects_to_pdf(str(input_pdf_path), str(output_pdf_path), num_spots)
+
+print(output_dir)
