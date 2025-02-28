@@ -2,9 +2,9 @@ name: Linux Compile
 
 on:
   push:
-    branches: [ "*" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["main"]
 
 jobs:
   build:
