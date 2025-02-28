@@ -1,5 +1,17 @@
-typst compile --root . test/copie/original_copy.typ ./copies/original.png --input nb-copies=1 --input exam-id="test1" --ppi 200 --format png
-typst query --one --field value --root ./ test/copie/original_copy.typ '<atomic-boxes>' --input nb-copies=1 --input exam-id="test1" --pretty > original_boxes.json
+rm -r ./copies/*
+rm -r ./output/*
 
-typst compile --root . test/copie/circle_copy.typ ./copies/circle.png --input nb-copies=1 --input exam-id="test1" --ppi 200 --format png
-typst query --one --field value --root ./ test/copie/circle_copy.typ '<atomic-boxes>' --input nb-copies=1 --input exam-id="test1" --pretty > circle_boxes.json
+# Options communes aux deux commandes
+args=(--input barcode-type="aztec" --input barcode-height=10 --input circle-diameter=3 --input nb-copies=1 --input exam-id="test1")
+doc="copy_4_circles.typ"
+root="."
+
+# Commande de compilation
+typst compile --root "$root" "typst/$doc" "./copies/copy.png" "${args[@]}" --ppi 200 --format png
+
+# Commande de requête
+typst query --one --field value --root "$root" "typst/$doc" '<atomic-boxes>' "${args[@]}" --pretty > original_boxes.json
+typst query --one --field value --root "$root" "typst/$doc" '<page>' "${args[@]}" --pretty > page.json
+
+# Commande de parsing
+# ./build-cmake/parser output/ original_boxes.json copies/copy.png
