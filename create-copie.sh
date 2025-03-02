@@ -5,7 +5,7 @@ mkdir -p ./output
 
 # Options communes aux deux commandes
 args=(--input barcode-type="qrcode" --input barcode-height=10 --input circle-diameter=3 --input nb-copies=1 --input exam-id="test1")
-doc="copy_4_barcodes.typ"
+doc="copy_3_circles.typ"
 root="."
 
 # Commande de compilation

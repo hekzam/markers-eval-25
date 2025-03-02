@@ -1,50 +1,14 @@
 #include <vector>
 #include <string>
 
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/objdetect.hpp>
-
 #include <ZXing/ReadBarcode.h>
 
 #include <common.h>
-#include <json_helper.h>
+#include "json_helper.h"
+#include "string_helper.h"
+#include "parser_helper.h"
+
 #include "qrcode_parser.h"
-#include <string_helper.h>
-
-struct DetectedBarcode {
-    std::string content;
-    std::vector<cv::Point2f> bounding_box;
-};
-
-std::vector<DetectedBarcode> identify_barcodes(cv::Mat img) {
-    std::vector<DetectedBarcode> barcodes = {};
-
-    if (img.type() != CV_8U)
-        throw std::invalid_argument(
-            "img has type != CV_8U while it should contain luminance information on 8-bit unsigned integers");
-
-    if (img.cols < 2 || img.rows < 2)
-        return {};
-
-    auto iv =
-        ZXing::ImageView(reinterpret_cast<const uint8_t*>(img.ptr()), img.cols, img.rows, ZXing::ImageFormat::Lum);
-    auto z_barcodes = ZXing::ReadBarcodes(iv);
-
-    for (const auto& b : z_barcodes) {
-        DetectedBarcode barcode;
-        barcode.content = b.text();
-
-        std::vector<cv::Point> corners;
-        for (int j = 0; j < 4; ++j) {
-            const auto& p = b.position()[j];
-            barcode.bounding_box.emplace_back(cv::Point2f(p.x, p.y));
-        }
-        barcodes.emplace_back(barcode);
-    }
-
-    return barcodes;
-}
 
 int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, const std::string& content_hash,
                              std::vector<cv::Point2f>& corner_points, std::vector<DetectedBarcode*>& corner_barcodes) {
@@ -89,34 +53,6 @@ int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, const std::
     return found_mask;
 }
 
-cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2f>& expected_corner_points,
-                             const std::vector<cv::Point2f>& found_corner_points) {
-    int nb_found = 0;
-    std::vector<cv::Point2f> src, dst;
-    src.reserve(3);
-    dst.reserve(3);
-
-    for (int corner = 0; corner < 4; ++corner) {
-        if ((1 << corner) & found_corner_mask) {
-            src.emplace_back(found_corner_points[corner]);
-            dst.emplace_back(expected_corner_points[corner]);
-
-            nb_found += 1;
-            if (nb_found >= 3)
-                break;
-        }
-    }
-
-    if (nb_found != 3)
-        throw std::invalid_argument("only " + std::to_string(nb_found) + " corners were found (3 or more required)");
-
-    /*for (int i = 0; i < 3; ++i) {
-    printf("src[%d]: (%f, %f)\n", i, src[i].x, src[i].y);
-    printf("dst[%d]: (%f, %f)\n", i, dst[i].x, dst[i].y);
-    }*/
-    return cv::getAffineTransform(src, dst);
-}
-
 cv::Mat main_qrcode(cv::Mat img, Metadata& meta, std::vector<cv::Point2f> dst_corner_points) {
     std::string expected_content_hash = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=";
 
@@ -126,8 +62,26 @@ cv::Mat main_qrcode(cv::Mat img, Metadata& meta, std::vector<cv::Point2f> dst_co
     std::vector<DetectedBarcode*> corner_barcodes;
     int found_corner_mask = identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
 
+    if (found_corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
+        throw std::invalid_argument("not all corner barcodes were found");
+
     meta = parse_metadata(corner_barcodes[BOTTOM_LEFT]->content);
 
     auto affine_transform = get_affine_transform(found_corner_mask, dst_corner_points, corner_points);
     return affine_transform;
+}
+
+void draw_qrcode(cv::Mat& calibrated_img_col, const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
+                 const cv::Point2f& src_img_size, const cv::Point2f& dimension) {
+    for (auto box : corner_markers) {
+        if (strncmp("marker barcode br", box->id.c_str(), 17) == 0)
+            break;
+
+        const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
+                                                   cv::Point2f{ box->x + box->width, box->y },
+                                                   cv::Point2f{ box->x + box->width, box->y + box->height },
+                                                   cv::Point2f{ box->x, box->y + box->height } };
+        std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
+        cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
+    }
 }

@@ -10,8 +10,18 @@ std::vector<std::shared_ptr<AtomicBox>> json_to_atomicBox(const json& content) {
         box.page = value["page"];
         box.x = value["x"];
         box.y = value["y"];
-        box.width = value["width"];
-        box.height = value["height"];
+        if (value.contains("width")) {
+            box.width = value["width"];
+        } else {
+            box.width = value["diameter"];
+            box.x -= box.width / 2;
+        }
+        if (value.contains("height")) {
+            box.height = value["height"];
+        } else {
+            box.height = value["diameter"];
+            box.y -= box.height / 2;
+        }
 
         boxes.emplace_back(std::make_shared<AtomicBox>(box));
     }

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <cmath>
 #include <filesystem>
+#include <memory>
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -13,34 +14,15 @@
 
 #include <common.h>
 #include "utils/json_helper.h"
-#include <memory>
+#include "utils/parser_helper.h"
 #include "string_helper.h"
 #include "qrcode_parser.h"
+#include "circle_parser.h"
 
-enum CornerBF { TOP_LEFT_BF = 0x01, TOP_RIGHT_BF = 0x02, BOTTOM_LEFT_BF = 0x04, BOTTOM_RIGHT_BF = 0x08 };
-
-/**
- * @brief Analyse un objet JSON pour extraire les informations des AtomicBox et les stocker dans un vecteur.
- *
- * La fonction parcourt chaque élément du contenu JSON, crée une instance d'AtomicBox avec les attributs extraits,
- * et ajoute cette instance dans le vecteur passé par référence.
- *
- * @param content Objet JSON contenant les descriptions des AtomicBox. Chaque clé représente l'identifiant de la box.
- * @param boxes Vecteur dans lequel les AtomicBox analysées seront stockées.
- */
-void parse_atomic_boxes(const json& content, std::vector<AtomicBox>& boxes) {
-    for (const auto& [key, value] : content.items()) {
-        AtomicBox box;
-        box.id = key;
-        box.page = value["page"];
-        box.x = value["x"];
-        box.y = value["y"];
-        box.width = value["width"];
-        box.height = value["height"];
-
-        boxes.emplace_back(box);
-    }
-}
+std::unordered_map<std::string, Parser> parsers = {
+    { "qrcode", { main_qrcode, draw_qrcode } },
+    { "circle", { main_circle, draw_circle } },
+};
 
 /**
  * @brief Différencie les AtomicBox en les classant par type et page.
@@ -62,10 +44,8 @@ void parse_atomic_boxes(const json& content, std::vector<AtomicBox>& boxes) {
  * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants dans la description JSON.
  */
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
-                                std::vector<std::shared_ptr<AtomicBox>>& markers,
                                 std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
                                 std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page) {
-    markers.clear();
     corner_markers.resize(4);
     user_boxes_per_page.clear();
 
@@ -78,53 +58,30 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
     }
     user_boxes_per_page.resize(max_page);
 
+    int corner_mask = 0;
     for (auto box : boxes) {
         if (starts_with(box->id, "hz")) {
-            markers.emplace_back(box);
+            int corner = -1;
+            if (starts_with(box->id, "hztl"))
+                corner = TOP_LEFT;
+            else if (starts_with(box->id, "hztr"))
+                corner = TOP_RIGHT;
+            else if (starts_with(box->id, "hzbl"))
+                corner = BOTTOM_LEFT;
+            else if (starts_with(box->id, "hzbr"))
+                corner = BOTTOM_RIGHT;
+
+            if (corner != -1) {
+                corner_markers[corner] = box;
+                corner_mask |= (1 << corner);
+            }
         } else {
             user_boxes_per_page.at(box->page - 1).emplace_back(box);
         }
     }
 
-    int corner_mask = 0;
-    for (auto box : markers) {
-        int corner = -1;
-        if (starts_with(box->id, "hztl"))
-            corner = TOP_LEFT;
-        else if (starts_with(box->id, "hztr"))
-            corner = TOP_RIGHT;
-        else if (starts_with(box->id, "hzbl"))
-            corner = BOTTOM_LEFT;
-        else if (starts_with(box->id, "hzbr"))
-            corner = BOTTOM_RIGHT;
-
-        if (corner != -1) {
-            corner_markers[corner] = box;
-            corner_mask |= (1 << corner);
-        }
-    }
-
     if (corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
         throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
-}
-
-/**
- * @brief Redimensionne une coordonnée d'une image source vers une image destination.
- *
- * Cette fonction prend une coordonnée dans l'image source et la redimensionne proportionnellement
- * à l'image de destination.
- *
- * @param src_coord Coordonnée à redimensionner.
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return cv::Point2f Coordonnée redimensionnée dans l'image destination.
- */
-cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img_size,
-                        const cv::Point2f& dst_img_size) {
-    return cv::Point2f{
-        (src_coord.x / src_img_size.x) * dst_img_size.x,
-        (src_coord.y / src_img_size.y) * dst_img_size.y,
-    };
 }
 
 /**
@@ -163,28 +120,6 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
 }
 
 /**
- * @brief Convertit un ensemble de points en coordonnées flottantes vers des coordonnées raster (entiers).
- *
- * La fonction redimensionne chaque point en fonction de la transformation entre l'image source et l'image destination,
- * puis convertit les coordonnées flottantes en coordonnées entières arrondies.
- *
- * @param vec_points Vecteur de points en coordonnées flottantes.
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return std::vector<cv::Point> Vecteur de points en coordonnées raster (entiers).
- */
-std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_points, const cv::Point2f& src_img_size,
-                                         const cv::Point2f& dst_img_size) {
-    std::vector<cv::Point> raster_points;
-    raster_points.reserve(vec_points.size());
-    for (const auto& point : vec_points) {
-        auto scaled_point = coord_scale(point, src_img_size, dst_img_size);
-        raster_points.emplace_back(cv::Point(round(scaled_point.x), round(scaled_point.y)));
-    }
-    return raster_points;
-}
-
-/**
  * @brief Redresse et calibre une image en fonction des marqueurs de coin.
  *
  * La fonction calcule les centres des marqueurs à partir des boîtes des coins, puis applique
@@ -198,11 +133,7 @@ std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_poi
  * @param dst_img_size Taille de l'image destination (largeur, hauteur).
  * @return cv::Mat Image redressée et convertie en couleur BGR.
  */
-cv::Mat redress_image(cv::Mat img, Metadata& meta, std::vector<std::shared_ptr<AtomicBox>> corner_markers,
-                      const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
-    auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
-
-    auto affine_transform = main_qrcode(img, meta, dst_corner_points);
+cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
 
     cv::Mat calibrated_img = img;
     warpAffine(img, calibrated_img, affine_transform, calibrated_img.size(), cv::INTER_LINEAR);
@@ -241,11 +172,14 @@ int main(int argc, char* argv[]) {
     // printf("atomic_boxes: %s\n", atomic_boxes_json.dump(2).c_str());
 
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
-    std::vector<std::shared_ptr<AtomicBox>> markers;
     std::vector<std::shared_ptr<AtomicBox>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
-    differentiate_atomic_boxes(atomic_boxes, markers, corner_markers, user_boxes_per_page);
+    differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
+    /// TODO: add an argument to specify the parser
+    auto parser = parsers["circle"];
+
+    /// TODO: load page.json
     const cv::Point2f src_img_size{ 210, 297 }; // TODO: do not assume A4
 
     for (int i = 3; i < argc; ++i) {
@@ -253,8 +187,13 @@ int main(int argc, char* argv[]) {
         const cv::Point2f dst_img_size(img.cols, img.rows);
         // TODO: use min and max for 90 ° rotate if needed
         // printf("dst_img_size: (%f, %f)\n", dst_img_size.x, dst_img_size.y);
+
+        auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
+
         Metadata meta;
-        auto calibrated_img_col = redress_image(img, meta, corner_markers, src_img_size, dst_img_size);
+        auto affine_transform = parser.parser(img, meta, dst_corner_points);
+
+        auto calibrated_img_col = redress_image(img, affine_transform);
 
         cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
@@ -293,17 +232,7 @@ int main(int argc, char* argv[]) {
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(0, 0, 255), 2);
         }
 
-        for (auto box : corner_markers) {
-            if (strncmp("marker barcode br", box->id.c_str(), 17) == 0)
-                break;
-
-            const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y + box->height },
-                                                       cv::Point2f{ box->x, box->y + box->height } };
-            std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
-            cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
-        }
+        parser.draw_marker(calibrated_img_col, corner_markers, src_img_size, dimension);
 
         std::filesystem::path input_img_path{ argv[i] };
         std::filesystem::path output_img_path_fname = input_img_path.filename().replace_extension(".png");

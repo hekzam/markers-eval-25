@@ -11,17 +11,17 @@ def add_defects_to_pdf(input_pdf_path, output_pdf_path, num_spots):
         apply_random_transformations(img)
 
         # Ajouter du flou
-        img.blur(radius=0, sigma=1)
+        # img.blur(radius=0, sigma=1)
 
-        # Ajouter des taches
-        with Drawing() as draw:
-            draw.fill_color = Color('black')
-            for _ in range(num_spots):
-                x = random.randint(0, img.width)
-                y = random.randint(0, img.height)
-                radius = random.randint(20, 50)
-                draw.circle((x, y), (x + radius, y + radius))
-            draw(img)
+        # # Ajouter des taches
+        # with Drawing() as draw:
+        #     draw.fill_color = Color('black')
+        #     for _ in range(num_spots):
+        #         x = random.randint(0, img.width)
+        #         y = random.randint(0, img.height)
+        #         radius = random.randint(20, 50)
+        #         draw.circle((x, y), (x + radius, y + radius))
+        #     draw(img)
 
         # Sauvegarder le PDF modifié
         img.save(filename=output_pdf_path)
@@ -42,7 +42,7 @@ output_dir = script_dir / 'copie_pourrie'
 output_dir.mkdir(exist_ok=True)
 
 # Utilisation de la fonction
-input_pdf_path = script_dir / '../../copies/original.png'
+input_pdf_path = script_dir / '../../copies/copy.png'
 num_spots = 5
 
 for i in range(1, 11):
