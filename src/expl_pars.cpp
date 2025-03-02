@@ -109,9 +109,7 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
         };
 
         // compute the center of the marker
-        cv::Mat mean_mat;
-        cv::reduce(marker_bounding_box, mean_mat, 1, cv::REDUCE_AVG);
-        cv::Point2f mean_point{ mean_mat.at<float>(0, 0), mean_mat.at<float>(0, 1) };
+        auto mean_point = center_of_box(marker_bounding_box);
         // printf("corner[%d] mean point: (%f, %f)\n", corner, mean_point.x, mean_point.y);
 
         corner_points[corner] = coord_scale(mean_point, src_img_size, dst_img_size);

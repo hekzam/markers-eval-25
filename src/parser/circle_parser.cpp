@@ -20,15 +20,17 @@ std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     return detected_circles;
 }
 
-float findArea(float a, float b, float c) {
-    // Length of sides must be positive
-    // and sum of any two sides
-    // must be smaller than third side.
-    if (a < 0 || b < 0 || c < 0 || (a + b <= c) || a + c <= b || b + c <= a) {
+float findArea(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
+    float side_a = sqrt(pow(b.x - c.x, 2) + pow(b.y - c.y, 2));
+    float side_b = sqrt(pow(a.x - c.x, 2) + pow(a.y - c.y, 2));
+    float side_c = sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
+
+    if (side_a < 0 || side_b < 0 || side_c < 0 || (side_a + side_b <= side_c) || side_a + side_c <= side_b ||
+        side_b + side_c <= side_a) {
         throw std::invalid_argument("Invalid sides\n");
     }
-    float s = (a + b + c) / 2;
-    return sqrt(s * (s - a) * (s - b) * (s - c));
+    float s = (side_a + side_b + side_c) / 2;
+    return sqrt(s * (s - side_a) * (s - side_b) * (s - side_c));
 }
 
 bool compare_area(const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
@@ -41,9 +43,7 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
 
     int found_mask = 0x00;
 
-    cv::Mat mean_mat;
-    cv::reduce(corner_barcode.bounding_box, mean_mat, 1, cv::REDUCE_AVG);
-    corner_points[BOTTOM_RIGHT] = cv::Point2f(mean_mat.at<float>(0, 0), mean_mat.at<float>(0, 1));
+    corner_points[BOTTOM_RIGHT] = center_of_box(corner_barcode.bounding_box);
     found_mask |= (1 << BOTTOM_RIGHT);
 
     std::pair<float, cv::Point2f> max_distance = { 0, cv::Point2f(0, 0) };
@@ -66,13 +66,7 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
         if (circle[0] == max_distance.second.x && circle[1] == max_distance.second.y)
             continue;
 
-        float a =
-            sqrt(pow(circle[0] - corner_points[BOTTOM_RIGHT].x, 2) + pow(circle[1] - corner_points[BOTTOM_RIGHT].y, 2));
-        float b = sqrt(pow(circle[0] - corner_barcode.bounding_box[1].x, 2) +
-                       pow(circle[1] - corner_barcode.bounding_box[1].y, 2));
-        float c = sqrt(pow(circle[0] - max_distance.second.x, 2) + pow(circle[1] - max_distance.second.y, 2));
-
-        float area = findArea(a, b, c);
+        float area = findArea(corner_points[TOP_LEFT], corner_points[BOTTOM_RIGHT], cv::Point2f(circle[0], circle[1]));
         area_points.push_back({ area, cv::Point2f(circle[0], circle[1]) });
     }
 

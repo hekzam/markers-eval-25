@@ -13,4 +13,6 @@ std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_poi
 cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2f>& expected_corner_points,
                              const std::vector<cv::Point2f>& found_corner_points);
 
+cv::Point center_of_box(std::vector<cv::Point2f> bounding_box);
+
 #endif

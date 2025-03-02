@@ -76,6 +76,12 @@ std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_poi
     return raster_points;
 }
 
+cv::Point center_of_box(std::vector<cv::Point2f> bounding_box) {
+    cv::Mat mean_mat;
+    cv::reduce(bounding_box, mean_mat, 1, cv::REDUCE_AVG);
+    return cv::Point2f(mean_mat.at<float>(0, 0), mean_mat.at<float>(0, 1));
+}
+
 cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2f>& expected_corner_points,
                              const std::vector<cv::Point2f>& found_corner_points) {
     int nb_found = 0;
