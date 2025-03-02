@@ -79,7 +79,7 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
     user_boxes_per_page.resize(max_page);
 
     for (auto box : boxes) {
-        if (starts_with(box->id, "marker barcode ")) {
+        if (starts_with(box->id, "hz")) {
             markers.emplace_back(box);
         } else {
             user_boxes_per_page.at(box->page - 1).emplace_back(box);
@@ -89,13 +89,13 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
     int corner_mask = 0;
     for (auto box : markers) {
         int corner = -1;
-        if (starts_with(box->id, "marker barcode tl"))
+        if (starts_with(box->id, "hztl"))
             corner = TOP_LEFT;
-        else if (starts_with(box->id, "marker barcode tr"))
+        else if (starts_with(box->id, "hztr"))
             corner = TOP_RIGHT;
-        else if (starts_with(box->id, "marker barcode bl"))
+        else if (starts_with(box->id, "hzbl"))
             corner = BOTTOM_LEFT;
-        else if (starts_with(box->id, "marker barcode br"))
+        else if (starts_with(box->id, "hzbr"))
             corner = BOTTOM_RIGHT;
 
         if (corner != -1) {

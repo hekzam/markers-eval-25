@@ -20,10 +20,10 @@
       columns: 2,
       column-gutter: 1fr,
       {
-        barcode("tl", ("hztl", exam-id), barcode-height, barcode-height, type: barcode-type)
+        barcode("hztl", ("hztl", exam-id), barcode-height, barcode-height, type: barcode-type)
       },
       {
-        barcode("tr", ("hztr", exam-id), barcode-height, barcode-height, type: barcode-type)
+        barcode("hztr", ("hztr", exam-id), barcode-height, barcode-height, type: barcode-type)
       },
     )
   } else []
@@ -43,7 +43,7 @@
       column-gutter: 1fr,
       {
         let (copy-i, page-i) = get-indexes()
-        barcode("bl", ("hzbl", str(copy-i), str(page-i), exam-id), barcode-height, barcode-height, type: barcode-type)
+        barcode("hzbl", ("hzbl", str(copy-i), str(page-i), exam-id), barcode-height, barcode-height, type: barcode-type)
       },
       {
         grid(
@@ -60,7 +60,7 @@
       },
       {
         let (copy-i, page-i) = get-indexes()
-        barcode("br", ("hzbr", str(copy-i), str(page-i), EXAM-CONTENT-HASH, exam-id), barcode-height, barcode-height, type: barcode-type)
+        barcode("hzbr", ("hzbr", str(copy-i), str(page-i), EXAM-CONTENT-HASH, exam-id), barcode-height, barcode-height, type: barcode-type)
       },
     )
     v(MARGIN_Y)

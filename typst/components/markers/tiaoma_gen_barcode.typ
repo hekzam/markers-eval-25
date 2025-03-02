@@ -24,5 +24,5 @@
       error("Type de barcode inconnu: " + type)
     }
   )
-  gen-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: barcode)
+  gen-box(label, height, height, stroke-width: 0mm, inner-content: barcode)
 }

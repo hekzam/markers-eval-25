@@ -1,9 +1,11 @@
 rm -r ./copies/*
 rm -r ./output/*
+mkdir -p ./copies
+mkdir -p ./output
 
 # Options communes aux deux commandes
-args=(--input barcode-type="aztec" --input barcode-height=10 --input circle-diameter=3 --input nb-copies=1 --input exam-id="test1")
-doc="copy_4_circles.typ"
+args=(--input barcode-type="qrcode" --input barcode-height=10 --input circle-diameter=3 --input nb-copies=1 --input exam-id="test1")
+doc="copy_4_barcodes.typ"
 root="."
 
 # Commande de compilation
