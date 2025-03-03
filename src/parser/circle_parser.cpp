@@ -11,11 +11,14 @@
 #include "circle_parser.h"
 
 std::vector<cv::Vec3f> detected_circles;
+DetectedBarcode corner_barcode;
+std::vector<cv::Point2f> corner_points;
 
 std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     std::vector<cv::Vec3f> detected_circles;
 
-    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT_ALT, 1, img.rows / 8, 300, 0.98f, 10, 50);
+    // cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT_ALT, 1, img.rows / 8, 300, 0.98f, 10, 50);
+    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 30, 10, 50);
 
     return detected_circles;
 }
@@ -31,6 +34,16 @@ float findArea(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
     }
     float s = (side_a + side_b + side_c) / 2;
     return sqrt(s * (s - side_a) * (s - side_b) * (s - side_c));
+}
+
+float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
+    cv::Point2f ab = b - a;
+    cv::Point2f cb = b - c;
+
+    float dot = ab.x * cb.x + ab.y * cb.y;
+    float cross = ab.x * cb.y - ab.y * cb.x;
+
+    return atan2(cross, dot);
 }
 
 bool compare_area(const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
@@ -60,22 +73,25 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
     corner_points[TOP_LEFT] = max_distance.second;
     found_mask |= (1 << TOP_LEFT);
 
-    std::vector<std::pair<float, cv::Point2f>> area_points;
+    std::vector<std::pair<float, cv::Point2f>> right_corner_points;
 
     for (const auto& circle : detected_circles) {
         if (circle[0] == max_distance.second.x && circle[1] == max_distance.second.y)
             continue;
 
-        float area = findArea(corner_points[TOP_LEFT], corner_points[BOTTOM_RIGHT], cv::Point2f(circle[0], circle[1]));
-        area_points.push_back({ area, cv::Point2f(circle[0], circle[1]) });
+        float angle_corner =
+            angle(corner_points[TOP_LEFT], cv::Point2f(circle[0], circle[1]), corner_points[BOTTOM_RIGHT]);
+        angle_corner = angle_corner < 0 ? angle_corner + M_PI : angle_corner;
+        angle_corner = abs(angle_corner - M_PI / 2);
+        right_corner_points.push_back({ angle_corner, cv::Point2f(circle[0], circle[1]) });
     }
 
-    std::sort(area_points.begin(), area_points.end(), compare_area);
+    std::sort(right_corner_points.begin(), right_corner_points.end(), compare_area);
 
-    corner_points[TOP_RIGHT] = area_points[0].second;
+    corner_points[TOP_RIGHT] = right_corner_points[0].second;
     found_mask |= (1 << TOP_RIGHT);
 
-    corner_points[BOTTOM_LEFT] = area_points[1].second;
+    corner_points[BOTTOM_LEFT] = right_corner_points[1].second;
     found_mask |= (1 << BOTTOM_LEFT);
 
     if (corner_points[TOP_RIGHT].x < corner_points[BOTTOM_LEFT].x) {
@@ -85,11 +101,10 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
     return found_mask;
 }
 
-cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f> dst_corner_points) {
+cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
 
     auto barcodes = identify_barcodes(img);
 
-    DetectedBarcode corner_barcode;
     for (const auto& barcode : barcodes) {
         if (starts_with(barcode.content, "hzbr")) {
             corner_barcode = barcode;
@@ -101,7 +116,6 @@ cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f> dst_co
 
     detected_circles = detect_circles(img);
 
-    std::vector<cv::Point2f> corner_points;
     auto mask = identify_corner(detected_circles, corner_points, corner_barcode);
 
     if (mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
@@ -122,15 +136,28 @@ void draw_circle(cv::Mat& calibrated_img_col, const std::vector<std::shared_ptr<
         cv::circle(calibrated_img_col, center, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
     }
 
-    for (auto box : corner_markers) {
-        if (strncmp("marker barcode br", box->id.c_str(), 17) == 0)
-            break;
+    std::vector<cv::Point> box;
 
+    for (const auto& point : corner_barcode.bounding_box) {
+        box.push_back(cv::Point(point.x, point.y));
+    }
+
+    cv::polylines(calibrated_img_col, box, true, cv::Scalar(0, 0, 255), 2);
+
+    for (auto box : corner_markers) {
         const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
                                                    cv::Point2f{ box->x + box->width, box->y },
                                                    cv::Point2f{ box->x + box->width, box->y + box->height },
                                                    cv::Point2f{ box->x, box->y + box->height } };
         std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
         cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
+        cv::circle(calibrated_img_col,
+                   convert_to_raster({ cv::Point2f{ box->x + box->width / 2, box->y + box->height / 2 } }, src_img_size,
+                                     dimension)[0],
+                   3, cv::Scalar(0, 255, 0), -1);
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        cv::circle(calibrated_img_col, corner_points[i], 3, cv::Scalar(0, 255, 255), -1);
     }
 }

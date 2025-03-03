@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
             free(output_img_fname);
 
             // Déssiner les contours de la boîte utilisateur
-            cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(0, 0, 255), 2);
+            cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 255), 2);
         }
 
         parser.draw_marker(calibrated_img_col, corner_markers, src_img_size, dimension);

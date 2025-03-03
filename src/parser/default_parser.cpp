@@ -13,7 +13,7 @@
 #include "json_helper.h"
 #include "default_parser.h"
 
-cv::Mat default_parser(cv::Mat img, Metadata& meta, std::vector<cv::Point2f> dst_corner_points) {
+cv::Mat default_parser(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     meta.id = 0;
     meta.page = 1;
     meta.name = "";
