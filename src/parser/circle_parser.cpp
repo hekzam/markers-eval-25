@@ -17,8 +17,7 @@ std::vector<cv::Point2f> corner_points;
 std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     std::vector<cv::Vec3f> detected_circles;
 
-    // cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT_ALT, 1, img.rows / 8, 300, 0.98f, 10, 50);
-    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 30, 10, 50);
+    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 30, 10, 30);
 
     return detected_circles;
 }
