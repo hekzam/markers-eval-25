@@ -58,8 +58,8 @@
         )
       },
       {
-        let (copy-i, page-i) = get-indexes()
-        barcode("hzbr", ("hzbr", str(copy-i), str(page-i), EXAM-CONTENT-HASH, exam-id), barcode-height, barcode-height, type: barcode-type)
+        let (copy-i, page-i) = get-indexes() // EXAM-CONTENT-HASH, exam-id
+        barcode("hzbr", ("hzbr", str(copy-i), str(page-i)), barcode-height, barcode-height, type: barcode-type)
       },
     )
     v(MARGIN_Y)

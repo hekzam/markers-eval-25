@@ -1,8 +1,6 @@
 #include <vector>
 #include <string>
 
-#include <ZXing/ReadBarcode.h>
-
 #include <common.h>
 #include "json_helper.h"
 #include "string_helper.h"

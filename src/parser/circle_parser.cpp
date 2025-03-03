@@ -1,8 +1,6 @@
 #include <vector>
 #include <string>
 
-#include <ZXing/ReadBarcode.h>
-
 #include <common.h>
 #include "json_helper.h"
 #include "parser_helper.h"
@@ -103,6 +101,15 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
 cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
 
     auto barcodes = identify_barcodes(img);
+
+    if (barcodes.empty()) {
+        printf("no barcode found\n");
+        meta.id = 0;
+        meta.page = 1;
+        meta.name = "";
+        return cv::Mat::eye(2, 3, CV_32F);
+        // throw std::invalid_argument("no barcode found");
+    }
 
     for (const auto& barcode : barcodes) {
         if (starts_with(barcode.content, "hzbr")) {

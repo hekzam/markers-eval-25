@@ -1,7 +1,11 @@
 #include <vector>
 #include <string>
 
+#ifdef ENABLE_ZBAR
+#include <zbar.h>
+#else
 #include <ZXing/ReadBarcode.h>
+#endif
 
 #include <common.h>
 #include "parser_helper.h"
@@ -17,10 +21,33 @@ std::vector<DetectedBarcode> identify_barcodes(cv::Mat img) {
     if (img.cols < 2 || img.rows < 2)
         return {};
 
+#ifdef ENABLE_ZBAR
+    zbar::Image image(img.cols, img.rows, "Y800", (uchar*) img.data, img.cols * img.rows);
+    zbar::ImageScanner scanner;
+
+    // Configure scanner
+    scanner.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
+
+    // Scan the image for barcodes and QRCodes
+    int n = scanner.scan(image);
+
+    // Print results
+    for (zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol) {
+        DetectedBarcode barcode;
+        barcode.content = symbol->get_data();
+
+        // Obtain location
+        for (int i = 0; i < symbol->get_location_size(); i++) {
+            barcode.bounding_box.emplace_back(cv::Point2f(symbol->get_location_x(i), symbol->get_location_y(i)));
+        }
+
+        barcodes.emplace_back(barcode);
+    }
+#else
     auto iv =
         ZXing::ImageView(reinterpret_cast<const uint8_t*>(img.ptr()), img.cols, img.rows, ZXing::ImageFormat::Lum);
-    auto z_barcodes = ZXing::ReadBarcodes(iv);
-
+    auto options = ZXing::ReaderOptions().setFormats(ZXing::BarcodeFormat::QRCode);
+    auto z_barcodes = ZXing::ReadBarcodes(iv, options);
     for (const auto& b : z_barcodes) {
         DetectedBarcode barcode;
         barcode.content = b.text();
@@ -32,6 +59,7 @@ std::vector<DetectedBarcode> identify_barcodes(cv::Mat img) {
         }
         barcodes.emplace_back(barcode);
     }
+#endif
 
     return barcodes;
 }
