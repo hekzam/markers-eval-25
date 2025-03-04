@@ -1,6 +1,6 @@
 {
     "cmake.debugConfig": {
-        "args": ["../output", "../original_boxes.json", "../tools/pdf_pourrisseur/copie_pourrie"]
+        "args": ["../output", "../original_boxes.json", "../copies/copy.png"]
     },
     "files.associations": {
         "string": "cpp",
@@ -93,7 +93,9 @@
         "__verbose_abort": "cpp",
         "ios": "cpp",
         "locale": "cpp",
-        "print": "cpp"
+        "print": "cpp",
+        "queue": "cpp",
+        "stack": "cpp"
     },
     "editor.formatOnSave": true,
     "C_Cpp.errorSquiggles": "enabled"

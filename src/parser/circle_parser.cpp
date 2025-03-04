@@ -121,7 +121,7 @@ cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_c
     meta = parse_metadata(corner_barcode.content);
 
     detected_circles = detect_circles(img);
-
+    corner_points.clear();
     auto mask = identify_corner(detected_circles, corner_points, corner_barcode);
 
     if (mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))

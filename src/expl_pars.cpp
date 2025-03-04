@@ -12,10 +12,14 @@
 #include "string_helper.h"
 #include "qrcode_parser.h"
 #include "circle_parser.h"
+#include "custom_marker_parser.h"
+#include "default_parser.h"
 
 std::unordered_map<std::string, Parser> parsers = {
     { "qrcode", { main_qrcode, draw_qrcode } },
     { "circle", { main_circle, draw_circle } },
+    // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
+    { "default", { default_parser, draw_default } },
 };
 
 int main(int argc, char* argv[]) {
@@ -52,7 +56,7 @@ int main(int argc, char* argv[]) {
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
     /// TODO: add an argument to specify the parser
-    auto parser = parsers["circle"];
+    auto parser = parsers["custom"];
 
     /// TODO: load page.json
     const cv::Point2f src_img_size{ 210, 297 }; // TODO: do not assume A4
