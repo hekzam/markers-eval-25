@@ -72,9 +72,6 @@ cv::Mat main_qrcode(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_c
 void draw_qrcode(cv::Mat& calibrated_img_col, const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
                  const cv::Point2f& src_img_size, const cv::Point2f& dimension) {
     for (auto box : corner_markers) {
-        if (strncmp("marker barcode br", box->id.c_str(), 17) == 0)
-            break;
-
         const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
                                                    cv::Point2f{ box->x + box->width, box->y },
                                                    cv::Point2f{ box->x + box->width, box->y + box->height },

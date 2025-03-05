@@ -33,17 +33,7 @@ float findArea(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
     return sqrt(s * (s - side_a) * (s - side_b) * (s - side_c));
 }
 
-float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
-    cv::Point2f ab = b - a;
-    cv::Point2f cb = b - c;
-
-    float dot = ab.x * cb.x + ab.y * cb.y;
-    float cross = ab.x * cb.y - ab.y * cb.x;
-
-    return atan2(cross, dot);
-}
-
-bool compare_area(const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
+static bool compare_area(const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
     return a.first < b.first;
 }
 

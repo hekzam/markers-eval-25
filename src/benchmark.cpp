@@ -13,10 +13,12 @@
 
 #include "qrcode_parser.h"
 #include "circle_parser.h"
+#include "qrcode_empty_parser.h"
 
 std::unordered_map<std::string, Parser> parsers = {
     { "qrcode", { main_qrcode, draw_qrcode } },
     { "circle", { main_circle, draw_circle } },
+    { "empty", { main_qrcode_empty, draw_qrcode } },
 };
 
 int main(int argc, char* argv[]) {
@@ -59,7 +61,7 @@ int main(int argc, char* argv[]) {
     }
 
     /// TODO: add an argument to specify the parser
-    auto parser = parsers["circle"];
+    auto parser = parsers["empty"];
 
     /// TODO: load page.json
     const cv::Point2f src_img_size{ 210, 297 }; // TODO: do not assume A4

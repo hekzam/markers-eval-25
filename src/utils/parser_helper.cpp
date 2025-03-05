@@ -1,17 +1,17 @@
 #include <vector>
 #include <string>
 
-#ifdef ENABLE_ZBAR
-#include <zbar.h>
-#else
-#include <ZXing/ReadBarcode.h>
-#endif
-
 #include <common.h>
 #include "parser_helper.h"
 #include "string_helper.h"
 
-std::vector<DetectedBarcode> identify_barcodes(cv::Mat img) {
+std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
+#ifdef ENABLE_ZBAR
+                                               zbar_symbol_type_t flags
+#else
+                                               ZXing::BarcodeFormats flags
+#endif
+) {
     std::vector<DetectedBarcode> barcodes = {};
 
     if (img.type() != CV_8U)
@@ -26,7 +26,7 @@ std::vector<DetectedBarcode> identify_barcodes(cv::Mat img) {
     zbar::ImageScanner scanner;
 
     // Configure scanner
-    scanner.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
+    scanner.set_config(flags, zbar::ZBAR_CFG_ENABLE, 1);
 
     // Scan the image for barcodes and QRCodes
     int n = scanner.scan(image);
@@ -46,7 +46,7 @@ std::vector<DetectedBarcode> identify_barcodes(cv::Mat img) {
 #else
     auto iv =
         ZXing::ImageView(reinterpret_cast<const uint8_t*>(img.ptr()), img.cols, img.rows, ZXing::ImageFormat::Lum);
-    auto options = ZXing::ReaderOptions().setFormats(ZXing::BarcodeFormat::QRCode);
+    auto options = ZXing::ReaderOptions().setFormats(flags);
     auto z_barcodes = ZXing::ReadBarcodes(iv, options);
     for (const auto& b : z_barcodes) {
         DetectedBarcode barcode;
@@ -254,4 +254,14 @@ cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
     cv::Mat calibrated_img_col;
     cv::cvtColor(calibrated_img, calibrated_img_col, cv::COLOR_GRAY2BGR);
     return calibrated_img_col;
+}
+
+float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
+    cv::Point2f ab = b - a;
+    cv::Point2f cb = b - c;
+
+    float dot = ab.x * cb.x + ab.y * cb.y;
+    float cross = ab.x * cb.y - ab.y * cb.x;
+
+    return atan2(cross, dot);
 }

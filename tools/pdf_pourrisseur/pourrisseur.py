@@ -14,14 +14,14 @@ def add_defects_to_pdf(input_pdf_path, output_pdf_path, num_spots):
         # img.blur(radius=0, sigma=1)
 
         # # Ajouter des taches
-        with Drawing() as draw:
-            draw.fill_color = Color('black')
-            for _ in range(num_spots):
-                x = random.randint(0, img.width)
-                y = random.randint(0, img.height)
-                radius = random.randint(20, 50)
-                draw.circle((x, y), (x + radius, y + radius))
-            draw(img)
+        # with Drawing() as draw:
+        #     draw.fill_color = Color('black')
+        #     for _ in range(num_spots):
+        #         x = random.randint(0, img.width)
+        #         y = random.randint(0, img.height)
+        #         radius = random.randint(20, 50)
+        #         draw.circle((x, y), (x + radius, y + radius))
+        #     draw(img)
 
         # Sauvegarder le PDF modifié
         img.save(filename=output_pdf_path)
