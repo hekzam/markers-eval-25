@@ -10,8 +10,8 @@ CONTRAST = 0.8, 1.2
 BRIGHTNESS = 0.8, 1.2
 GAUSSIAN = 2, 10
 SPOTS = 2, 5
-ROTATION = -2, 2
-TRANSLATION = -10, 10
+ROTATE = 3
+TRANSLATION = -80, 80
 
 def add_defects_to_image(input_image_path, output_image_path, params):
     """Applies only the specified transformations."""
@@ -19,10 +19,10 @@ def add_defects_to_image(input_image_path, output_image_path, params):
 
     # Apply only the transformations present in the parameters
     if 'rotation' in params:
-        img = apply_rotation(img, params.get('rotation'))
+        img = apply_rotation(img, params['rotation'])
 
     if 'translation' in params:
-        img = apply_translation(img, params.get('translation'))
+        img = apply_translation(img, params['translation'])
 
     if 'contrast' in params:
         img = modify_contrast(img, params['contrast'])
@@ -38,23 +38,21 @@ def add_defects_to_image(input_image_path, output_image_path, params):
 
     if 'spot' in params:
         img = add_random_spots(img, params['spot'])
-
+    
     img.save(output_image_path)
 
 def apply_rotation(img, rotation=None):
     """Applies a specific rotation or one proportional to the percentage."""
     if rotation is None:
-        rotation = random.uniform(0, 100)
-    angle = ROTATION[0] + (rotation / 100) * (ROTATION[1] - ROTATION[0])
-    return img.rotate(angle, expand=False)
+        rotation = random.uniform(-ROTATE, ROTATE)
+    return img.rotate(rotation, expand=False)
 
 def apply_translation(img, translation=None):
     """Applies a translation based on a percentage."""
     if translation is None:
-        translation = random.uniform(0, 100)
-    max_dx = TRANSLATION[1]
-    dx = int((translation / 100) * max_dx)
-    dy = int((translation / 100) * max_dx)
+        translation = random.uniform(TRANSLATION[0], TRANSLATION[1]), random.uniform(TRANSLATION[0], TRANSLATION[1])
+    dx = translation[0]
+    dy = translation[1]
     return img.transform(img.size, Image.AFFINE, (1, 0, dx, 0, 1, dy))
 
 def modify_contrast(img, factor=None):
@@ -150,9 +148,9 @@ def parse_arguments(args):
                     transformations[key] = (dx, dy)
                 except ValueError:
                     print(f"Incorrect format for translation : {value}")
+                    afficher_usage()
                     sys.exit(1)
             elif key == 'spot':
-                print("Pythonnade")
                 transformations[key] = int(value)
         else:
             key = arg.lower()
@@ -180,3 +178,5 @@ for i in range(10):
     add_defects_to_image(input_image_path, output_image_path, params)
 
 print(f"Modified images saved in: {output_dir}")
+
+
