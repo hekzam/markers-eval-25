@@ -1,28 +1,32 @@
-#import "../common/global_variables.typ": copy-counter
+#import "global_variables.typ": copy-counter, generating-content
 #import "../content/content.typ": content
 #import "../common/utils.typ": update-page-state, finalize-states
-#import "../style/const.typ": PAGE_WIDTH, PAGE_HEIGHT
 
-// ----------------------------------------------------------------
-// Génère des copies d'un contenu donné.
-// - nb-copies: Nombre de copies à générer.
-// - duplex-printing: Impression recto verso.
-// ----------------------------------------------------------------
-#let process-copies-with-pagination = (nb-copies, duplex-printing) => {
-  update-page-state(PAGE_WIDTH, PAGE_HEIGHT)
+
+// Génère un nombre donné de copies d'un contenu, en gérant la pagination
+// - nb-copies: Nombre de copies à générer
+// - duplex-printing: Impression recto verso
+// - content-wrapper: Fonction qui génère le contenu de chaque copie
+#let process-copies-with-pagination(nb-copies, duplex-printing, content-wrapper: (c) => c) = {
   
-  let pagebreak_to = if duplex-printing { "odd" } else { none }
-  let copy-index = 0
-  while copy-index < nb-copies {
-    copy-counter.update(copy-index)
-    copy-index = copy-index + 1
-    counter(page).update(1)
-
-    content // Contenu de la copie
-
-    if copy-index < nb-copies {
-      pagebreak(to: pagebreak_to)
+  // Initialisation des états
+  copy-counter.update(1)
+  generating-content.update(true)
+  
+  // Affichage de la première copie
+  content-wrapper(content)
+  
+  // Génération des copies suivantes
+  for i in range(2, nb-copies + 1) {
+    if duplex-printing and calc.odd(i) {
+      pagebreak(to: "odd")
+    } else {
+      pagebreak()
     }
+    copy-counter.update(i)
+    content-wrapper(content)
   }
+
+  generating-content.update(false)
   finalize-states()
 }
