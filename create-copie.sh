@@ -7,7 +7,7 @@ rm -rf ./copies/*
 rm -rf ./output/*
 
 # Options communes aux deux commandes
-doc="gen_copie.typ"
+doc="template.typ"
 root="."
 
 # Commande de compilation

@@ -1,10 +1,36 @@
-#import "style/const.typ": PAGE_WIDTH, PAGE_HEIGHT, MARGIN_X, MARGIN_Y
-#import "common/global_variables.typ": copy-counter, generating-content
-#import "common/utils.typ": check-type, update-page-state
-#import "common/gen_copy_common.typ": process-copies-with-pagination
-#import "components/corner_markers.typ": setup-corner-markers
+#import "../style/const.typ": PAGE_WIDTH, PAGE_HEIGHT, MARGIN_X, MARGIN_Y
+#import "../common/global_variables.typ": copy-counter, generating-content
+#import "../common/utils.typ": check-type, update-page-state, finalize-states
+#import "../components/corner_markers.typ": setup-corner-markers
+#import "../content/content.typ": content
 
-#let SVG = image("assets/marker.svg")
+// Génère un nombre donné de copies d'un contenu, en gérant la pagination
+// - nb-copies: Nombre de copies à générer
+// - duplex-printing: Impression recto verso
+// - content-wrapper: Fonction qui génère le contenu de chaque copie
+#let process-copies-with-pagination(nb-copies, duplex-printing, content-wrapper: (c) => c) = {
+  
+  // Initialisation des états
+  copy-counter.update(1)
+  generating-content.update(true)
+  
+  // Affichage de la première copie
+  content-wrapper(content)
+  
+  // Génération des copies suivantes
+  for i in range(2, nb-copies + 1) {
+    if duplex-printing and calc.odd(i) {
+      pagebreak(to: "odd")
+    } else {
+      pagebreak()
+    }
+    copy-counter.update(i)
+    content-wrapper(content)
+  }
+
+  generating-content.update(false)
+  finalize-states()
+}
 
 // Génère des copies d'un contenu donné avec des marqueurs configurables dans les coins.
 // - exam-id: Identifiant unique de l'examen.
@@ -112,36 +138,3 @@
 
   custom-process(nb-copies, duplex-printing)
 }
-
-#let marker-config = (
-  top-left: (
-    type: "svg",
-    svg: SVG,
-  ),
-  top-right: (
-    type: "svg",
-    svg: SVG,
-  ),
-  bottom-left: (
-    type: "aztec",
-    size: 10mm,
-  ),
-  bottom-right: (
-    type: "svg",
-    svg: SVG,
-  )
-)
-
-#let m-s = float(sys.inputs.at("marker-default-size", default: "3")) * 1mm
-#let m-m = float(sys.inputs.at("marker-margin", default: "3")) * 1mm
-#let n-c = int(sys.inputs.at("nb-copies", default: "1"))
-#let d-p = int(sys.inputs.at("duplex-printing", default: "0")) == 1
-
-#gen-copies(
-  "Le pire examen de tous les temps !", 
-  nb-copies: n-c, 
-  duplex-printing: d-p,
-  marker-config,
-  marker-default-size: m-s,
-  marker-margin: m-m
-)
