@@ -8,11 +8,19 @@ rm -rf ./output/*
 
 # Paramètres globaux
 encoded_marker_size="15"
-fiducial_marker_size="5"
+fiducial_marker_size="10"
 marker_margin="3"
 nb_copies="1"
 duplex_printing="0"
-marker_config="7"
+marker_config="2"
+
+# Config 1: QR codes avec données encodées dans tous les coins
+# Config 2: QR codes avec données encodées uniquement dans le coin bas-droit
+# Config 3: Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
+# Config 4: Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
+# Config 5: Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
+# Config 6: Différents marqueurs ArUco, QR code avec données en bas-droit
+# Config 7: Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
 
 while [[ $# -gt 0 ]]; do
   case $1 in
