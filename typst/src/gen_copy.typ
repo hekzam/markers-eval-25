@@ -4,10 +4,12 @@
 #import "../components/corner_markers.typ": setup-corner-markers
 #import "../content/content.typ": content
 
-// Génère un nombre donné de copies d'un contenu, en gérant la pagination
-// - nb-copies: Nombre de copies à générer
-// - duplex-printing: Impression recto verso
-// - content-wrapper: Fonction qui génère le contenu de chaque copie
+/**
+ * Génère un nombre donné de copies d'un contenu, en gérant la pagination
+ * @param nb-copies Nombre de copies à générer
+ * @param duplex-printing Impression recto verso
+ * @param content-wrapper Fonction qui génère le contenu de chaque copie
+ */
 #let process-copies-with-pagination(nb-copies, duplex-printing, content-wrapper: (c) => c) = {
   
   // Initialisation des états
@@ -32,26 +34,31 @@
   finalize-states()
 }
 
-// Génère des copies d'un contenu donné avec des marqueurs configurables dans les coins.
-// - exam-id: Identifiant unique de l'examen.
-// - nb-copies: Nombre de copies à générer.
-// - duplex-printing: Impression recto verso.
-// - marker-config: Configuration des marqueurs pour chaque coin.
-// - marker-default-size: Taille par défaut des marqueurs.
-// - marker-margin: Marge entre les marqueurs et le bord de la page.
+/**
+ * Génère des copies d'un contenu donné avec des marqueurs configurables dans les coins.
+ * @param exam-id Identifiant unique de l'examen
+ * @param nb-copies Nombre de copies à générer
+ * @param duplex-printing Impression recto verso
+ * @param marker-config Configuration des marqueurs pour chaque coin
+ * @param encoded-marker-size Taille du marqueur encodé
+ * @param fiducial-marker-size Taille du marqueur fiducial
+ * @param marker-margin Marge entre les marqueurs et le bord de la page
+ */
 #let gen-copies(
   exam-id,
   nb-copies: 1,
   duplex-printing: true,
   marker-config,
-  marker-default-size: 10mm,
-  marker-margin: 0mm
+  encoded-marker-size,
+  fiducial-marker-size,
+  marker-margin
 ) = {
   check-type(exam-id, str, "exam-id must be a string")
   assert(not exam-id.contains(","), message: "exam-id cannot contain comma ','")
   check-type(nb-copies, int, "nb-copies must be an integer")
   check-type(duplex-printing, bool, "duplex-printing must be a boolean")
-  check-type(marker-default-size, length, "marker-default-size must be a length")
+  check-type(encoded-marker-size, length, "encoded-marker-size must be a length")
+  check-type(fiducial-marker-size, length, "fiducial-marker-size must be a length")
   check-type(marker-margin, length, "marker-margin must be a length")
   
   update-page-state(PAGE_WIDTH, PAGE_HEIGHT, exam-id)
@@ -59,51 +66,32 @@
   let page-fn = () => {
     context if generating-content.get() {
       let positions = (
-        top-left: (x: 0pt, y: 0pt),
-        top-right: (x: PAGE_WIDTH, y: 0pt),
-        bottom-left: (x: 0pt, y: PAGE_HEIGHT),
-        bottom-right: (x: PAGE_WIDTH, y: PAGE_HEIGHT)
+        top-left:    (x: 0pt,         y: 0pt),
+        top-right:   (x: PAGE_WIDTH,  y: 0pt),
+        bottom-left: (x: 0pt,       y: PAGE_HEIGHT),
+        bottom-right:(x: PAGE_WIDTH,  y: PAGE_HEIGHT)
       )
-      
-      place(
-        dx: positions.top-left.x,
-        dy: positions.top-left.y,
-        setup-corner-markers(
-          top-left-config: marker-config.top-left,
-          marker-size: marker-default-size,
-          marker-margin: marker-margin
+
+      let place-corner = (corner) => {
+        let pos = positions.at(corner)
+        let config-key = corner + "-config"
+        
+        place(
+          dx: pos.x,
+          dy: pos.y,
+          setup-corner-markers(
+            config-key,                // Argument positionnel 1: clé de configuration
+            marker-config.at(corner),  // Argument positionnel 2: configuration du coin
+            encoded-marker-size,       // Argument positionnel 3: taille du marqueur encodé
+            fiducial-marker-size,      // Argument positionnel 4: taille du marqueur fiducial 
+            marker-margin              // Argument positionnel 5: marge
+          )
         )
-      )
-      
-      place(
-        dx: positions.top-right.x,
-        dy: positions.top-right.y,
-        setup-corner-markers(
-          top-right-config: marker-config.top-right, 
-          marker-size: marker-default-size,
-          marker-margin: marker-margin
-        )
-      )
-      
-      place(
-        dx: positions.bottom-left.x,
-        dy: positions.bottom-left.y,
-        setup-corner-markers(
-          bottom-left-config: marker-config.bottom-left,
-          marker-size: marker-default-size,
-          marker-margin: marker-margin
-        )
-      )
-      
-      place(
-        dx: positions.bottom-right.x,
-        dy: positions.bottom-right.y,
-        setup-corner-markers(
-          bottom-right-config: marker-config.bottom-right,
-          marker-size: marker-default-size,
-          marker-margin: marker-margin
-        )
-      )
+      }
+
+      for corner in ("top-left", "top-right", "bottom-left", "bottom-right") {
+        place-corner(corner)
+      }
       
       place(
         center,
@@ -116,7 +104,6 @@
       )
     }
   }
-
   // Configuration de la page - sans marges pour les marqueurs
   set page(
     width: PAGE_WIDTH,
