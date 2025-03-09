@@ -28,6 +28,7 @@ sudo snap install typst
 - `libopencv-dev` : Bibliothèque de traitement d’image pour l’alignement et la reconnaissance des marqueurs.
 - `nlohmann-json3-dev` : Gestion du format JSON pour la structuration des données.
 - `snapd` & `typst` : Génération des formulaires d'examen via Typst.
+- `libzbar-dev` & `libzbar0` : si vous souhaitez utiliser zbar pour la détection des QR codes au lieu de ZXing.
 
 ## Compilation du projet
 
@@ -42,6 +43,7 @@ cmake --build build-cmake -j
 - `-Bbuild-cmake` : Définit le répertoire de build.
 - `-GNinja` : Utilisation de Ninja comme générateur de build.
 - `-DCMAKE_BUILD_TYPE=Release` : Compilation optimisée.
+- `-DENABLE_ZBAR=ON` : si vous souhaitez utiliser zbar pour la détection des QR codes au lieu de ZXing.
 
 ## Exécution du programme
 

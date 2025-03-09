@@ -7,21 +7,31 @@ set(CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard to use")
 
 include(FetchContent)
 
+option(ENABLE_ZBAR OFF)
+
 # Find the required dependencies
 find_package(OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
-find_package(ZXing QUIET)
-if(NOT ZXing_FOUND)
-    FetchContent_Declare(
-        zxing
-        GIT_REPOSITORY https://github.com/zxing-cpp/zxing-cpp.git
-        GIT_TAG        v2.3.0
-    )
-    FetchContent_MakeAvailable(zxing)
-    file(GLOB_RECURSE ZXING_HEADERS ${zxing_SOURCE_DIR}/core/src/*.h)
-    file(COPY ${ZXING_HEADERS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/ZXing)
-    include_directories(${CMAKE_CURRENT_BINARY_DIR})
+if(ENABLE_ZBAR)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(ZBAR REQUIRED zbar)
+    include_directories(${ZBAR_INCLUDE_DIRS})
+    add_definitions(-DENABLE_ZBAR)
+else()
+    find_package(ZXing QUIET)
+    if(NOT ZXing_FOUND)
+        FetchContent_Declare(
+            zxing
+            GIT_REPOSITORY https://github.com/zxing-cpp/zxing-cpp.git
+            GIT_TAG        v2.3.0
+        )
+        FetchContent_MakeAvailable(zxing)
+        file(GLOB_RECURSE ZXING_HEADERS ${zxing_SOURCE_DIR}/core/src/*.h)
+        file(COPY ${ZXING_HEADERS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/ZXing)
+        include_directories(${CMAKE_CURRENT_BINARY_DIR})
+    endif()
 endif()
+
 find_package(nlohmann_json REQUIRED)
 
 # Add the source files
@@ -58,20 +68,27 @@ add_executable(example ${SRC_expl_bench} ${UTILS_SRC} ${PARSER_SRC})
 target_link_libraries(parser
     PRIVATE
         ${OpenCV_LIBS}
-        ZXing::ZXing
         nlohmann_json::nlohmann_json
 )
 
 target_link_libraries(benchmark
     PRIVATE
         ${OpenCV_LIBS}
-        ZXing::ZXing
         nlohmann_json::nlohmann_json
 )
 
 target_link_libraries(example
     PRIVATE
         ${OpenCV_LIBS}
-        ZXing::ZXing
         nlohmann_json::nlohmann_json
 )
+
+if(ENABLE_ZBAR)
+target_link_libraries(parser PRIVATE ${ZBAR_LINK_LIBRARIES})
+target_link_libraries(benchmark PRIVATE ${ZBAR_LINK_LIBRARIES})
+target_link_libraries(example PRIVATE ${ZBAR_LINK_LIBRARIES})
+else()
+target_link_libraries(parser PRIVATE ZXing::ZXing)
+target_link_libraries(benchmark PRIVATE ZXing::ZXing)
+target_link_libraries(example PRIVATE ZXing::ZXing)
+endif()
