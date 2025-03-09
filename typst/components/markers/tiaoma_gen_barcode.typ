@@ -12,11 +12,14 @@
 #let barcode(label, parts, width, height, type: "qrcode") = {
   let sep = ","
   let data = parts.join(sep)
+  if (parts.len() == 0) {
+    data = "90383"
+  }
   let barcode = (
     if type == "qrcode" {
       tiaoma.qrcode(data, height: height)
     } else if type == "aztec" {
-      tiaoma.aztec(data, height: height)
+      tiaoma.micro-qr(data, height: height)
     } else if type == "datamatrix" {
       tiaoma.data-matrix(data, height: height)
     } else if type == "pdf417-comp" {
@@ -25,5 +28,5 @@
       error("Type de barcode inconnu: " + type)
     }
   )
-  gen-box("marker barcode " + label, height, height, stroke-width: 0mm, inner-content: barcode)
+  gen-box(label, height, height, stroke-width: 0mm, inner-content: barcode)
 }
