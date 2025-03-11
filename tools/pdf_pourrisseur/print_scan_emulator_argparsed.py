@@ -3,6 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageEnhance
+import argparse
 
 # MAX RANDOM CONSTANTS
 SALT_PEPPER = 0.08
@@ -18,7 +19,7 @@ def add_defects_to_image(input_image_path, output_image_path, params):
     img = Image.open(input_image_path).convert("RGB")
 
     # Apply only the transformations present in the parameters
-    if 'rotation' in params:
+    if 'rotation' in params :
         img = apply_rotation(img, params['rotation'])
 
     if 'translation' in params:
@@ -168,17 +169,36 @@ output_dir.mkdir(exist_ok=True)
 
 input_image_path = script_dir / '../../copies/original.png'
 
-if len(sys.argv) > 1:
-    params = parse_arguments(sys.argv[1:])
+parser = argparse.ArgumentParser(description='Applies random or specified printer/scanner transformation to an image')
+parser.add_argument('-r', '--rotation', type=int, metavar='', nargs='?', required=False, help='rotation=<angle> : Applies a rotation (in degrees).')
+parser.add_argument('-t', '--translation', type=tuple, metavar='', nargs='?', required=False, help='translation=dx,dy : Applies a translation (displacement in x and y).')
+parser.add_argument('-c', '--contrast', type=float, metavar='', nargs='?', required=False, help='contrast=<value> : Adjusts the contrast (floating-point value).')
+parser.add_argument('-b', '--brightness', type=float, metavar='', nargs='?', required=False, help='brightness=<value> : Adjusts the brightness (floating-point value).')
+parser.add_argument('-g', '--gaussian', type=float, metavar='', nargs='?', required=False, help='gaussian=<value> : Applies Gaussian blur (sigma).')
+parser.add_argument('-s', '--salt_pepper', type=float, metavar='', nargs='?', required=False, help='salt_pepper=<value> : Adds salt-and-pepper noise (density).')
+parser.add_argument('-p', '--spot', type=float, metavar='', nargs='?', required=False, help='spot=<value> : Applies a spot effect (intensity).')
+parser.add_argument('-n', '--nb_copy', type=int, metavar='', nargs='?', required=False, help='nb_copy=<value> : Number of copies.')
+
+
+args = parser.parse_args()
+params = vars(args)
+params = {k: v for k, v in vars(args).items() if v is not None}
+
+
+# Vérifier si au moins un argument est spécifié
+if any(value is not None for value in params.values()):
+    # Garder uniquement les arguments spécifiés et supprimer les autres
+    params = {k: v for k, v in params.items() if v is not None}
 else:
+    
     params = {k: None for k in ['rotation', 'translation', 'contrast', 'brightness', 'gaussian', 'salt_pepper', 'spot']}
 
 print(params)
 
+
 for i in range(10):
     output_image_path = output_dir / f'output_{i}.png'
     add_defects_to_image(input_image_path, output_image_path, params)
-
 print(f"Modified images saved in: {output_dir}")
 
 
