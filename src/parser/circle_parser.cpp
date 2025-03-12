@@ -15,7 +15,7 @@ std::vector<cv::Point2f> corner_points;
 std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     std::vector<cv::Vec3f> detected_circles;
 
-    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 30, 10, 30);
+    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 10, 30);
 
     return detected_circles;
 }
@@ -75,6 +75,10 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
 
     std::sort(right_corner_points.begin(), right_corner_points.end(), compare_area);
 
+    if (right_corner_points.size() < 2) {
+        return found_mask;
+    }
+
     corner_points[TOP_RIGHT] = right_corner_points[0].second;
     found_mask |= (1 << TOP_RIGHT);
 
@@ -88,7 +92,7 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
     return found_mask;
 }
 
-cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+std::optional<cv::Mat> main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
 
     auto barcodes = identify_barcodes(img);
 
@@ -97,7 +101,7 @@ cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_c
         meta.id = 0;
         meta.page = 1;
         meta.name = "";
-        return cv::Mat::eye(2, 3, CV_32F);
+        return {};
         // throw std::invalid_argument("no barcode found");
     }
 
@@ -111,11 +115,15 @@ cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_c
     meta = parse_metadata(corner_barcode.content);
 
     detected_circles = detect_circles(img);
+    if (detected_circles.empty()) {
+        printf("no circle found\n");
+        return {};
+    }
     corner_points.clear();
     auto mask = identify_corner(detected_circles, corner_points, corner_barcode);
 
     if (mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
-        throw std::invalid_argument("not all corner barcodes were found");
+        return {};
 
     auto mat = get_affine_transform(mask, dst_corner_points, corner_points);
 

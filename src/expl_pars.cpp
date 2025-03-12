@@ -75,7 +75,12 @@ int main(int argc, char* argv[]) {
         Metadata meta;
         auto affine_transform = parser.parser(img, meta, dst_corner_points);
 
-        auto calibrated_img_col = redress_image(img, affine_transform);
+        if (!affine_transform.has_value()) {
+            fprintf(stderr, "could not parse image '%s'\n", argv[i]);
+            return 1;
+        }
+
+        auto calibrated_img_col = redress_image(img, affine_transform.value());
 
         cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 

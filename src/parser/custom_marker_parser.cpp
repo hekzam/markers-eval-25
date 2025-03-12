@@ -57,7 +57,7 @@ std::vector<std::vector<cv::Point>> detect_marker(cv::Mat img_gray) {
     return filtered_contours;
 }
 
-cv::Mat custom_marker_parser(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+std::optional<cv::Mat> custom_marker_parser(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     meta.id = 0;
     meta.page = 1;
     meta.name = "";

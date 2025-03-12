@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     }
 
     /// TODO: add an argument to specify the parser
-    auto parser = parsers["empty"];
+    auto parser = parsers["circle"];
 
     /// TODO: load page.json
     const cv::Point2f src_img_size{ 210, 297 }; // TODO: do not assume A4
@@ -75,13 +75,18 @@ int main(int argc, char* argv[]) {
         auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
 
         Metadata meta;
-        cv::Mat affine_transform;
+        std::optional<cv::Mat> affine_transform;
         {
             BENCHMARK_BLOCK("parser");
             affine_transform = parser.parser(img, meta, dst_corner_points);
         }
 
-        auto calibrated_img_col = redress_image(img, affine_transform);
+        if (!affine_transform.has_value()) {
+            fprintf(stderr, "could not find the markers\n");
+            continue;
+        }
+
+        auto calibrated_img_col = redress_image(img, affine_transform.value());
 
         cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 

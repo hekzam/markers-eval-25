@@ -12,7 +12,7 @@
 #include "default_parser.h"
 #include "parser_helper.h"
 
-cv::Mat default_parser(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+std::optional<cv::Mat> default_parser(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     meta.id = 0;
     meta.page = 1;
     meta.name = "";
