@@ -51,7 +51,11 @@ int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, const std::
     return found_mask;
 }
 
-std::optional<cv::Mat> main_qrcode(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+std::optional<cv::Mat> main_qrcode(cv::Mat img,
+#ifdef DEBUG
+                                   cv::Mat debug_img,
+#endif
+                                   Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     std::string expected_content_hash = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=";
 
     auto barcodes = identify_barcodes(img);
@@ -67,16 +71,4 @@ std::optional<cv::Mat> main_qrcode(cv::Mat img, Metadata& meta, std::vector<cv::
 
     auto affine_transform = get_affine_transform(found_corner_mask, dst_corner_points, corner_points);
     return affine_transform;
-}
-
-void draw_qrcode(cv::Mat& calibrated_img_col, const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
-                 const cv::Point2f& src_img_size, const cv::Point2f& dimension) {
-    for (auto box : corner_markers) {
-        const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
-                                                   cv::Point2f{ box->x + box->width, box->y },
-                                                   cv::Point2f{ box->x + box->width, box->y + box->height },
-                                                   cv::Point2f{ box->x, box->y + box->height } };
-        std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
-        cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
-    }
 }

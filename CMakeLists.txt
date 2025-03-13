@@ -46,8 +46,13 @@ set(SRC_BENCH
     src/benchmark.cpp
 )
 
-file(GLOB_RECURSE UTILS_SRC src/utils/*.cpp)
-file(GLOB_RECURSE PARSER_SRC src/parser/*.cpp)
+file(GLOB UTILS_SRC src/utils/*.cpp)
+file(GLOB PARSER_SRC src/parser/*.cpp)
+
+# add debug definitions
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DDEBUG)
+endif()
 
 set(INCLUDE_DIRS
     src

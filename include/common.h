@@ -24,15 +24,17 @@ struct AtomicBox {
 };
 
 struct Metadata {
-    std::string name;
-    int page;
     int id;
+    int page;
+    std::string name;
 };
 
 struct Parser {
-    std::optional<cv::Mat> (*parser)(cv::Mat, Metadata&, std::vector<cv::Point2f>&);
-    void (*draw_marker)(cv::Mat&, const std::vector<std::shared_ptr<AtomicBox>>&, const cv::Point2f&,
-                        const cv::Point2f&);
+    std::optional<cv::Mat> (*parser)(cv::Mat img,
+#ifdef DEBUG
+                                     cv::Mat debug_img,
+#endif
+                                     Metadata&, std::vector<cv::Point2f>&);
 };
 
 #endif
