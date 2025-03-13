@@ -11,8 +11,6 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 
-bool is_debug = true;
-
 int main(int argc, char* argv[]) {
     if (argc != 4) {
         fprintf(stderr, "usage: parser OUTPUT_DIR ATOMIC_BOXES DIR_IMAGE...\n");
@@ -125,14 +123,14 @@ int main(int argc, char* argv[]) {
         printf("output image: %s\n", output_img_fname);
         free(output_img_fname);
 
-        if (is_debug) {
-            output_img_fname = nullptr;
-            nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
-            (void) nb;
-            cv::imwrite(output_img_fname, debug_img);
-            printf("output image: %s\n", output_img_fname);
-            free(output_img_fname);
-        }
+#ifdef DEBUG
+        output_img_fname = nullptr;
+        nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
+        (void) nb;
+        cv::imwrite(output_img_fname, debug_img);
+        printf("output image: %s\n", output_img_fname);
+        free(output_img_fname);
+#endif
     }
 
     return 0;
