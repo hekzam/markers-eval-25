@@ -38,4 +38,4 @@ build-*/
 !typst/style/*.json
 copies/*
 output/*
-tools/pdf_pourrisseur/copie_pourrie/*.png
+tools/pdf_noiser/noisy_copies/*.png
