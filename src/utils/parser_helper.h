@@ -32,5 +32,10 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
                                                     const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size);
 cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform);
 float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c);
+std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
+#ifdef DEBUG
+                                  cv::Mat debug_img,
+#endif
+                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points);
 
 #endif

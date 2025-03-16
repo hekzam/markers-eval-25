@@ -11,16 +11,6 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 
-#include "qrcode_parser.h"
-#include "circle_parser.h"
-#include "qrcode_empty_parser.h"
-
-std::unordered_map<std::string, Parser> parsers = {
-    { "qrcode", { main_qrcode, draw_qrcode } },
-    { "circle", { main_circle, draw_circle } },
-    { "empty", { main_qrcode_empty, draw_qrcode } },
-};
-
 int main(int argc, char* argv[]) {
     if (argc != 4) {
         fprintf(stderr, "usage: parser OUTPUT_DIR ATOMIC_BOXES DIR_IMAGE...\n");
@@ -60,9 +50,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    /// TODO: add an argument to specify the parser
-    auto parser = parsers["empty"];
-
     /// TODO: load page.json
     const cv::Point2f src_img_size{ 210, 297 }; // TODO: do not assume A4
 
@@ -74,14 +61,33 @@ int main(int argc, char* argv[]) {
 
         auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
 
-        Metadata meta;
-        cv::Mat affine_transform;
+        Metadata meta = {
+            0,
+            1,
+            "",
+        };
+#ifdef DEBUG
+        cv::Mat debug_img;
+        cv::cvtColor(img, debug_img, cv::COLOR_GRAY2BGR);
+#endif
+
+        std::optional<cv::Mat> affine_transform;
+
         {
             BENCHMARK_BLOCK("parser");
-            affine_transform = parser.parser(img, meta, dst_corner_points);
+            affine_transform = run_parser("circle", img,
+#ifdef DEBUG
+                                          debug_img,
+#endif
+                                          meta, dst_corner_points);
         }
 
-        auto calibrated_img_col = redress_image(img, affine_transform);
+        if (!affine_transform.has_value()) {
+            fprintf(stderr, "could not find the markers\n");
+            continue;
+        }
+
+        auto calibrated_img_col = redress_image(img, affine_transform.value());
 
         cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
@@ -96,7 +102,18 @@ int main(int argc, char* argv[]) {
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 255), 2);
         }
 
-        parser.draw_marker(calibrated_img_col, corner_markers, src_img_size, dimension);
+        for (auto box : corner_markers) {
+            const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
+                                                       cv::Point2f{ box->x + box->width, box->y },
+                                                       cv::Point2f{ box->x + box->width, box->y + box->height },
+                                                       cv::Point2f{ box->x, box->y + box->height } };
+            std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
+            cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
+            cv::circle(calibrated_img_col,
+                       convert_to_raster({ cv::Point2f{ box->x + box->width / 2, box->y + box->height / 2 } },
+                                         src_img_size, dimension)[0],
+                       3, cv::Scalar(0, 255, 0), -1);
+        }
 
         std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
         char* output_img_fname = nullptr;
@@ -105,6 +122,15 @@ int main(int argc, char* argv[]) {
         cv::imwrite(output_img_fname, calibrated_img_col);
         printf("output image: %s\n", output_img_fname);
         free(output_img_fname);
+
+#ifdef DEBUG
+        output_img_fname = nullptr;
+        nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
+        (void) nb;
+        cv::imwrite(output_img_fname, debug_img);
+        printf("output image: %s\n", output_img_fname);
+        free(output_img_fname);
+#endif
     }
 
     return 0;

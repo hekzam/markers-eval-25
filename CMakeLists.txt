@@ -38,16 +38,18 @@ find_package(nlohmann_json REQUIRED)
 set(SRC
     src/expl_pars.cpp
 )
-set(SRC_expl_bench
-    src/example.cpp
-)
 
 set(SRC_BENCH
     src/benchmark.cpp
 )
 
-file(GLOB_RECURSE UTILS_SRC src/utils/*.cpp)
-file(GLOB_RECURSE PARSER_SRC src/parser/*.cpp)
+file(GLOB UTILS_SRC src/utils/*.cpp)
+file(GLOB PARSER_SRC src/parser/*.cpp)
+
+# add debug definitions
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DDEBUG)
+endif()
 
 set(INCLUDE_DIRS
     src
@@ -55,14 +57,12 @@ set(INCLUDE_DIRS
     src/parser
     "include"
 )
-include_directories( example PRIVATE ${INCLUDE_DIRS})
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
 include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
-add_executable(example ${SRC_expl_bench} ${UTILS_SRC} ${PARSER_SRC})
 
 # Link the dependencies
 target_link_libraries(parser
@@ -77,18 +77,10 @@ target_link_libraries(benchmark
         nlohmann_json::nlohmann_json
 )
 
-target_link_libraries(example
-    PRIVATE
-        ${OpenCV_LIBS}
-        nlohmann_json::nlohmann_json
-)
-
 if(ENABLE_ZBAR)
 target_link_libraries(parser PRIVATE ${ZBAR_LINK_LIBRARIES})
 target_link_libraries(benchmark PRIVATE ${ZBAR_LINK_LIBRARIES})
-target_link_libraries(example PRIVATE ${ZBAR_LINK_LIBRARIES})
 else()
 target_link_libraries(parser PRIVATE ZXing::ZXing)
 target_link_libraries(benchmark PRIVATE ZXing::ZXing)
-target_link_libraries(example PRIVATE ZXing::ZXing)
 endif()
