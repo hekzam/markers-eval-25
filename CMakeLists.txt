@@ -57,7 +57,6 @@ set(INCLUDE_DIRS
     src/parser
     "include"
 )
-include_directories( example PRIVATE ${INCLUDE_DIRS})
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
 include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
 
@@ -78,18 +77,10 @@ target_link_libraries(benchmark
         nlohmann_json::nlohmann_json
 )
 
-target_link_libraries(example
-    PRIVATE
-        ${OpenCV_LIBS}
-        nlohmann_json::nlohmann_json
-)
-
 if(ENABLE_ZBAR)
 target_link_libraries(parser PRIVATE ${ZBAR_LINK_LIBRARIES})
 target_link_libraries(benchmark PRIVATE ${ZBAR_LINK_LIBRARIES})
-target_link_libraries(example PRIVATE ${ZBAR_LINK_LIBRARIES})
 else()
 target_link_libraries(parser PRIVATE ZXing::ZXing)
 target_link_libraries(benchmark PRIVATE ZXing::ZXing)
-target_link_libraries(example PRIVATE ZXing::ZXing)
 endif()
