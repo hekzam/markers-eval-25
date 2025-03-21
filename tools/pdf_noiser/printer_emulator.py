@@ -2,17 +2,17 @@ import random
 import numpy as np
 import sys
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance, ImageOps
 import argparse
 
 # MAX RANDOM CONSTANTS
-SALT_PEPPER = 0.08
+SALT_PEPPER = 0.06
 CONTRAST = 0.8, 1.2
 BRIGHTNESS = 0.8, 1.2
-GAUSSIAN = 2, 10
+GAUSSIAN = 4, 6
 SPOTS = 2, 5
 ROTATE = 3
-TRANSLATION = -80, 80
+TRANSLATION = -25, 25
 
 def add_defects_to_image(img, output_image_path, params):
     """Applies only the specified transformations."""
@@ -37,7 +37,7 @@ def add_defects_to_image(img, output_image_path, params):
 
     if 'spot' in params:
         img = add_random_spots(img, params['spot'])
-    
+    img = img.rotate(0, expand=False)
     img.save(output_image_path)
 
 def apply_rotation(img, rotation=None):
@@ -46,7 +46,7 @@ def apply_rotation(img, rotation=None):
         rotation = random.uniform(-ROTATE, ROTATE)
     if rotation == 0:
         return img
-    return img.rotate(rotation, expand=False)
+    return img.rotate(rotation, expand=True)
 
 def apply_translation(img, translation=None):
     """Applies a translation based on a percentage."""
