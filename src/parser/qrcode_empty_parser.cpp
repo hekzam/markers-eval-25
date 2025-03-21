@@ -71,7 +71,11 @@ int identify_corner(std::vector<DetectedBarcode>& detected_qrcode, std::vector<c
     return found_mask;
 }
 
-cv::Mat main_qrcode_empty(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+std::optional<cv::Mat> main_qrcode_empty(cv::Mat img,
+#ifdef DEBUG
+                                         cv::Mat debug_img,
+#endif
+                                         Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
 
     auto barcodes = identify_barcodes(img,
 #ifdef ENABLE_ZBAR

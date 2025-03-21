@@ -8,14 +8,10 @@
 
 #include "circle_parser.h"
 
-std::vector<cv::Vec3f> detected_circles;
-DetectedBarcode corner_barcode;
-std::vector<cv::Point2f> corner_points;
-
 std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     std::vector<cv::Vec3f> detected_circles;
 
-    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 30, 10, 30);
+    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 10, 30);
 
     return detected_circles;
 }
@@ -75,6 +71,10 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
 
     std::sort(right_corner_points.begin(), right_corner_points.end(), compare_area);
 
+    if (right_corner_points.size() < 2) {
+        return found_mask;
+    }
+
     corner_points[TOP_RIGHT] = right_corner_points[0].second;
     found_mask |= (1 << TOP_RIGHT);
 
@@ -88,18 +88,31 @@ int identify_corner(std::vector<cv::Vec3f>& detected_circles, std::vector<cv::Po
     return found_mask;
 }
 
-cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
-
+std::optional<cv::Mat> main_circle(cv::Mat img,
+#ifdef DEBUG
+                                   cv::Mat debug_img,
+#endif
+                                   Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     auto barcodes = identify_barcodes(img);
 
     if (barcodes.empty()) {
         printf("no barcode found\n");
-        meta.id = 0;
-        meta.page = 1;
-        meta.name = "";
-        return cv::Mat::eye(2, 3, CV_32F);
-        // throw std::invalid_argument("no barcode found");
+        return {};
     }
+
+#ifdef DEBUG
+    for (const auto& barcode : barcodes) {
+        std::vector<cv::Point> box;
+
+        for (const auto& point : barcode.bounding_box) {
+            box.push_back(cv::Point(point.x, point.y));
+        }
+
+        cv::polylines(debug_img, box, true, cv::Scalar(0, 0, 255), 2);
+    }
+#endif
+
+    DetectedBarcode corner_barcode;
 
     for (const auto& barcode : barcodes) {
         if (starts_with(barcode.content, "hzbr")) {
@@ -108,52 +121,47 @@ cv::Mat main_circle(cv::Mat img, Metadata& meta, std::vector<cv::Point2f>& dst_c
         }
     }
 
-    meta = parse_metadata(corner_barcode.content);
-
-    detected_circles = detect_circles(img);
-    corner_points.clear();
-    auto mask = identify_corner(detected_circles, corner_points, corner_barcode);
-
-    if (mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
-        throw std::invalid_argument("not all corner barcodes were found");
-
-    auto mat = get_affine_transform(mask, dst_corner_points, corner_points);
-
-    return mat;
-}
-
-void draw_circle(cv::Mat& calibrated_img_col, const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
-                 const cv::Point2f& src_img_size, const cv::Point2f& dimension) {
-
-    for (const auto& c : detected_circles) {
-        cv::Point center(cvRound(c[0]), cvRound(c[1]));
-        int radius = cvRound(c[2]);
-        cv::circle(calibrated_img_col, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
-        cv::circle(calibrated_img_col, center, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
-    }
-
+#ifdef DEBUG
     std::vector<cv::Point> box;
 
     for (const auto& point : corner_barcode.bounding_box) {
         box.push_back(cv::Point(point.x, point.y));
     }
 
-    cv::polylines(calibrated_img_col, box, true, cv::Scalar(0, 0, 255), 2);
+    cv::polylines(debug_img, box, true, cv::Scalar(0, 255, 0), 2);
+#endif
 
-    for (auto box : corner_markers) {
-        const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
-                                                   cv::Point2f{ box->x + box->width, box->y },
-                                                   cv::Point2f{ box->x + box->width, box->y + box->height },
-                                                   cv::Point2f{ box->x, box->y + box->height } };
-        std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
-        cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
-        cv::circle(calibrated_img_col,
-                   convert_to_raster({ cv::Point2f{ box->x + box->width / 2, box->y + box->height / 2 } }, src_img_size,
-                                     dimension)[0],
-                   3, cv::Scalar(0, 255, 0), -1);
+    meta = parse_metadata(corner_barcode.content);
+
+    auto detected_circles = detect_circles(img);
+    if (detected_circles.empty()) {
+        printf("no circle found\n");
+        return {};
     }
 
+#ifdef DEBUG
+    for (const auto& c : detected_circles) {
+        cv::Point center(cvRound(c[0]), cvRound(c[1]));
+        int radius = cvRound(c[2]);
+        cv::circle(debug_img, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
+        cv::circle(debug_img, center, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
+    }
+#endif
+
+    std::vector<cv::Point2f> corner_points;
+    auto mask = identify_corner(detected_circles, corner_points, corner_barcode);
+
+#ifdef DEBUG
     for (int i = 0; i < 4; ++i) {
-        cv::circle(calibrated_img_col, corner_points[i], 3, cv::Scalar(0, 255, 255), -1);
+        if ((1 << i) & mask)
+            cv::circle(debug_img, corner_points[i], 3, cv::Scalar(0, 255, 255), -1);
     }
+#endif
+
+    if (mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
+        return {};
+
+    auto mat = get_affine_transform(mask, dst_corner_points, corner_points);
+
+    return mat;
 }

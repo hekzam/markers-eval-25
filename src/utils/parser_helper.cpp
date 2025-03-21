@@ -5,6 +5,20 @@
 #include "parser_helper.h"
 #include "string_helper.h"
 
+#include "default_parser.h"
+#include "qrcode_parser.h"
+#include "circle_parser.h"
+#include "custom_marker_parser.h"
+#include "qrcode_empty_parser.h"
+
+std::unordered_map<std::string, Parser> parsers = {
+    { "default", { default_parser } },
+    { "qrcode", { main_qrcode } },
+    { "circle", { main_circle } },
+    // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
+    { "empty", { main_qrcode_empty } },
+};
+
 std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
 #ifdef ENABLE_ZBAR
                                                zbar_symbol_type_t flags
@@ -248,7 +262,7 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
  */
 cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
 
-    cv::Mat calibrated_img = img;
+    cv::Mat calibrated_img = img.clone();
     warpAffine(img, calibrated_img, affine_transform, calibrated_img.size(), cv::INTER_LINEAR);
 
     cv::Mat calibrated_img_col;
@@ -264,4 +278,17 @@ float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
     float cross = ab.x * cb.y - ab.y * cb.x;
 
     return atan2(cross, dot);
+}
+
+std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
+#ifdef DEBUG
+                                  cv::Mat debug_img,
+#endif
+                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+    auto parser = parsers[parser_name];
+    return parser.parser(img,
+#ifdef DEBUG
+                         debug_img,
+#endif
+                         meta, dst_corner_points);
 }

@@ -95,7 +95,9 @@
         "locale": "cpp",
         "print": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__config": "cpp",
+        "execution": "cpp"
     },
     "editor.formatOnSave": true,
     "C_Cpp.errorSquiggles": "enabled"
