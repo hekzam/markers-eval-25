@@ -9,9 +9,10 @@
 
 #include <common.h>
 #include "json_helper.h"
-#include "default_parser.h"
 #include "parser_helper.h"
-#include <string_helper.h>
+#include "string_helper.h"
+#include "math_helper.h"
+#include "draw_helper.h"
 
 int identify_corner_aruco(std::vector<int> markerIds, std::vector<std::vector<cv::Point2f>> markerCorners,
                           std::vector<cv::Point2f>& corner_points) {
@@ -35,11 +36,8 @@ int identify_corner_aruco(std::vector<int> markerIds, std::vector<std::vector<cv
                 continue;
         }
 
-        cv::Mat mean_mat;
-        cv::reduce(markerCorners[i], mean_mat, 1, cv::REDUCE_AVG);
-        corner_points[pos_found] = cv::Point2f(mean_mat.at<float>(0, 0), mean_mat.at<float>(0, 1));
+        corner_points[pos_found] = center_of_box(markerCorners[i]);
         int pos_found_bf = 1 << pos_found;
-        // printf("found pos=%d -> bf=%d\n", pos_found, pos_found_bf);
         found_mask |= pos_found_bf;
     }
 
@@ -60,25 +58,17 @@ std::optional<cv::Mat> aruco_parser(cv::Mat img,
     }
 
 #ifdef DEBUG
-    for (const auto& barcode : barcodes) {
-        std::vector<cv::Point> box;
-
-        for (const auto& point : barcode.bounding_box) {
-            box.push_back(cv::Point(point.x, point.y));
-        }
-
-        cv::polylines(debug_img, box, true, cv::Scalar(0, 0, 255), 2);
-    }
+    draw_qrcode(barcodes, debug_img);
 #endif
 
-    DetectedBarcode corner_barcode;
+    auto corner_barcode_opt = select_bottom_right_corner(barcodes);
 
-    for (const auto& barcode : barcodes) {
-        if (starts_with(barcode.content, "hzbr")) {
-            corner_barcode = barcode;
-            break;
-        }
+    if (!corner_barcode_opt) {
+        printf("no corner barcode found\n");
+        return {};
     }
+
+    auto corner_barcode = corner_barcode_opt.value();
     std::vector<int> markerIds;
     std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
     cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
@@ -109,9 +99,7 @@ std::optional<cv::Mat> aruco_parser(cv::Mat img,
         return {};
     }
 
-    cv::Mat mean_mat;
-    cv::reduce(corner_barcode.bounding_box, mean_mat, 1, cv::REDUCE_AVG);
-    corner_points[BOTTOM_RIGHT] = { cv::Point2f(mean_mat.at<float>(0, 0), mean_mat.at<float>(0, 1)) };
+    corner_points[BOTTOM_RIGHT] = center_of_box(corner_barcode.bounding_box);
     found_mask |= BOTTOM_RIGHT_BF;
 
     meta = parse_metadata(corner_barcode.content);

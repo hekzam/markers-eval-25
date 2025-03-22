@@ -11,6 +11,8 @@
 #include "json_helper.h"
 #include "string_helper.h"
 #include "parser_helper.h"
+#include "math_helper.h"
+#include "draw_helper.h"
 
 #include "qrcode_parser.h"
 
@@ -85,6 +87,10 @@ std::optional<cv::Mat> main_qrcode_empty(cv::Mat img,
 #endif
     );
 
+#ifdef DEBUG
+    draw_qrcode(barcodes, debug_img);
+#endif
+
     if (barcodes.size() < 4) {
         printf("no barcode found\n");
         meta.id = 0;
@@ -94,14 +100,14 @@ std::optional<cv::Mat> main_qrcode_empty(cv::Mat img,
         // throw std::invalid_argument("no barcode found");
     }
 
-    DetectedBarcode corner_barcode;
+    auto corner_barcode_opt = select_bottom_right_corner(barcodes);
 
-    for (const auto& barcode : barcodes) {
-        if (starts_with(barcode.content, "hzbr")) {
-            corner_barcode = barcode;
-            break;
-        }
+    if (!corner_barcode_opt) {
+        printf("no corner barcode found\n");
+        return {};
     }
+
+    auto corner_barcode = corner_barcode_opt.value();
 
     std::vector<cv::Point2f> corner_points;
     int found_corner_mask = identify_corner(barcodes, corner_points, corner_barcode);

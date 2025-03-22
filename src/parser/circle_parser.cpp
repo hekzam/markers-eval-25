@@ -5,6 +5,8 @@
 #include "json_helper.h"
 #include "parser_helper.h"
 #include "string_helper.h"
+#include "math_helper.h"
+#include "draw_helper.h"
 
 #include "circle_parser.h"
 
@@ -119,25 +121,17 @@ std::optional<cv::Mat> main_circle(cv::Mat img,
     }
 
 #ifdef DEBUG
-    for (const auto& barcode : barcodes) {
-        std::vector<cv::Point> box;
-
-        for (const auto& point : barcode.bounding_box) {
-            box.push_back(cv::Point(point.x, point.y));
-        }
-
-        cv::polylines(debug_img, box, true, cv::Scalar(0, 0, 255), 2);
-    }
+    draw_qrcode(barcodes, debug_img);
 #endif
 
-    DetectedBarcode corner_barcode;
+    auto corner_barcode_opt = select_bottom_right_corner(barcodes);
 
-    for (const auto& barcode : barcodes) {
-        if (starts_with(barcode.content, "hzbr")) {
-            corner_barcode = barcode;
-            break;
-        }
+    if (!corner_barcode_opt) {
+        printf("no corner barcode found\n");
+        return {};
     }
+
+    auto corner_barcode = corner_barcode_opt.value();
 
 #ifdef DEBUG
     std::vector<cv::Point> box;
