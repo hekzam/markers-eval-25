@@ -11,6 +11,15 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 
+void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::filesystem::path output_img_path_fname) {
+    char* output_img_fname = nullptr;
+    int nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
+    (void) nb;
+    cv::imwrite(output_img_fname, debug_img);
+    printf("output image: %s\n", output_img_fname);
+    free(output_img_fname);
+}
+
 int main(int argc, char* argv[]) {
     if (argc != 4) {
         fprintf(stderr, "usage: parser OUTPUT_DIR ATOMIC_BOXES DIR_IMAGE...\n");
@@ -71,11 +80,13 @@ int main(int argc, char* argv[]) {
         cv::cvtColor(img, debug_img, cv::COLOR_GRAY2BGR);
 #endif
 
+        std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
+
         std::optional<cv::Mat> affine_transform;
 
         {
             BENCHMARK_BLOCK("parser");
-            affine_transform = run_parser("circle", img,
+            affine_transform = run_parser("aruco", img,
 #ifdef DEBUG
                                           debug_img,
 #endif
@@ -83,6 +94,9 @@ int main(int argc, char* argv[]) {
         }
 
         if (!affine_transform.has_value()) {
+#ifdef DEBUG
+            save_debug_img(debug_img, output_dir, output_img_path_fname);
+#endif
             fprintf(stderr, "could not find the markers\n");
             continue;
         }
@@ -115,7 +129,6 @@ int main(int argc, char* argv[]) {
                        3, cv::Scalar(0, 255, 0), -1);
         }
 
-        std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
         char* output_img_fname = nullptr;
         int nb = asprintf(&output_img_fname, "%s/cal-%s", output_dir.c_str(), output_img_path_fname.c_str());
         (void) nb;
@@ -124,12 +137,7 @@ int main(int argc, char* argv[]) {
         free(output_img_fname);
 
 #ifdef DEBUG
-        output_img_fname = nullptr;
-        nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
-        (void) nb;
-        cv::imwrite(output_img_fname, debug_img);
-        printf("output image: %s\n", output_img_fname);
-        free(output_img_fname);
+        save_debug_img(debug_img, output_dir, output_img_path_fname);
 #endif
     }
 

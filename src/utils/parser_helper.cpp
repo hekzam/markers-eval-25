@@ -10,11 +10,13 @@
 #include "circle_parser.h"
 #include "custom_marker_parser.h"
 #include "qrcode_empty_parser.h"
+#include "aruco_parser.h"
 
 std::unordered_map<std::string, Parser> parsers = {
     { "default", { default_parser } },
     { "qrcode", { main_qrcode } },
     { "circle", { main_circle } },
+    { "aruco", { aruco_parser } },
     // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
     { "empty", { main_qrcode_empty } },
 };

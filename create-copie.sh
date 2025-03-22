@@ -12,7 +12,7 @@ fiducial_marker_size="10"
 marker_margin="3"
 nb_copies="1"
 duplex_printing="0"
-marker_config="3"
+marker_config="6"
 
 # Config 1: QR codes avec données encodées dans tous les coins
 # Config 2: QR codes avec données encodées uniquement dans le coin bas-droit
