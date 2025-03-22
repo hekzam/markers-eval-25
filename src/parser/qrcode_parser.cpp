@@ -60,6 +60,18 @@ std::optional<cv::Mat> main_qrcode(cv::Mat img,
 
     auto barcodes = identify_barcodes(img);
 
+#ifdef DEBUG
+    for (const auto& barcode : barcodes) {
+        std::vector<cv::Point> box;
+
+        for (const auto& point : barcode.bounding_box) {
+            box.push_back(cv::Point(point.x, point.y));
+        }
+
+        cv::polylines(debug_img, box, true, cv::Scalar(0, 0, 255), 2);
+    }
+#endif
+
     std::vector<cv::Point2f> corner_points;
     std::vector<DetectedBarcode*> corner_barcodes;
     int found_corner_mask = identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
