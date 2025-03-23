@@ -43,6 +43,11 @@ set(SRC_BENCH
     src/benchmark.cpp
 )
 
+set(SRC_TYPST_INTERFACE
+    src/typst_interface.cpp
+    src/external-tools/create_copy.cpp
+)
+
 file(GLOB UTILS_SRC src/utils/*.cpp)
 file(GLOB PARSER_SRC src/parser/*.cpp)
 
@@ -55,14 +60,17 @@ set(INCLUDE_DIRS
     src
     src/utils
     src/parser
+    src/external-tools
     "include"
 )
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
 include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
+include_directories(typst_interface PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
+add_executable(typst_interface ${SRC_TYPST_INTERFACE})
 
 # Link the dependencies
 target_link_libraries(parser
@@ -77,10 +85,18 @@ target_link_libraries(benchmark
         nlohmann_json::nlohmann_json
 )
 
+target_link_libraries(typst_interface
+    PRIVATE
+        ${OpenCV_LIBS}
+        nlohmann_json::nlohmann_json
+)
+
 if(ENABLE_ZBAR)
 target_link_libraries(parser PRIVATE ${ZBAR_LINK_LIBRARIES})
 target_link_libraries(benchmark PRIVATE ${ZBAR_LINK_LIBRARIES})
+target_link_libraries(typst_interface PRIVATE ${ZBAR_LINK_LIBRARIES})
 else()
 target_link_libraries(parser PRIVATE ZXing::ZXing)
 target_link_libraries(benchmark PRIVATE ZXing::ZXing)
+target_link_libraries(typst_interface PRIVATE ZXing::ZXing)
 endif()

@@ -1,20 +1,24 @@
 #include <vector>
 #include <string>
+#include <optional>
 
 #include <common.h>
 #include "parser_helper.h"
 #include "string_helper.h"
+#include "math_helper.h"
 
 #include "default_parser.h"
 #include "qrcode_parser.h"
 #include "circle_parser.h"
 #include "custom_marker_parser.h"
 #include "qrcode_empty_parser.h"
+#include "aruco_parser.h"
 
 std::unordered_map<std::string, Parser> parsers = {
     { "default", { default_parser } },
     { "qrcode", { main_qrcode } },
     { "circle", { main_circle } },
+    { "aruco", { aruco_parser } },
     // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
     { "empty", { main_qrcode_empty } },
 };
@@ -78,55 +82,9 @@ std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
     return barcodes;
 }
 
-/**
- * @brief Redimensionne une coordonnée d'une image source vers une image destination.
- *
- * Cette fonction prend une coordonnée dans l'image source et la redimensionne proportionnellement
- * à l'image de destination.
- *
- * @param src_coord Coordonnée à redimensionner.
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return cv::Point2f Coordonnée redimensionnée dans l'image destination.
- */
-cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img_size,
-                        const cv::Point2f& dst_img_size) {
-    return cv::Point2f{
-        (src_coord.x / src_img_size.x) * dst_img_size.x,
-        (src_coord.y / src_img_size.y) * dst_img_size.y,
-    };
-}
-
-/**
- * @brief Convertit un ensemble de points en coordonnées flottantes vers des coordonnées raster (entiers).
- *
- * La fonction redimensionne chaque point en fonction de la transformation entre l'image source et l'image destination,
- * puis convertit les coordonnées flottantes en coordonnées entières arrondies.
- *
- * @param vec_points Vecteur de points en coordonnées flottantes.
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return std::vector<cv::Point> Vecteur de points en coordonnées raster (entiers).
- */
-std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_points, const cv::Point2f& src_img_size,
-                                         const cv::Point2f& dst_img_size) {
-    std::vector<cv::Point> raster_points;
-    raster_points.reserve(vec_points.size());
-    for (const auto& point : vec_points) {
-        auto scaled_point = coord_scale(point, src_img_size, dst_img_size);
-        raster_points.emplace_back(cv::Point(round(scaled_point.x), round(scaled_point.y)));
-    }
-    return raster_points;
-}
-
-cv::Point center_of_box(std::vector<cv::Point2f> bounding_box) {
-    cv::Mat mean_mat;
-    cv::reduce(bounding_box, mean_mat, 1, cv::REDUCE_AVG);
-    return cv::Point2f(mean_mat.at<float>(0, 0), mean_mat.at<float>(0, 1));
-}
-
-cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2f>& expected_corner_points,
-                             const std::vector<cv::Point2f>& found_corner_points) {
+std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
+                                            const std::vector<cv::Point2f>& expected_corner_points,
+                                            const std::vector<cv::Point2f>& found_corner_points) {
     int nb_found = 0;
     std::vector<cv::Point2f> src, dst;
     src.reserve(3);
@@ -143,8 +101,10 @@ cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2
         }
     }
 
-    if (nb_found != 3)
-        throw std::invalid_argument("only " + std::to_string(nb_found) + " corners were found (3 or more required)");
+    if (nb_found != 3) {
+        printf("not all corner points were found\n");
+        return {};
+    }
 
     /*for (int i = 0; i < 3; ++i) {
     printf("src[%d]: (%f, %f)\n", i, src[i].x, src[i].y);
@@ -209,7 +169,7 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
         }
     }
 
-    if (corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
+    if (sum_mask(corner_mask) < 3)
         throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
 }
 
@@ -231,6 +191,9 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
     corner_points.resize(4);
     for (int corner = 0; corner < 4; ++corner) {
         auto marker = corner_markers[corner];
+        if (marker == nullptr) {
+            continue;
+        }
         const std::vector<cv::Point2f> marker_bounding_box = {
             cv::Point2f{ marker->x, marker->y }, cv::Point2f{ marker->x + marker->width, marker->y },
             cv::Point2f{ marker->x + marker->width, marker->y + marker->height },
@@ -270,16 +233,6 @@ cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
     return calibrated_img_col;
 }
 
-float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
-    cv::Point2f ab = b - a;
-    cv::Point2f cb = b - c;
-
-    float dot = ab.x * cb.x + ab.y * cb.y;
-    float cross = ab.x * cb.y - ab.y * cb.x;
-
-    return atan2(cross, dot);
-}
-
 std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,
@@ -291,4 +244,13 @@ std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
                          debug_img,
 #endif
                          meta, dst_corner_points);
+}
+
+std::optional<DetectedBarcode> select_bottom_right_corner(const std::vector<DetectedBarcode>& barcodes) {
+    for (const auto& barcode : barcodes) {
+        if (starts_with(barcode.content, "hzbr")) {
+            return barcode;
+        }
+    }
+    return {};
 }

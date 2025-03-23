@@ -1,6 +1,6 @@
 {
     "cmake.debugConfig": {
-        "args": ["../output", "../original_boxes.json", "../tools/pdf_pourrisseur/copie_pourrie"]
+        "args": ["../output", "../original_boxes.json", "../copies/copy.png"]
     },
     "files.associations": {
         "string": "cpp",

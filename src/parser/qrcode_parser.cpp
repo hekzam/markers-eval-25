@@ -5,6 +5,7 @@
 #include "json_helper.h"
 #include "string_helper.h"
 #include "parser_helper.h"
+#include "draw_helper.h"
 
 #include "qrcode_parser.h"
 
@@ -59,6 +60,10 @@ std::optional<cv::Mat> main_qrcode(cv::Mat img,
     std::string expected_content_hash = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=";
 
     auto barcodes = identify_barcodes(img);
+
+#ifdef DEBUG
+    draw_qrcode(barcodes, debug_img);
+#endif
 
     std::vector<cv::Point2f> corner_points;
     std::vector<DetectedBarcode*> corner_barcodes;

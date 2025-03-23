@@ -108,6 +108,30 @@
     {},
     create-marker-config("qrcode", is_data_encoded: true)
   ),
+
+  // Config 8: Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+  create-full-marker-config(
+    create-marker-config("circle-outline"),
+    create-marker-config("circle-outline"),
+    create-marker-config("circle-outline"),
+    create-marker-config("qrcode", is_data_encoded: true)
+  ),
+
+  // Config 9: Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+    create-full-marker-config(
+      create-marker-config("square"),
+      create-marker-config("square"),
+      create-marker-config("square"),
+      create-marker-config("qrcode", is_data_encoded: true)
+  ),
+
+  // Config 10: Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+  create-full-marker-config(
+    create-marker-config("square-outline"),
+    create-marker-config("square-outline"),
+    create-marker-config("square-outline"),
+    create-marker-config("qrcode", is_data_encoded: true)
+  )
 )
 
 /**
@@ -127,10 +151,12 @@
 // Paramètres pour la génération de copies
 #let e-m-s = float(sys.inputs.at("encoded-marker-size", default: "15")) * 1mm
 #let f-m-s = float(sys.inputs.at("fiducial-marker-size", default: "5")) * 1mm
+#let s-w = float(sys.inputs.at("stroke-width", default: "0.5")) * 1mm
 #let m-m = float(sys.inputs.at("marker-margin", default: "3")) * 1mm
 #let n-c = int(sys.inputs.at("nb-copies", default: "1"))
 #let d-p = int(sys.inputs.at("duplex-printing", default: "0")) == 1
 #let m-c = sys.inputs.at("marker-config", default: "2")
+#let g-l = int(sys.inputs.at("grey-level", default: "0"))
 
 #gen-copies(
   "Le pire examen de tous les temps !", 
@@ -139,5 +165,7 @@
   get-marker-config(m-c),
   e-m-s,
   f-m-s,
-  m-m
+  s-w,
+  m-m,
+  g-l
 )

@@ -51,7 +51,9 @@
   marker-config,
   encoded-marker-size,
   fiducial-marker-size,
-  marker-margin
+  stroke-width,
+  marker-margin,
+  grey-level
 ) = {
   check-type(exam-id, str, "exam-id must be a string")
   assert(not exam-id.contains(","), message: "exam-id cannot contain comma ','")
@@ -59,7 +61,9 @@
   check-type(duplex-printing, bool, "duplex-printing must be a boolean")
   check-type(encoded-marker-size, length, "encoded-marker-size must be a length")
   check-type(fiducial-marker-size, length, "fiducial-marker-size must be a length")
+  check-type(stroke-width, length, "stroke-width must be a length")
   check-type(marker-margin, length, "marker-margin must be a length")
+  check-type(grey-level, int, "grey-level must be an integer")
   
   update-page-state(PAGE_WIDTH, PAGE_HEIGHT, exam-id)
 
@@ -80,11 +84,13 @@
           dx: pos.x,
           dy: pos.y,
           setup-corner-markers(
-            config-key,                // Argument positionnel 1: clé de configuration
-            marker-config.at(corner),  // Argument positionnel 2: configuration du coin
-            encoded-marker-size,       // Argument positionnel 3: taille du marqueur encodé
-            fiducial-marker-size,      // Argument positionnel 4: taille du marqueur fiducial 
-            marker-margin              // Argument positionnel 5: marge
+            config-key,
+            marker-config.at(corner),
+            encoded-marker-size,
+            fiducial-marker-size,
+            stroke-width,
+            marker-margin,
+            grey-level
           )
         )
       }
