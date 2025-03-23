@@ -7,6 +7,8 @@
 #include <vector>
 #include <string>
 
+#include <opencv2/objdetect/aruco_detector.hpp>
+
 #include <common.h>
 #include "json_helper.h"
 #include "parser_helper.h"
