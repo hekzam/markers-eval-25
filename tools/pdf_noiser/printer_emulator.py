@@ -11,8 +11,8 @@ CONTRAST = 0.8, 1.2
 BRIGHTNESS = 0.8, 1.2
 GAUSSIAN = 2, 10
 SPOTS = 2, 5
-ROTATE = 3
-TRANSLATION = -80, 80
+ROTATE = 0
+TRANSLATION = -0, 0
 
 def add_defects_to_image(img, output_image_path, params):
     """Applies only the specified transformations."""

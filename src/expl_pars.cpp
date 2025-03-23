@@ -10,6 +10,16 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 #include "utils/string_helper.h"
+#include "utils/math_helper.h"
+
+void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::filesystem::path output_img_path_fname) {
+    char* output_img_fname = nullptr;
+    int nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
+    (void) nb;
+    cv::imwrite(output_img_fname, debug_img);
+    printf("output image: %s\n", output_img_fname);
+    free(output_img_fname);
+}
 
 int main(int argc, char* argv[]) {
     if (argc < 4) {
@@ -60,6 +70,9 @@ int main(int argc, char* argv[]) {
         cv::cvtColor(img, debug_img, cv::COLOR_GRAY2BGR);
 #endif
 
+        std::filesystem::path input_img_path{ argv[i] };
+        std::filesystem::path output_img_path_fname = input_img_path.filename().replace_extension(".png");
+
         Metadata meta;
         auto affine_transform = run_parser("circle", img,
 #ifdef DEBUG
@@ -68,8 +81,11 @@ int main(int argc, char* argv[]) {
                                            meta, dst_corner_points);
 
         if (!affine_transform.has_value()) {
+#ifdef DEBUG
+            save_debug_img(debug_img, output_dir, output_img_path_fname);
+#endif
             fprintf(stderr, "could not parse image '%s'\n", argv[i]);
-            return 1;
+            return 0;
         }
 
         auto calibrated_img_col = redress_image(img, affine_transform.value());
@@ -112,6 +128,9 @@ int main(int argc, char* argv[]) {
         }
 
         for (auto box : corner_markers) {
+            if (box == nullptr) {
+                continue;
+            }
             const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y + box->height },
@@ -124,18 +143,16 @@ int main(int argc, char* argv[]) {
                        3, cv::Scalar(0, 255, 0), -1);
         }
 
-        std::filesystem::path input_img_path{ argv[i] };
-        std::filesystem::path output_img_path_fname = input_img_path.filename().replace_extension(".png");
         char* output_img_fname = nullptr;
         int nb = asprintf(&output_img_fname, "%s/cal-%s", output_dir.c_str(), output_img_path_fname.c_str());
         (void) nb;
         cv::imwrite(output_img_fname, calibrated_img_col);
+        printf("output image: %s\n", output_img_fname);
         free(output_img_fname);
 
-        /*cv::Mat with_markers;
-        cv::cvtColor(img, with_markers, cv::COLOR_GRAY2BGR);
-        std::string output_filename = std::string("/tmp/pout-") + std::to_string(i) + std::string(".png");
-        cv::imwrite(output_filename, with_markers);*/
+#ifdef DEBUG
+        save_debug_img(debug_img, output_dir, output_img_path_fname);
+#endif
     }
 
     return 0;
