@@ -19,8 +19,9 @@ std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
                                                ZXing::BarcodeFormats flags = ZXing::BarcodeFormat::QRCode
 #endif
 );
-cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2f>& expected_corner_points,
-                             const std::vector<cv::Point2f>& found_corner_points);
+std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
+                                            const std::vector<cv::Point2f>& expected_corner_points,
+                                            const std::vector<cv::Point2f>& found_corner_points);
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
                                 std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
                                 std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page);

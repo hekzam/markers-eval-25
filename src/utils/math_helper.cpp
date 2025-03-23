@@ -1,4 +1,5 @@
 #include <vector>
+#include <tuple>
 
 #include <common.h>
 #include "parser_helper.h"
@@ -60,8 +61,8 @@ float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
     return atan2(cross, dot);
 }
 
-static bool compare(const std::pair<float, cv::Point2f>& a, const std::pair<float, cv::Point2f>& b) {
-    return a.first < b.first;
+static bool compare(const std::tuple<float, cv::Point2f, float>& a, const std::tuple<float, cv::Point2f, float>& b) {
+    return std::get<0>(a) < std::get<0>(b);
 }
 
 int found_other_point(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>& corner_points,
@@ -87,33 +88,42 @@ int found_other_point(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>
     corner_points[TOP_LEFT] = max_distance.second;
     found_mask |= (1 << TOP_LEFT);
 
-    std::vector<std::pair<float, cv::Point2f>> right_corner_points;
+    std::vector<std::tuple<float, cv::Point2f, float>> right_corner_points;
 
     for (const auto& point : points) {
         if (point == max_distance.second)
             continue;
 
         float angle_corner = angle(corner_points[TOP_LEFT], point, corner_points[BOTTOM_RIGHT]);
-        angle_corner = angle_corner < 0 ? angle_corner + M_PI : angle_corner;
-        angle_corner = abs(angle_corner - M_PI / 2);
-        right_corner_points.push_back({ angle_corner, point });
+        float right_angle = abs(abs(angle_corner) - (M_PI / 2));
+        right_corner_points.push_back({ right_angle, point, angle_corner });
     }
 
     std::sort(right_corner_points.begin(), right_corner_points.end(), compare);
 
-    if (right_corner_points.size() < 2) {
-        return found_mask;
+    if (right_corner_points.size() > 0 && std::get<0>(right_corner_points[0]) < 0.1f) {
+        corner_points[TOP_RIGHT] = std::get<1>(right_corner_points[0]);
+        found_mask |= (1 << TOP_RIGHT);
     }
 
-    corner_points[TOP_RIGHT] = right_corner_points[0].second;
-    found_mask |= (1 << TOP_RIGHT);
+    if (right_corner_points.size() > 1 && std::get<0>(right_corner_points[1]) < 0.1f) {
+        corner_points[BOTTOM_LEFT] = std::get<1>(right_corner_points[1]);
+        found_mask |= (1 << BOTTOM_LEFT);
+    }
 
-    corner_points[BOTTOM_LEFT] = right_corner_points[1].second;
-    found_mask |= (1 << BOTTOM_LEFT);
-
-    if (corner_points[TOP_RIGHT].x < corner_points[BOTTOM_LEFT].x) {
+    if (std::get<2>(right_corner_points[0]) > 0) {
         std::swap(corner_points[TOP_RIGHT], corner_points[BOTTOM_LEFT]);
     }
 
     return found_mask;
+}
+
+int sum_mask(int mask) {
+    int sum = 0;
+    for (int i = 0; i < 4; ++i) {
+        if ((1 << i) & mask) {
+            sum += 1;
+        }
+    }
+    return sum;
 }

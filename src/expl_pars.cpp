@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
         std::filesystem::path output_img_path_fname = input_img_path.filename().replace_extension(".png");
 
         Metadata meta;
-        auto affine_transform = run_parser("aruco", img,
+        auto affine_transform = run_parser("circle", img,
 #ifdef DEBUG
                                            debug_img,
 #endif
@@ -128,6 +128,9 @@ int main(int argc, char* argv[]) {
         }
 
         for (auto box : corner_markers) {
+            if (box == nullptr) {
+                continue;
+            }
             const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y + box->height },

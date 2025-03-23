@@ -104,9 +104,6 @@ std::optional<cv::Mat> main_circle(cv::Mat img,
     }
 #endif
 
-    if (mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
-        return {};
-
     auto mat = get_affine_transform(mask, dst_corner_points, corner_points);
 
     return mat;

@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <optional>
 
 #include <common.h>
 #include "parser_helper.h"
@@ -81,8 +82,9 @@ std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
     return barcodes;
 }
 
-cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2f>& expected_corner_points,
-                             const std::vector<cv::Point2f>& found_corner_points) {
+std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
+                                            const std::vector<cv::Point2f>& expected_corner_points,
+                                            const std::vector<cv::Point2f>& found_corner_points) {
     int nb_found = 0;
     std::vector<cv::Point2f> src, dst;
     src.reserve(3);
@@ -99,8 +101,10 @@ cv::Mat get_affine_transform(int found_corner_mask, const std::vector<cv::Point2
         }
     }
 
-    if (nb_found != 3)
-        throw std::invalid_argument("only " + std::to_string(nb_found) + " corners were found (3 or more required)");
+    if (nb_found != 3) {
+        printf("not all corner points were found\n");
+        return {};
+    }
 
     /*for (int i = 0; i < 3; ++i) {
     printf("src[%d]: (%f, %f)\n", i, src[i].x, src[i].y);
@@ -165,7 +169,7 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
         }
     }
 
-    if (corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
+    if (sum_mask(corner_mask) < 3)
         throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
 }
 
@@ -187,6 +191,9 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
     corner_points.resize(4);
     for (int corner = 0; corner < 4; ++corner) {
         auto marker = corner_markers[corner];
+        if (marker == nullptr) {
+            continue;
+        }
         const std::vector<cv::Point2f> marker_bounding_box = {
             cv::Point2f{ marker->x, marker->y }, cv::Point2f{ marker->x + marker->width, marker->y },
             cv::Point2f{ marker->x + marker->width, marker->y + marker->height },
