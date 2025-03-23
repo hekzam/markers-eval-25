@@ -69,6 +69,7 @@ std::optional<cv::Mat> aruco_parser(cv::Mat img,
     }
 
     auto corner_barcode = corner_barcode_opt.value();
+
     std::vector<int> markerIds;
     std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
     cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();

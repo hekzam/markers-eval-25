@@ -27,7 +27,6 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
 std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
                                                     const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size);
 cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform);
-float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c);
 std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,

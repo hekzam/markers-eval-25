@@ -226,16 +226,6 @@ cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
     return calibrated_img_col;
 }
 
-float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
-    cv::Point2f ab = b - a;
-    cv::Point2f cb = b - c;
-
-    float dot = ab.x * cb.x + ab.y * cb.y;
-    float cross = ab.x * cb.y - ab.y * cb.x;
-
-    return atan2(cross, dot);
-}
-
 std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,
