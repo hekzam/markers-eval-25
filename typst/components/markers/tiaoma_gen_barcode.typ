@@ -8,22 +8,26 @@
  * @param width La largeur de la boîte
  * @param height La hauteur de la boîte
  * @param type Type de barcode (valeur par défaut "qrcode")
+ * @param color Couleur du code-barre
  */
-#let barcode(label, parts, width, height, type: "qrcode") = {
+#let barcode(label, parts, width, height, type: "qrcode", color) = {
   let sep = ","
   let data = parts.join(sep)
   if (parts.len() == 0) {
     data = "90383"
   }
+  let options = (
+    fg-color: color
+  )
   let barcode = (
     if type == "qrcode" {
-      tiaoma.qrcode(data, height: height)
+      tiaoma.qrcode(data, height: height, options: options)
     } else if type == "aztec" {
-      tiaoma.micro-qr(data, height: height)
+      tiaoma.micro-qr(data, height: height, options: options)
     } else if type == "datamatrix" {
-      tiaoma.data-matrix(data, height: height)
+      tiaoma.data-matrix(data, height: height, options: options)
     } else if type == "pdf417-comp" {
-      tiaoma.pdf417-comp(data, height: height)
+      tiaoma.pdf417-comp(data, height: height, options: options)
     } else {
       error("Type de barcode inconnu: " + type)
     }

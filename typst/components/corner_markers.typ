@@ -3,6 +3,7 @@
 #import "./markers/tiaoma_gen_barcode.typ": barcode
 #import "./markers/circle.typ": circle-box
 #import "./markers/svg_marker.typ": gen-svg-box
+#import "./container.typ": gen-box
 
 #let PREFIX_TOP_LEFT = "hztl"
 #let PREFIX_TOP_RIGHT = "hztr"
@@ -35,22 +36,25 @@
  * @param size Taille par défaut du marqueur
  */
 #let create-marker(prefix-position, marker-config, encoded-marker-size,
-  fiducial-marker-size) = {
+  fiducial-marker-size, stroke-width, grey-level) = {
+  let color = luma(grey-level)
   if marker-config == none { return none }
   let type = marker-config.at("type", default: "qrcode")
   let is-data-encoded = marker-config.at("is-data-encoded", default: false)
-  
+  let fill-color = if type.contains("outline") { white } else { color }
+
   if type == "qrcode" or type == "datamatrix" or type == "aztec" or type == "pdf417-comp" {
     let (copy-i, page-i) = get-indexes()
     let barcode-data = (prefix-position, ..if is-data-encoded {
       (str(copy-i), str(page-i), get-exam-id())
     })
     let marker-size = if is-data-encoded {encoded-marker-size} else {fiducial-marker-size}
-    return barcode(prefix-position, barcode-data, marker-size, marker-size, type: type)
+    return barcode(prefix-position, barcode-data, marker-size, marker-size, type: type, color)
 
-  } else if type == "circle" {
-    return circle-box(prefix-position, fiducial-marker-size)
-
+  } else if type.contains("circle") {
+    return circle-box(prefix-position, fiducial-marker-size, fill-color: fill-color, stroke-width: stroke-width, stroke-color: color)
+  } else if type.contains("square") {
+    return gen-box(prefix-position, fiducial-marker-size, fiducial-marker-size, fill-color: fill-color, stroke-width: stroke-width, stroke-color: color)
   } else if type == "svg" {
     let svg-image = marker-config.at("svg", default: none)
     let position-rotation = get-corner-config(prefix-position).rotation
@@ -78,11 +82,13 @@
   marker-config,
   encoded-marker-size,
   fiducial-marker-size,
-  marker-margin
+  stroke-width,
+  marker-margin,
+  grey-level
 ) = {
   if marker-config == none { return }
   
-  let marker = create-marker(prefix-position, marker-config, encoded-marker-size, fiducial-marker-size)
+  let marker = create-marker(prefix-position, marker-config, encoded-marker-size, fiducial-marker-size, stroke-width, grey-level)
   if marker == none { return }
   
   let corner-config = get-corner-config(prefix-position)
@@ -112,7 +118,9 @@
   marker_config,
   encoded_marker_size,
   fiducial_marker_size,
-  marker_margin
+  stroke-width,
+  marker_margin,
+  grey-level
 ) = {
   let CORNER_MAPPING = (
     "top-left": PREFIX_TOP_LEFT,
@@ -129,8 +137,10 @@
         prefix_position, 
         marker_config, 
         encoded_marker_size, 
-        fiducial_marker_size, 
-        marker_margin
+        fiducial_marker_size,
+        stroke-width,
+        marker_margin,
+        grey-level
       )
     }
   }
