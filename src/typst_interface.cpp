@@ -1,20 +1,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include "external tools/create_copy.h"
-
-enum MarkerConfig {
-    QR_ALL_CORNERS = 1,             // QR codes avec données encodées dans tous les coins
-    QR_BOTTOM_RIGHT_ONLY = 2,       // QR codes avec données encodées uniquement dans le coin bas-droit
-    CIRCLES_WITH_QR_BR = 3,         // Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-    TOP_CIRCLES_QR_BR = 4,          // Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-    CUSTOM_SVG_WITH_QR_BR = 5,      // Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-    ARUCO_WITH_QR_BR = 6,           // Différents marqueurs ArUco, QR code avec données en bas-droit
-    TWO_ARUCO_WITH_QR_BR = 7,       // Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-    CIRCLE_OUTLINES_WITH_QR_BR = 8, // Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-    SQUARES_WITH_QR_BR = 9,         // Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-    SQUARE_OUTLINES_WITH_QR_BR = 10 // Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-};
+#include "external-tools/create_copy.h"
 
 bool isValidMarkerConfig(int config) {
     return config >= QR_ALL_CORNERS && config <= SQUARE_OUTLINES_WITH_QR_BR;

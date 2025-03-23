@@ -5,11 +5,12 @@
 #include <filesystem>
 #include <cstdlib>
 
+#include <create_copy.h>
+
 namespace fs = std::filesystem;
 
-bool create_copy(int encoded_marker_size = 15, int fiducial_marker_size = 10, int stroke_width = 2,
-                 int marker_margin = 3, int nb_copies = 1, int duplex_printing = 0, int marker_config = 10,
-                 int grey_level = 100) {
+bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
+                 int duplex_printing, int marker_config, int grey_level) {
 
     fs::create_directories("./copies");
     fs::create_directories("./output");
