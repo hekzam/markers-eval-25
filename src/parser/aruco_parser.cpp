@@ -74,10 +74,18 @@ std::optional<cv::Mat> aruco_parser(cv::Mat img,
 
     std::vector<int> markerIds;
     std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
+
+#if (CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR > 6)
     cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
     cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_1000);
     cv::aruco::ArucoDetector detector(dictionary, detectorParams);
     detector.detectMarkers(img, markerCorners, markerIds, rejectedCandidates);
+#else
+
+    cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
+    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_1000);
+    cv::aruco::detectMarkers(img, dictionary, markerCorners, markerIds, parameters, rejectedCandidates);
+#endif
 
 #ifdef DEBUG
     for (int i = 0; i < markerIds.size(); i++) {
