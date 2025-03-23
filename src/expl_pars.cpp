@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 
         if (!affine_transform.has_value()) {
             fprintf(stderr, "could not parse image '%s'\n", argv[i]);
-            return 1;
+            return 0;
         }
 
         auto calibrated_img_col = redress_image(img, affine_transform.value());
