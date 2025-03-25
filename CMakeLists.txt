@@ -45,7 +45,7 @@ set(SRC_BENCH
 
 set(SRC_TYPST_INTERFACE
     src/typst_interface.cpp
-    src/external\ tools/create_copy.cpp
+    src/external-tools/create_copy.cpp
 )
 
 file(GLOB UTILS_SRC src/utils/*.cpp)
@@ -60,7 +60,7 @@ set(INCLUDE_DIRS
     src
     src/utils
     src/parser
-    src/external\ tools
+    src/external-tools
     "include"
 )
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
