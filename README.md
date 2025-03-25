@@ -76,16 +76,16 @@ Exemple d'utilisation :
 
 Le paramètre `--config` permet de sélectionner parmi les configurations suivantes :
 
-1. **QR_ALL_CORNERS** : QR codes avec données encodées dans tous les coins
-2. **QR_BOTTOM_RIGHT_ONLY** : QR codes avec données encodées uniquement dans le coin bas-droit
-3. **CIRCLES_WITH_QR_BR** : Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-4. **TOP_CIRCLES_QR_BR** : Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-5. **CUSTOM_SVG_WITH_QR_BR** : Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-6. **ARUCO_WITH_QR_BR** : Différents marqueurs ArUco, QR code avec données en bas-droit
-7. **TWO_ARUCO_WITH_QR_BR** : Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-8. **CIRCLE_OUTLINES_WITH_QR_BR** : Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-9. **SQUARES_WITH_QR_BR** : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-10. **SQUARE_OUTLINES_WITH_QR_BR** : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+1.  : QR codes avec données encodées dans tous les coins
+2.  : QR codes avec données encodées uniquement dans le coin bas-droit
+3.  : Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
+4.  : Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
+5.  : Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
+6.  : Différents marqueurs ArUco, QR code avec données en bas-droit
+7.  : Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
+8.  : Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 
 ## 📂 Structure du projet
 
