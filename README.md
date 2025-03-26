@@ -55,7 +55,44 @@ Une fois la compilation terminée, utilisez la commande suivante pour générer 
 
 Ce script permet de produire des formulaires contenant les nouveaux marqueurs optimisés, tout en intégrant les métadonnées nécessaires pour leur identification et leur calibration.
 
+<<<<<<< Updated upstream
 ## 📂 Structure du projet (to edit)
+=======
+### Options disponibles
+
+```
+  --encoded-size N      : Taille des marqueurs encodés (par défaut: 15)
+  --fiducial-size N     : Taille des marqueurs fiduciaires (par défaut: 10)
+  --stroke-width N      : Largeur du trait des marqueurs (par défaut: 2)
+  --margin N            : Marge autour des marqueurs (par défaut: 3)
+  --duplex N            : Mode d'impression recto-verso (0: simple face, 1: recto-verso) (par défaut: 0)
+  --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
+  --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
+  --header-marker N     : Affiche un marker dans l'entête de la copie
+```
+
+Exemple d'utilisation :
+```sh
+./create-copie.sh --config 3 --grey-level 50
+```
+
+### Configurations de marqueurs disponibles
+
+Le paramètre `--config` permet de sélectionner parmi les configurations suivantes :
+
+1. **QR_ALL_CORNERS** : QR codes avec données encodées dans tous les coins
+2. **QR_BOTTOM_RIGHT_ONLY** : QR codes avec données encodées uniquement dans le coin bas-droit
+3. **CIRCLES_WITH_QR_BR** : Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
+4. **TOP_CIRCLES_QR_BR** : Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
+5. **CUSTOM_SVG_WITH_QR_BR** : Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
+6. **ARUCO_WITH_QR_BR** : Différents marqueurs ArUco, QR code avec données en bas-droit
+7. **TWO_ARUCO_WITH_QR_BR** : Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
+8. **CIRCLE_OUTLINES_WITH_QR_BR** : Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+9. **SQUARES_WITH_QR_BR** : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+10. **SQUARE_OUTLINES_WITH_QR_BR** : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+
+## 📂 Structure du projet
+>>>>>>> Stashed changes
 
 ```
 .

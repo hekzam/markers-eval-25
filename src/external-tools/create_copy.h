@@ -19,21 +19,8 @@ enum MarkerConfig {
         10 // Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 };
 
-/**
- * Génère une copie de marqueurs fiduciaux et encodés
- *
- * @param encoded_marker_size Taille des marqueurs encodés
- * @param fiducial_marker_size Taille des marqueurs fiduciaux
- * @param stroke_width Largeur du trait des marqueurs
- * @param marker_margin Marge autour des marqueurs
- * @param nb_copies Nombre de copies à générer
- * @param duplex_printing 0: impression recto, 1: impression recto-verso
- * @param marker_config Configuration des marqueurs
- * @param grey_level Niveau de gris (0: noir, 255: blanc)
- * @return true si la génération a réussi, false sinon
- */
-bool create_copy(int encoded_marker_size = 15, int fiducial_marker_size = 10, int stroke_width = 2,
-                 int marker_margin = 3, int nb_copies = 1, int duplex_printing = 0,
-                 int marker_config = CIRCLES_WITH_QR_BR, int grey_level = 100);
+// Function to create a copy with markers
+bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
+                 int duplex_printing, int marker_config, int grey_level, int header_marker);
 
 #endif

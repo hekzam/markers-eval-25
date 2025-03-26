@@ -43,6 +43,8 @@
  * @param encoded-marker-size Taille du marqueur encodé
  * @param fiducial-marker-size Taille du marqueur fiducial
  * @param marker-margin Marge entre les marqueurs et le bord de la page
+ * @param grey-level Niveau de gris des marqueurs (0-255)
+ * @param header-marker Active ou désactive le marqueur d'en-tête
  */
 #let gen-copies(
   exam-id,
@@ -53,7 +55,8 @@
   fiducial-marker-size,
   stroke-width,
   marker-margin,
-  grey-level
+  grey-level,
+  header-marker: false
 ) = {
   check-type(exam-id, str, "exam-id must be a string")
   assert(not exam-id.contains(","), message: "exam-id cannot contain comma ','")
@@ -64,6 +67,7 @@
   check-type(stroke-width, length, "stroke-width must be a length")
   check-type(marker-margin, length, "marker-margin must be a length")
   check-type(grey-level, int, "grey-level must be an integer")
+  check-type(header-marker, bool, "header-marker must be a boolean")
   
   update-page-state(PAGE_WIDTH, PAGE_HEIGHT, exam-id)
 
@@ -97,6 +101,16 @@
 
       for corner in ("top-left", "top-right", "bottom-left", "bottom-right") {
         place-corner(corner)
+      }
+      if header-marker {
+        import "../components/corner_markers.typ": place-header-marker
+        place-header-marker(
+          exam-id,
+          30mm,
+          10mm,
+          3mm,
+          grey-level
+        )
       }
       
       place(
