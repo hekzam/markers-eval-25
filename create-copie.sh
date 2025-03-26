@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 show_usage() {
   echo "Usage: $0 [options]"
   echo "Options:"
