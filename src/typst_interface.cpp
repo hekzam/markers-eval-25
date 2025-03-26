@@ -10,21 +10,6 @@ bool isValidMarkerConfig(int config) {
 extern bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin,
                         int nb_copies, int duplex_printing, int marker_config, int grey_level, int header_marker);
 
-/**
- * Main function for marker generation utility
- * Accepts command-line arguments to customize marker generation:
- *
- * Usage: program [options]
- * Options:
- *   --encoded-size N      : Size of encoded markers (default: 15)
- *   --fiducial-size N     : Size of fiducial markers (default: 10)
- *   --stroke-width N      : Width of marker stroke (default: 2)
- *   --margin N            : Margin around markers (default: 3)
- *   --copies N            : Number of copies to generate (default: 1)
- *   --duplex N            : Duplex printing mode (0: single-sided, 1: double-sided) (default: 0)
- *   --config N            : Marker configuration (1-10) (default: 10)
- *   --grey-level N        : Grey level (0: black, 255: white) (default: 100)
- */
 int main(int argc, char* argv[]) {
     int encoded_marker_size = 15;
     int fiducial_marker_size = 3;
