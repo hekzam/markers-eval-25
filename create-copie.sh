@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 show_usage() {
   echo "Usage: $0 [options]"
@@ -10,6 +10,7 @@ show_usage() {
   echo "  --duplex N            : Duplex printing mode (0: single-sided, 1: double-sided) (default: 0)"
   echo "  --config N            : Marker configuration (1-10) (default: 10)"
   echo "  --grey-level N        : Grey level (0: black, 255: white) (default: 100)"
+  echo "  --header-marker N     : Show header marker (0: hide, 1: show) (default: 1)"
 }
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then

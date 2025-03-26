@@ -28,9 +28,12 @@
       tiaoma.data-matrix(data, height: height, options: options)
     } else if type == "pdf417-comp" {
       tiaoma.pdf417-comp(data, height: height, options: options)
-    } else {
+    } else if type == "rmqr" {
+      tiaoma.rmqr(data, height: height, options: options)
+    }
+    else {
       error("Type de barcode inconnu: " + type)
     }
   )
-  gen-box(label, height, height, stroke-width: 0mm, inner-content: barcode)
+  gen-box(label, width, height, stroke-width: 0mm, inner-content: barcode)
 }

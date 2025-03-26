@@ -4,11 +4,13 @@
 #import "./markers/circle.typ": circle-box
 #import "./markers/svg_marker.typ": gen-svg-box
 #import "./container.typ": gen-box
+#import "@preview/tiaoma:0.2.1"
 
 #let PREFIX_TOP_LEFT = "hztl"
 #let PREFIX_TOP_RIGHT = "hztr"
 #let PREFIX_BOTTOM_LEFT = "hzbl"
 #let PREFIX_BOTTOM_RIGHT = "hzbr"
+#let PREFIX_TOP_CENTER = "hztc"
 
 /**
  * Configuration des coins
@@ -17,7 +19,8 @@
   (PREFIX_TOP_LEFT):     (align: top + left,    rotation: 0deg,   dx-sign: 1,  dy-sign: 1),
   (PREFIX_TOP_RIGHT):    (align: top + right,   rotation: 90deg,  dx-sign: -1, dy-sign: 1),
   (PREFIX_BOTTOM_LEFT):  (align: bottom + left,  rotation: 270deg, dx-sign: 1,  dy-sign: -1),
-  (PREFIX_BOTTOM_RIGHT): (align: bottom + right, rotation: 180deg, dx-sign: -1, dy-sign: -1)
+  (PREFIX_BOTTOM_RIGHT): (align: bottom + right, rotation: 180deg, dx-sign: -1, dy-sign: -1),
+  (PREFIX_TOP_CENTER):   (align: top + center,  rotation: 0deg,   dx-sign: 0,  dy-sign: 1)
 )
 
 /**
@@ -51,6 +54,10 @@
     let marker-size = if is-data-encoded {encoded-marker-size} else {fiducial-marker-size}
     return barcode(prefix-position, barcode-data, marker-size, marker-size, type: type, color)
 
+  } else if type == "rmqr" {
+    let barcode-data = (prefix-position, get-exam-id())
+    return barcode(prefix-position, barcode-data, 50mm, 7mm, type: "rmqr", color)
+
   } else if type.contains("circle") {
     return circle-box(prefix-position, fiducial-marker-size, fill-color: fill-color, stroke-width: stroke-width, stroke-color: color)
   } else if type.contains("square") {
@@ -67,6 +74,42 @@
     )
   } else {
     panic("Unknown marker type: " + type)
+  }
+}
+
+/**
+ * Place un marqueur d'entête au centre haut de la page
+ * @param header_data Données à encoder dans le marqueur
+ * @param width Largeur du marqueur
+ * @param height Hauteur du marqueur
+ * @param margin Marge entre le marqueur et le bord de la page
+ * @param grey_level Niveau de gris du marqueur (0-255)
+ */
+#let place-header-marker(
+  header_data,
+  width,
+  height,
+  margin,
+  grey_level
+) = {
+  context if generating-content.get() {
+    let marker-config = (
+      type: "rmqr",
+      is-data-encoded: true
+    )
+    
+    let marker = create-marker(PREFIX_TOP_CENTER, marker-config, width, height, 0pt, grey_level)
+    
+    let corner_config = get-corner-config(PREFIX_TOP_CENTER)
+    let alignment = corner_config.align
+    
+    let dy = corner_config.dy-sign * margin
+    
+    place(
+      alignment,
+      dy: dy,
+      marker
+    )
   }
 }
 
