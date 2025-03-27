@@ -16,11 +16,11 @@
 
 #include "qrcode_parser.h"
 
-std::optional<cv::Mat> main_qrcode_empty(cv::Mat img,
+std::optional<cv::Mat> qrcode_empty_parser(cv::Mat img,
 #ifdef DEBUG
-                                         cv::Mat debug_img,
+                                           cv::Mat debug_img,
 #endif
-                                         Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+                                           Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
 
     auto barcodes = identify_barcodes(img,
 #ifdef ENABLE_ZBAR
