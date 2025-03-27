@@ -32,8 +32,8 @@ int main(int argc, char* argv[]) {
     int marker_margin = 3;
     int nb_copies = 1;
     int duplex_printing = 0;
-    int marker_config = CIRCLES_WITH_QR_BR;
-    int grey_level = 255;
+    int marker_config = TOP_CIRCLES_QR_BR;
+    int grey_level = 0;
 
     for (int i = 1; i < argc; i += 2) {
         std::string arg = argv[i];

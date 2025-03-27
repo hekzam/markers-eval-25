@@ -17,7 +17,7 @@ cv::Point2f center_of_rec(cv::Rect rect) {
 std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     std::vector<cv::Vec3f> detected_circles;
 
-    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 10, 30);
+    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 5, 50);
 
     // std::vector<std::vector<cv::Point>> contours;
     // std::vector<cv::Vec4i> hierarchy; // unused; but could be used in drawContours

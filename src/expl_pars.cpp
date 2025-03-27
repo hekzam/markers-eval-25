@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
             save_debug_img(debug_img, output_dir, output_img_path_fname);
 #endif
             fprintf(stderr, "could not parse image '%s'\n", argv[i]);
-            return 0;
+            return 1;
         }
 
         auto calibrated_img_col = redress_image(img, affine_transform.value());
