@@ -10,28 +10,10 @@
 
 #include "circle_parser.h"
 
-cv::Point2f center_of_rec(cv::Rect rect) {
-    return cv::Point2f(rect.x + rect.width / 2, rect.y + rect.height / 2);
-}
-
 std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     std::vector<cv::Vec3f> detected_circles;
 
     cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 5, 50);
-
-    // std::vector<std::vector<cv::Point>> contours;
-    // std::vector<cv::Vec4i> hierarchy; // unused; but could be used in drawContours
-    // cv::findContours(img, contours, hierarchy, cv::RETR_CCOMP, cv::CHAIN_APPROX_SIMPLE);
-
-    // for (const auto& contour : contours) {
-    //     if (contour.size() < 5)
-    //         continue;
-
-    //     cv::Rect rect = cv::boundingRect(cv::Mat(contour));
-
-    //     auto center = center_of_rec(rect);
-    //     detected_circles.push_back({ center.x, center.y, 10 });
-    // }
 
     return detected_circles;
 }
