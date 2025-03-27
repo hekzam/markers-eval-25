@@ -18,4 +18,4 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
   exit 0
 fi
 
-./build/typst_interface "$@"
+./build-cmake/typst_interface "$@"
