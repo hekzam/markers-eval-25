@@ -13,14 +13,16 @@
 #include "custom_marker_parser.h"
 #include "qrcode_empty_parser.h"
 #include "aruco_parser.h"
+#include "shape_parser.h"
 
 std::unordered_map<std::string, Parser> parsers = {
     { "default", { default_parser } },
-    { "qrcode", { main_qrcode } },
-    { "circle", { main_circle } },
+    { "qrcode", { qrcode_parser } },
+    { "circle", { circle_parser } },
     { "aruco", { aruco_parser } },
+    { "shape", { shape_parser } },
     // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
-    { "empty", { main_qrcode_empty } },
+    { "empty", { qrcode_empty_parser } },
 };
 
 std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
@@ -213,7 +215,7 @@ std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::share
  * @brief Redresse et calibre une image en fonction des marqueurs de coin.
  *
  * La fonction calcule les centres des marqueurs à partir des boîtes des coins, puis applique
- * une transformation affine (via la fonction main_qrcode) pour redresser l'image.
+ * une transformation affine (via la fonction qrcode_parser) pour redresser l'image.
  * Ensuite, l'image redressée est convertie en couleur BGR.
  *
  * @param img Image en niveaux de gris à redresser.
