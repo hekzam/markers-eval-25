@@ -112,7 +112,7 @@ int found_other_point(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>
         find_a_corner = true;
     }
 
-    if (std::get<2>(right_corner_points[0]) > 0) {
+    if (right_corner_points.size() > 0 && std::get<2>(right_corner_points[0]) > 0) {
         std::swap(corner_points[TOP_RIGHT], corner_points[BOTTOM_LEFT]);
     }
 

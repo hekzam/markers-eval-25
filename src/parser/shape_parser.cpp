@@ -20,7 +20,7 @@ cv::Point2f center_of_rec(cv::Rect rect) {
     return cv::Point2f(rect.x + rect.width / 2, rect.y + rect.height / 2);
 }
 
-#define MIN_SIZE 40
+#define MIN_SIZE 25
 #define MAX_SIZE 100
 
 bool discriminate(cv::Rect rect) {
