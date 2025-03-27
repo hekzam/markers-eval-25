@@ -45,6 +45,7 @@ set(SRC_BENCH
 
 set(SRC_MODIFIEUR
     src/modifier.cpp
+    src/utils/modifier_utils.cpp
 )
 
 set(SRC_TYPST_INTERFACE
@@ -76,7 +77,7 @@ include_directories(modifier PRIVATE ${INCLUDE_DIRS})
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(typst_interface ${SRC_TYPST_INTERFACE})
-add_executable(modifier ${SRC_MODIFIEUR} ${UTILS_SRC})
+add_executable(modifier ${SRC_MODIFIEUR})
 
 # Link the dependencies
 target_link_libraries(parser
