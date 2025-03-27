@@ -21,6 +21,7 @@ enum MarkerConfig {
 
 // Function to create a copy with markers
 bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
-                 int duplex_printing, int marker_config, int grey_level, int header_marker);
+                 int duplex_printing, int marker_config, int grey_level, int header_marker,
+                 const std::string& filename = "copy");
 
 #endif

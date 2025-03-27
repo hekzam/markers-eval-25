@@ -66,11 +66,17 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
   --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
   --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)
+  --filename NAME       : Nom du fichier de sortie (par défaut: copy)
 ```
 
 Exemple d'utilisation :
 ```sh
 ./create-copie.sh --config 3 --grey-level 50
+```
+
+Une autre exemple avec un nom de fichier personnalisé :
+```sh
+./create-copie.sh --config 3 --grey-level 50 --filename exam01
 ```
 
 ### Configurations de marqueurs disponibles

@@ -10,7 +10,8 @@
 namespace fs = std::filesystem;
 
 bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
-                 int duplex_printing, int marker_config, int grey_level, int header_marker) {
+                 int duplex_printing, int marker_config, int grey_level, int header_marker,
+                 const std::string& filename) {
 
     fs::create_directories("./copies");
     fs::create_directories("./output");
@@ -35,8 +36,8 @@ bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_w
                          "--input grey-level=" + std::to_string(grey_level) + " " +
                          "--input header-marker=" + std::to_string(header_marker);
 
-    std::string compile_cmd =
-        "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/copy.png\" --format png";
+    std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +
+                              filename + ".png\" --format png";
 
     std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" +
                                      doc + "\" '<atomic-boxes>' --pretty > original_boxes.json";
