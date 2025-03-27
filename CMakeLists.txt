@@ -43,6 +43,10 @@ set(SRC_BENCH
     src/benchmark.cpp
 )
 
+set(SRC_MODIFIEUR
+    src/modifier.cpp
+)
+
 set(SRC_TYPST_INTERFACE
     src/typst_interface.cpp
     src/external-tools/create_copy.cpp
@@ -66,11 +70,13 @@ set(INCLUDE_DIRS
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
 include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
 include_directories(typst_interface PRIVATE ${INCLUDE_DIRS})
+include_directories(modifier PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(typst_interface ${SRC_TYPST_INTERFACE})
+add_executable(modifier ${SRC_MODIFIEUR} ${UTILS_SRC})
 
 # Link the dependencies
 target_link_libraries(parser
@@ -86,6 +92,12 @@ target_link_libraries(benchmark
 )
 
 target_link_libraries(typst_interface
+    PRIVATE
+        ${OpenCV_LIBS}
+        nlohmann_json::nlohmann_json
+)
+
+target_link_libraries(modifier
     PRIVATE
         ${OpenCV_LIBS}
         nlohmann_json::nlohmann_json
