@@ -13,7 +13,7 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 #include "utils/math_helper.h"
-#include "external-tools/create_copy.h" // Include the create_copy header
+#include "external-tools/create_copy.h"
 
 /**
  * @brief Sauvegarde de l'image de débogage
@@ -85,20 +85,23 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        // Parse the number of copies to generate
         int nb_copies = std::stoi(argv[4]);
         if (nb_copies <= 0) {
             throw std::runtime_error("Number of copies must be positive");
         }
 
-        // Generate copies before processing
+        std::filesystem::path copies_dir = "copies";
+        if (std::filesystem::exists(copies_dir)) {
+            std::cout << "Cleaning existing copies directory..." << std::endl;
+            std::filesystem::remove_all(copies_dir);
+        }
+        std::filesystem::create_directories(copies_dir);
+
         std::cout << "Generating " << nb_copies << " copies..." << std::endl;
         for (int i = 1; i <= nb_copies; i++) {
-            // Format copy name as "copy01", "copy02", etc.
             std::ostringstream copy_name;
             copy_name << "copy" << std::setw(2) << std::setfill('0') << i;
 
-            // Generate copy with ARUCO_WITH_QR_BR configuration
             bool success = create_copy(20,               // encoded_marker_size
                                        10,               // fiducial_marker_size
                                        1,                // stroke_width
@@ -120,20 +123,20 @@ int main(int argc, char* argv[]) {
 
         // Création du répertoire de sortie pour les images calibrées et annotées
         std::filesystem::path output_dir{ argv[1] };
+
+        // Nettoyage du répertoire de sortie s'il existe déjà
+        if (std::filesystem::exists(output_dir)) {
+            std::cout << "Cleaning existing output directory..." << std::endl;
+            std::filesystem::remove_all(output_dir);
+        }
         std::filesystem::create_directories(output_dir);
-
-        // Création des sous-répertoires
         std::filesystem::path subimg_output_dir = create_subdir(output_dir, "subimg");
-
-        // Suppression et recréation du répertoire CSV
-        std::filesystem::remove_all(output_dir.string() + "/csv");
         std::filesystem::path csv_output_dir = create_subdir(output_dir, "csv");
-
-        // Création et ouverture du fichier CSV de benchmark
+        
         std::filesystem::path benchmark_csv_path = csv_output_dir.string() + "/benchmark_results.csv";
         std::ofstream benchmark_csv(benchmark_csv_path);
         if (benchmark_csv.is_open()) {
-            benchmark_csv << "File,Time(ms)" << std::endl;
+            benchmark_csv << "File,Time(ms),Success" << std::endl;
         }
 
         // Lecture et parsing du fichier JSON des AtomicBoxes
@@ -175,14 +178,15 @@ int main(int argc, char* argv[]) {
             std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
 
             std::optional<cv::Mat> affine_transform;
+            BenchmarkGuardCSV benchmark_guard(entry.path().filename().string(), &benchmark_csv);
 
             {
-                BENCHMARK_BLOCK_CSV(entry.path().filename().string(), &benchmark_csv);
                 affine_transform = run_parser("aruco", img,
 #ifdef DEBUG
                                               debug_img,
 #endif
                                               meta, dst_corner_points);
+                benchmark_guard.setSuccess(affine_transform.has_value());
             }
 
             // Si la transformation affine n'a pas été trouvée, on passe à l'image suivante
@@ -230,8 +234,6 @@ int main(int argc, char* argv[]) {
             save_debug_img(debug_img, output_dir, output_img_path_fname);
 #endif
         }
-
-        // Close the benchmark CSV file
         if (benchmark_csv.is_open()) {
             benchmark_csv.close();
         }

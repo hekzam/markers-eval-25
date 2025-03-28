@@ -46,27 +46,33 @@ class BenchmarkGuard {
 
 #define BENCHMARK_BLOCK(name) BenchmarkGuard benchmark_guard##__LINE__(name)
 class BenchmarkGuardCSV {
-    public:
-      BenchmarkGuardCSV(const std::string& name, std::ofstream* csv)
-        : name_(name), csv_(csv),
-          start_(std::chrono::high_resolution_clock::now()) {
-      }
-  
-      ~BenchmarkGuardCSV() {
-          auto end = std::chrono::high_resolution_clock::now();
-          auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
-          double milliseconds = microseconds / 1000.0;
-  
-          std::cout << name_ << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds" << std::endl;
-          if(csv_) {
-              *csv_ << name_ << "," << std::fixed << std::setprecision(3) << milliseconds << std::endl;
-          }
-      }
-  
-    private:
-      std::string name_;
-      std::chrono::time_point<std::chrono::high_resolution_clock> start_;
-      std::ofstream* csv_;
+  public:
+    BenchmarkGuardCSV(const std::string& name, std::ofstream* csv)
+        : name_(name), csv_(csv), success_(false), start_(std::chrono::high_resolution_clock::now()) {
+    }
+
+    void setSuccess(bool success) {
+        success_ = success;
+    }
+
+    ~BenchmarkGuardCSV() {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
+        double milliseconds = microseconds / 1000.0;
+
+        std::cout << name_ << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds"
+                  << std::endl;
+        if (csv_) {
+            *csv_ << name_ << "," << std::fixed << std::setprecision(3) << milliseconds << "," << (success_ ? "1" : "0")
+                  << std::endl;
+        }
+    }
+
+  private:
+    std::string name_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+    std::ofstream* csv_;
+    bool success_;
 };
-  
+
 #define BENCHMARK_BLOCK_CSV(name, csv_ptr) BenchmarkGuardCSV benchmark_guard_csv##__LINE__(name, csv_ptr)
