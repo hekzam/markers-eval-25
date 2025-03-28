@@ -100,5 +100,6 @@
         "execution": "cpp"
     },
     "editor.formatOnSave": true,
-    "C_Cpp.errorSquiggles": "enabled"
+    "C_Cpp.errorSquiggles": "enabled",
+    "cmake.configureArgs": ["-DAUTO_DOWNLOAD_ZXING=ON"]
 }
