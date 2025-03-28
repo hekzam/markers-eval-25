@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard to use")
 include(FetchContent)
 
 option(ENABLE_ZBAR OFF)
+option(AUTO_DOWNLOAD_ZXING "Automatically download ZXing if not found" OFF)
 
 # Find the required dependencies
 find_package(OpenCV REQUIRED)
@@ -19,6 +20,9 @@ if(ENABLE_ZBAR)
     add_definitions(-DENABLE_ZBAR)
 else()
     find_package(ZXing QUIET)
+    if (NOT ZXing_FOUND AND NOT AUTO_DOWNLOAD_ZXING)
+        message(FATAL_ERROR "ZXing not found. Please install it or set AUTO_DOWNLOAD_ZXING to ON.")
+    endif()
     if(NOT ZXing_FOUND)
         FetchContent_Declare(
             zxing
