@@ -14,14 +14,6 @@ bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_w
                  const std::string& filename) {
 
     fs::create_directories("./copies");
-    fs::create_directories("./output");
-
-    for (const auto& entry : fs::directory_iterator("./copies")) {
-        fs::remove_all(entry.path());
-    }
-    for (const auto& entry : fs::directory_iterator("./output")) {
-        fs::remove_all(entry.path());
-    }
 
     std::string doc = "template.typ";
     std::string root = ".";

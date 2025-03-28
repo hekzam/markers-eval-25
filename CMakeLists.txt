@@ -41,6 +41,7 @@ set(SRC
 
 set(SRC_BENCH
     src/benchmark.cpp
+    src/external-tools/create_copy.cpp
 )
 
 set(SRC_TYPST_INTERFACE
