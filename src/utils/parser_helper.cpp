@@ -5,7 +5,7 @@
 #include <common.h>
 #include "parser_helper.h"
 #include "string_helper.h"
-#include "math_helper.h"
+#include "math_utils.h"
 
 #include "default_parser.h"
 #include "qrcode_parser.h"
