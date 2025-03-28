@@ -12,13 +12,6 @@
 #include "utils/parser_helper.h"
 #include "utils/math_helper.h"
 
-/**
- * @brief Sauvegarde de l'image de débogage
- *
- * @param debug_img Image de débogage
- * @param output_dir Répertoire de sortie
- * @param output_img_path_fname Chemin de l'image de sortie
- */
 void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::filesystem::path output_img_path_fname) {
     char* output_img_fname = nullptr;
     int nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
@@ -34,28 +27,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Création du répertoire de sortie pour les images calibrées et annotées
+    // Création du répertoire de sortie
     std::filesystem::path output_dir{ argv[1] };
     std::filesystem::create_directories(output_dir);
 
     std::filesystem::path subimg_output_dir = output_dir.string() + std::string("/subimg");
     std::filesystem::create_directories(subimg_output_dir);
 
-    // Suppression du répertoire CSV si déjà existant
-    std::filesystem::remove_all(output_dir.string() + std::string("/csv"));
-
-    // Créer un répertoire pour le fichier CSV
-    std::filesystem::path csv_output_dir = output_dir.string() + std::string("/csv");
-    std::filesystem::create_directories(csv_output_dir);
-
-    // Create and open the benchmark CSV file
-    std::filesystem::path benchmark_csv_path = csv_output_dir.string() + "/benchmark_results.csv";
-    std::ofstream benchmark_csv(benchmark_csv_path);
-    if (benchmark_csv.is_open()) {
-        benchmark_csv << "Operation,Time(ms)" << std::endl;
-    }
-
-    // Lecture du fichier de description des AtomicBoxes
+    // Lecture du fichier de description des AtomicBox
     std::ifstream atomic_boxes_file(argv[2]);
     if (!atomic_boxes_file.is_open()) {
         fprintf(stderr, "could not open file '%s'\n", argv[2]);
@@ -68,6 +47,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "could not json parse file '%s': %s", argv[2], e.what());
         return 1;
     }
+    // printf("atomic_boxes: %s\n", atomic_boxes_json.dump(2).c_str());
 
     // Conversion des AtomicBox en structures
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
@@ -77,7 +57,7 @@ int main(int argc, char* argv[]) {
     // Séparation des AtomicBox en marqueurs et boîtes utilisateur
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
-    // Vérification et traitement du répertoire d'images d'entrée
+    // Vérification et traitement du répertoire d'images
     std::filesystem::path dir_path{ argv[3] };
     if (!std::filesystem::is_directory(dir_path)) {
         fprintf(stderr, "could not open directory '%s'\n", argv[3]);
@@ -108,7 +88,7 @@ int main(int argc, char* argv[]) {
         std::optional<cv::Mat> affine_transform;
 
         {
-            BENCHMARK_BLOCK_CSV(entry.path().filename().string(), &benchmark_csv);
+            BENCHMARK_BLOCK("parser");
             affine_transform = run_parser("aruco", img,
 #ifdef DEBUG
                                           debug_img,
@@ -130,7 +110,7 @@ int main(int argc, char* argv[]) {
 
         cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
-        // Annotation des boîtes utilisateur
+        // Dessin des boîtes utilisateur
         for (auto box : user_boxes_per_page[meta.page - 1]) {
             const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y },
@@ -140,7 +120,7 @@ int main(int argc, char* argv[]) {
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 255), 2);
         }
 
-        // Annotation des marqueurs de coin
+        // Dessin des marqueurs de coin
         for (auto box : corner_markers) {
             const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
                                                        cv::Point2f{ box->x + box->width, box->y },
@@ -165,11 +145,6 @@ int main(int argc, char* argv[]) {
 #ifdef DEBUG
         save_debug_img(debug_img, output_dir, output_img_path_fname);
 #endif
-    }
-
-    // Close the benchmark CSV file
-    if (benchmark_csv.is_open()) {
-        benchmark_csv.close();
     }
 
     return 0;
