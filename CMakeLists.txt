@@ -45,7 +45,7 @@ set(SRC_BENCH
 
 set(SRC_MODIFIEUR
     src/modifier.cpp
-    src/utils/modifier_utils.cpp
+    src/utils/math_utils.cpp
 )
 
 set(SRC_TYPST_INTERFACE

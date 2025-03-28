@@ -10,7 +10,7 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 #include "utils/string_helper.h"
-#include "utils/math_helper.h"
+#include "utils/math_utils.h"
 
 void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::filesystem::path output_img_path_fname) {
     char* output_img_fname = nullptr;
