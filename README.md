@@ -45,7 +45,7 @@ cmake --build build-cmake -j
 - `-DCMAKE_BUILD_TYPE=Release` : Compilation optimisée.
 - `-DENABLE_ZBAR=ON` : si vous souhaitez utiliser zbar pour la détection des QR codes au lieu de ZXing.
 
-## Exécution du programme
+## 📄 Génération de copie
 
 Une fois la compilation terminée, utilisez la commande suivante pour générer les copies :
 
@@ -94,7 +94,7 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 
-## Exécution du benchmark
+## 📊 Exécution du benchmark
 
 Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
 
@@ -153,7 +153,7 @@ Après l'exécution, le benchmark produit plusieurs types de sorties :
 - **Typst** : [https://typst.app/](https://typst.app/)
 - **ZXing** : [https://github.com/zxing/zxing](https://github.com/zxing/zxing)
 
-## License
+## ⚖️ License
 
 - Code: Apache-2.0
 - Everything else, in particular documentation and measurements: CC-BY-SA-4.0
