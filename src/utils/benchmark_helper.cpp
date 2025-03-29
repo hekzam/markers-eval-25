@@ -37,7 +37,8 @@ json parse_json_file(const std::string& filepath) {
     }
 }
 
-bool generate_copies(int nb_copies, int marker_config) {
+bool generate_copies(int nb_copies, int marker_config, int encoded_marker_size, int fiducial_marker_size,
+                     int grey_level) {
     std::filesystem::path copies_dir = "copies";
     if (std::filesystem::exists(copies_dir)) {
         std::cout << "Cleaning existing copies directory..." << std::endl;
@@ -51,16 +52,16 @@ bool generate_copies(int nb_copies, int marker_config) {
         std::ostringstream copy_name;
         copy_name << "copy" << std::setw(2) << std::setfill('0') << i;
 
-        bool success = create_copy(20,             // encoded_marker_size
-                                   10,             // fiducial_marker_size
-                                   1,              // stroke_width
-                                   5,              // marker_margin
-                                   1,              // nb_copies per call
-                                   0,              // duplex_printing
-                                   marker_config,  // marker_config
-                                   0,              // grey_level
-                                   0,              // header_marker
-                                   copy_name.str() // filename
+        bool success = create_copy(encoded_marker_size,  // encoded_marker_size
+                                   fiducial_marker_size, // fiducial_marker_size
+                                   1,                    // stroke_width
+                                   5,                    // marker_margin
+                                   1,                    // nb_copies per call
+                                   0,                    // duplex_printing
+                                   marker_config,        // marker_config
+                                   grey_level,           // grey_level
+                                   0,                    // header_marker
+                                   copy_name.str()       // filename
         );
 
         if (!success) {

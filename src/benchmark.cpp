@@ -23,6 +23,12 @@ const std::string BLUE = "\033[34m";
 const std::string CYAN = "\033[36m";
 const std::string YELLOW = "\033[33m";
 
+const std::string PARSER_ARUCO = "aruco";
+const std::string PARSER_CIRCLE = "circle";
+const std::string PARSER_QRCODE = "qrcode";
+const std::string PARSER_CUSTOM_MARKER = "custom_marker";
+const std::string PARSER_DEFAULT = "default";
+
 /**
  * @brief Affiche une bannière de bienvenue pour le programme
  */
@@ -132,11 +138,41 @@ void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::fi
     free(output_img_fname);
 }
 
+/**
+ * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
+ *
+ * @param marker_config Le numéro de configuration de marqueur (1-10)
+ * @return std::string Le type de parseur à utiliser
+ */
+std::string select_parser_for_marker_config(int marker_config) {
+    switch (marker_config) {
+        case 1:
+        case 2:
+            return PARSER_QRCODE;
+        case 3:
+        case 4:
+        case 8:
+            return PARSER_CIRCLE;
+        case 5:
+            return PARSER_CUSTOM_MARKER;
+        case 6:
+        case 7:
+            return PARSER_ARUCO;
+        case 9:
+        case 10:
+        default:
+            return PARSER_DEFAULT;
+    }
+}
+
 int main(int argc, char* argv[]) {
     std::string output_dir_opt = "./output";
     std::string atomic_boxes_file = "./original_boxes.json";
     std::string input_dir = "./copies";
     std::string copies_str = "1";
+    int encoded_marker_size = 15;  // Default value for encoded marker size
+    int fiducial_marker_size = 10; // Default value for fiducial marker size
+    int grey_level = 0;            // Default value for grey level
 
     std::string input;
 
@@ -148,8 +184,14 @@ int main(int argc, char* argv[]) {
     atomic_boxes_file = get_user_input("Atomic boxes JSON file path", atomic_boxes_file);
     input_dir = get_user_input("Input directory", input_dir);
     copies_str = get_user_input("Number of copies", copies_str);
+    encoded_marker_size = get_user_input_int("Encoded marker size", encoded_marker_size, 5, 50);
+    fiducial_marker_size = get_user_input_int("Fiducial marker size", fiducial_marker_size, 5, 50);
+    grey_level = get_user_input_int("Grey level", grey_level, 0, 255);
     int marker_config_default = display_marker_configs();
     int marker_config = get_user_input_int("Marker configuration (1-10)", marker_config_default, 1, 10);
+
+    // Sélectionne le parseur à utiliser en fonction de la configuration choisie
+    std::string selected_parser = select_parser_for_marker_config(marker_config);
 
     // Affichage du récapitulatif
     std::cout << std::endl << BOLD << "Configuration:" << RESET << std::endl;
@@ -157,6 +199,9 @@ int main(int argc, char* argv[]) {
     std::cout << "- Atomic boxes file: " << YELLOW << atomic_boxes_file << RESET << std::endl;
     std::cout << "- Input directory: " << YELLOW << input_dir << RESET << std::endl;
     std::cout << "- Copies: " << YELLOW << copies_str << RESET << std::endl;
+    std::cout << "- Encoded marker size: " << YELLOW << encoded_marker_size << RESET << std::endl;
+    std::cout << "- Fiducial marker size: " << YELLOW << fiducial_marker_size << RESET << std::endl;
+    std::cout << "- Grey level: " << YELLOW << grey_level << RESET << std::endl;
     std::cout << "- Marker config: " << YELLOW << marker_config << RESET << std::endl << std::endl;
 
     // Verify values are not empty (should never happen with defaults)
@@ -170,7 +215,8 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Number of copies must be between 1 and 50");
     }
 
-    generate_copies(nb_copies, static_cast<MarkerConfig>(marker_config));
+    generate_copies(nb_copies, static_cast<MarkerConfig>(marker_config), encoded_marker_size, fiducial_marker_size,
+                    grey_level);
 
     // Création du répertoire de sortie pour les images calibrées et annotées
     std::filesystem::path output_dir{ output_dir_opt };
@@ -235,7 +281,7 @@ int main(int argc, char* argv[]) {
         std::optional<cv::Mat> affine_transform;
         BenchmarkGuardCSV benchmark_guard(entry.path().filename().string(), &benchmark_csv);
         {
-            affine_transform = run_parser("aruco", img,
+            affine_transform = run_parser(selected_parser, img,
 #ifdef DEBUG
                                           debug_img,
 #endif

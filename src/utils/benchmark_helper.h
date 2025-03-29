@@ -34,8 +34,12 @@ json parse_json_file(const std::string& filepath);
  * @brief Génère des copies de marqueurs avec une configuration spécifique
  * @param nb_copies Nombre de copies à générer
  * @param marker_config Configuration des marqueurs à utiliser
+ * @param encoded_marker_size Taille du marqueur encodé
+ * @param fiducial_marker_size Taille du marqueur fiducial
+ * @param grey_level Niveau de gris
  * @return true si toutes les copies ont été générées avec succès, false sinon
  */
-bool generate_copies(int nb_copies, int marker_config);
+bool generate_copies(int nb_copies, int marker_config, int encoded_marker_size = 15, int fiducial_marker_size = 10,
+                     int grey_level = 0);
 
 #endif
