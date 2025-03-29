@@ -138,6 +138,8 @@ void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::fi
     free(output_img_fname);
 }
 
+
+// à faire : utiliser un enum pour les parseurs
 /**
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
  *

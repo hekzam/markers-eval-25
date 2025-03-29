@@ -9,6 +9,7 @@
 
 namespace fs = std::filesystem;
 
+// à faire : cacher les messages de typst dans le terminal
 bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
                  int duplex_printing, int marker_config, int grey_level, int header_marker,
                  const std::string& filename) {
