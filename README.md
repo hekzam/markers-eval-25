@@ -99,7 +99,7 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
 
 ```sh
-./build-cmake/src/benchmark
+./run_benchmark.sh
 ```
 
 L'outil vous demandera plusieurs informations interactivement :
