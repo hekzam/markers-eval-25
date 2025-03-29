@@ -94,6 +94,30 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 
+## Exécution du benchmark
+
+Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
+
+```sh
+./build-cmake/src/benchmark
+```
+
+L'outil vous demandera plusieurs informations interactivement :
+
+1. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
+2. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
+3. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
+4. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
+5. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
+
+### Résultats du benchmark
+
+Après l'exécution, le benchmark produit plusieurs types de sorties :
+
+- **Images calibrées** : Versions redressées des copies scannées avec les zones détectées surlignées
+- **CSV de résultats** : Fichier `benchmark_results.csv` contenant les temps d'exécution et taux de succès pour chaque image
+- **Images de débogage** (si compilé en mode DEBUG) : Visualisation du processus de détection des marqueurs
+
 ## 📂 Structure du projet
 
 ```
