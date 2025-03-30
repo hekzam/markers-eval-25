@@ -11,7 +11,7 @@
 #include "json_helper.h"
 #include "string_helper.h"
 #include "parser_helper.h"
-#include "math_helper.h"
+#include "math_utils.h"
 #include "draw_helper.h"
 
 #include "qrcode_parser.h"
@@ -59,7 +59,7 @@ std::optional<cv::Mat> qrcode_empty_parser(cv::Mat img,
         barcode_pos.push_back(center_of_box(barcode.bounding_box));
     }
 
-    int found_corner_mask = found_other_point(barcode_pos, corner_points, corner_barcode);
+    int found_corner_mask = found_other_point(barcode_pos, corner_points, center_of_box(corner_barcode.bounding_box));
 
     if (found_corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
         throw std::invalid_argument("not all corner barcodes were found");

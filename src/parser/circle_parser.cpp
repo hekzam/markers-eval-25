@@ -5,7 +5,7 @@
 #include "json_helper.h"
 #include "parser_helper.h"
 #include "string_helper.h"
-#include "math_helper.h"
+#include "math_utils.h"
 #include "draw_helper.h"
 
 #include "circle_parser.h"
@@ -77,7 +77,7 @@ std::optional<cv::Mat> circle_parser(cv::Mat img,
         circle_pos.push_back(cv::Point2f(c[0], c[1]));
     }
 
-    auto mask = found_other_point(circle_pos, corner_points, corner_barcode);
+    auto mask = found_other_point(circle_pos, corner_points, center_of_box(corner_barcode.bounding_box));
 
 #ifdef DEBUG
     for (int i = 0; i < 4; ++i) {

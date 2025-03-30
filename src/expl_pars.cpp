@@ -10,16 +10,8 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 #include "utils/string_helper.h"
-#include "utils/math_helper.h"
-
-void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::filesystem::path output_img_path_fname) {
-    char* output_img_fname = nullptr;
-    int nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
-    (void) nb;
-    cv::imwrite(output_img_fname, debug_img);
-    printf("output image: %s\n", output_img_fname);
-    free(output_img_fname);
-}
+#include "utils/math_utils.h"
+#include "utils/draw_helper.h"
 
 int main(int argc, char* argv[]) {
     if (argc < 4) {
