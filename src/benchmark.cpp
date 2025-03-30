@@ -12,7 +12,7 @@
 #include <benchmark.hpp>
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
-#include "utils/math_helper.h"
+#include "utils/math_utils.h"
 #include "utils/benchmark_helper.h"
 #include "utils/draw_helper.h"
 #include "external-tools/create_copy.h"

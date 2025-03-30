@@ -10,7 +10,7 @@
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
 #include "utils/string_helper.h"
-#include "utils/math_helper.h"
+#include "utils/math_utils.h"
 #include "utils/draw_helper.h"
 
 int main(int argc, char* argv[]) {
