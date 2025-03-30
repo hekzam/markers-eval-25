@@ -169,8 +169,8 @@ void run_benchmark(const BenchmarkParams& params, const std::string& selected_pa
 #endif
         std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
         std::optional<cv::Mat> affine_transform;
-        BenchmarkGuardCSV benchmark_guard(entry.path().filename().string(), &benchmark_csv);
         {
+            BenchmarkGuardCSV benchmark_guard(entry.path().filename().string(), &benchmark_csv);
             affine_transform = run_parser(selected_parser, img,
 #ifdef DEBUG
                                           debug_img,
