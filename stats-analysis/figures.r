@@ -123,8 +123,8 @@ analyser_donnees_copies <- function(chemin_fichier) {
 }
 
 # Vérifier et définir le répertoire de travail
-if (dir.exists("markers-eval-25/visualisation-courbe")) {
-  setwd("markers-eval-25/visualisation-courbe")
+if (dir.exists("markers-eval-25/stats-analysis")) {
+  setwd("markers-eval-25/stats-analysis")
 } else {
   cat("Attention : Le répertoire de travail n'existe pas.\n")
 }
