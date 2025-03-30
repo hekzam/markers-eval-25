@@ -90,7 +90,7 @@ std::optional<cv::Mat> shape_parser(cv::Mat img,
 #endif
 
     std::vector<cv::Point2f> corner_points;
-    auto mask = found_other_point(detected_shapes, corner_points, corner_barcode);
+    auto mask = found_other_point(detected_shapes, corner_points, center_of_box(corner_barcode.bounding_box));
 
 #ifdef DEBUG
     for (int i = 0; i < 4; ++i) {
