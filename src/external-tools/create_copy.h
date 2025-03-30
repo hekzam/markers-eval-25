@@ -1,7 +1,8 @@
-#ifndef TYPST_INTERFACE_H
-#define TYPST_INTERFACE_H
+#ifndef CREATE_COPY_H
+#define CREATE_COPY_H
 
 #include <string>
+#include <vector>
 
 enum MarkerConfig {
     QR_ALL_CORNERS = 1,        // QR codes avec données encodées dans tous les coins
@@ -18,6 +19,19 @@ enum MarkerConfig {
     SQUARE_OUTLINES_WITH_QR_BR =
         10 // Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 };
+
+/**
+ * @brief Structure contenant les informations sur les configurations de marqueurs
+ */
+struct MarkerConfigInfo {
+    int id;
+    std::string description;
+};
+
+/**
+ * @brief Liste des configurations de marqueurs disponibles
+ */
+extern const std::vector<MarkerConfigInfo> marker_configs;
 
 /**
  * @brief Génère et exporte une copie paramétrée, enregistrée dans le répertoire ./copies

@@ -14,6 +14,7 @@
 #include "utils/parser_helper.h"
 #include "utils/math_helper.h"
 #include "utils/benchmark_helper.h"
+#include "utils/draw_helper.h"
 #include "external-tools/create_copy.h"
 
 const std::string RESET = "\033[0m";
@@ -40,24 +41,22 @@ void display_banner() {
 }
 
 /**
- * @brief Affiche les configurations de marqueurs disponibles
+ * @brief Affiche une liste de configurations disponibles
  *
+ * @param marker_configs Liste des configurations à afficher
+ * @param title Titre à afficher en gras avant la liste
  * @return int La configuration par défaut à utiliser
  */
-int display_marker_configs() {
-    std::cout << std::endl << BOLD << "Available marker configurations:" << RESET << std::endl;
-    std::cout << "  1. QR codes in all corners" << std::endl;
-    std::cout << "  2. QR code only in bottom-right corner" << std::endl;
-    std::cout << "  3. Circles in first three corners, QR code in bottom-right" << std::endl;
-    std::cout << "  4. Circles on top, nothing in bottom-left, QR code in bottom-right" << std::endl;
-    std::cout << "  5. Custom SVG markers in three corners, QR code in bottom-right" << std::endl;
-    std::cout << "  6. ArUco markers, QR code in bottom-right" << std::endl;
-    std::cout << "  7. Two ArUco markers, nothing in bottom-left, QR code in bottom-right" << std::endl;
-    std::cout << "  8. Circle outlines in first three corners, QR code in bottom-right" << std::endl;
-    std::cout << "  9. Squares in first three corners, QR code in bottom-right" << std::endl;
-    std::cout << " 10. Square outlines in first three corners, QR code in bottom-right" << std::endl;
+int display_configs(const std::vector<MarkerConfigInfo>& marker_configs, const int default_config,
+                    const std::string& title = "Available configurations:") {
 
-    return 6; // ARUCO_WITH_QR_BR comme valeur par défaut
+    std::cout << std::endl << BOLD << title << RESET << std::endl;
+
+    for (const auto& config : marker_configs) {
+        std::cout << std::setw(3) << config.id << ". " << config.description << std::endl;
+    }
+
+    return default_config;
 }
 
 /**
@@ -123,24 +122,6 @@ std::string get_user_input(const std::string& prompt, const std::string& default
 }
 
 /**
- * @brief Sauvegarde de l'image de débogage
- *
- * @param debug_img Image de débogage
- * @param output_dir Répertoire de sortie
- * @param output_img_path_fname Chemin de l'image de sortie
- */
-void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::filesystem::path output_img_path_fname) {
-    char* output_img_fname = nullptr;
-    int nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
-    (void) nb;
-    cv::imwrite(output_img_fname, debug_img);
-    printf("output image: %s\n", output_img_fname);
-    free(output_img_fname);
-}
-
-
-// à faire : utiliser un enum pour les parseurs
-/**
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
  *
  * @param marker_config Le numéro de configuration de marqueur (1-10)
@@ -148,20 +129,20 @@ void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::fi
  */
 std::string select_parser_for_marker_config(int marker_config) {
     switch (marker_config) {
-        case 1:
-        case 2:
+        case QR_ALL_CORNERS:
+        case QR_BOTTOM_RIGHT_ONLY:
             return PARSER_QRCODE;
-        case 3:
-        case 4:
-        case 8:
+        case CIRCLES_WITH_QR_BR:
+        case TOP_CIRCLES_QR_BR:
+        case CIRCLE_OUTLINES_WITH_QR_BR:
             return PARSER_CIRCLE;
-        case 5:
+        case CUSTOM_SVG_WITH_QR_BR:
             return PARSER_CUSTOM_MARKER;
-        case 6:
-        case 7:
+        case ARUCO_WITH_QR_BR:
+        case TWO_ARUCO_WITH_QR_BR:
             return PARSER_ARUCO;
-        case 9:
-        case 10:
+        case SQUARES_WITH_QR_BR:
+        case SQUARE_OUTLINES_WITH_QR_BR:
         default:
             return PARSER_DEFAULT;
     }
@@ -172,9 +153,9 @@ int main(int argc, char* argv[]) {
     std::string atomic_boxes_file = "./original_boxes.json";
     std::string input_dir = "./copies";
     std::string copies_str = "1";
-    int encoded_marker_size = 15;  // Default value for encoded marker size
-    int fiducial_marker_size = 10; // Default value for fiducial marker size
-    int grey_level = 0;            // Default value for grey level
+    int encoded_marker_size = 15;
+    int fiducial_marker_size = 10;
+    int grey_level = 0;
 
     std::string input;
 
@@ -189,7 +170,7 @@ int main(int argc, char* argv[]) {
     encoded_marker_size = get_user_input_int("Encoded marker size", encoded_marker_size, 5, 50);
     fiducial_marker_size = get_user_input_int("Fiducial marker size", fiducial_marker_size, 5, 50);
     grey_level = get_user_input_int("Grey level", grey_level, 0, 255);
-    int marker_config_default = display_marker_configs();
+    int marker_config_default = display_configs(marker_configs, ARUCO_WITH_QR_BR, "Available marker configurations:");
     int marker_config = get_user_input_int("Marker configuration (1-10)", marker_config_default, 1, 10);
 
     // Sélectionne le parseur à utiliser en fonction de la configuration choisie
