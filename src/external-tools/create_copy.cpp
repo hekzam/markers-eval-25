@@ -1,6 +1,4 @@
 #include <iostream>
-#include <string>
-#include <vector>
 #include <map>
 #include <filesystem>
 #include <cstdlib>
@@ -9,21 +7,36 @@
 
 namespace fs = std::filesystem;
 
+const std::vector<MarkerConfigInfo> marker_configs = {
+    { QR_ALL_CORNERS, "QR codes in all corners" },
+    { QR_BOTTOM_RIGHT_ONLY, "QR code only in bottom-right corner" },
+    { CIRCLES_WITH_QR_BR, "Circles in first three corners, QR code in bottom-right" },
+    { TOP_CIRCLES_QR_BR, "Circles on top, nothing in bottom-left, QR code in bottom-right" },
+    { CUSTOM_SVG_WITH_QR_BR, "Custom SVG markers in three corners, QR code in bottom-right" },
+    { ARUCO_WITH_QR_BR, "ArUco markers, QR code in bottom-right" },
+    { TWO_ARUCO_WITH_QR_BR, "Two ArUco markers, nothing in bottom-left, QR code in bottom-right" },
+    { CIRCLE_OUTLINES_WITH_QR_BR, "Circle outlines in first three corners, QR code in bottom-right" },
+    { SQUARES_WITH_QR_BR, "Squares in first three corners, QR code in bottom-right" },
+    { SQUARE_OUTLINES_WITH_QR_BR, "Square outlines in first three corners, QR code in bottom-right" }
+};
+
+std::string getOutputRedirection() {
+#ifdef _WIN32
+    return " 2> NUL";
+#else
+    return " 2> /dev/null";
+#endif
+}
+
 bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
-                 int duplex_printing, int marker_config, int grey_level, int header_marker) {
+                 int duplex_printing, int marker_config, int grey_level, int header_marker,
+                 const std::string& filename) {
 
     fs::create_directories("./copies");
-    fs::create_directories("./output");
-
-    for (const auto& entry : fs::directory_iterator("./copies")) {
-        fs::remove_all(entry.path());
-    }
-    for (const auto& entry : fs::directory_iterator("./output")) {
-        fs::remove_all(entry.path());
-    }
 
     std::string doc = "template.typ";
     std::string root = ".";
+    std::string redirect = getOutputRedirection();
 
     std::string params = "--input encoded-marker-size=" + std::to_string(encoded_marker_size) + " " +
                          "--input fiducial-marker-size=" + std::to_string(fiducial_marker_size) + " " +
@@ -35,14 +48,14 @@ bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_w
                          "--input grey-level=" + std::to_string(grey_level) + " " +
                          "--input header-marker=" + std::to_string(header_marker);
 
-    std::string compile_cmd =
-        "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/copy.png\" --format png";
+    std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +
+                              filename + ".png\" --format png" + redirect;
 
     std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" +
-                                     doc + "\" '<atomic-boxes>' --pretty > original_boxes.json";
+                                     doc + "\" '<atomic-boxes>' --pretty > original_boxes.json" + redirect;
 
     std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" + doc +
-                             "\" '<page>' --pretty > page.json";
+                             "\" '<page>' --pretty > page.json" + redirect;
 
     std::cout << "Executing: " << compile_cmd << std::endl;
     int compile_result = system(compile_cmd.c_str());

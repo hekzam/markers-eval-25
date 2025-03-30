@@ -1,5 +1,6 @@
 #include <vector>
 #include <tuple>
+#include <iostream>
 
 #include <common.h>
 #include "parser_helper.h"
@@ -61,17 +62,13 @@ float angle(cv::Point2f a, cv::Point2f b, cv::Point2f c) {
     return atan2(cross, dot);
 }
 
-static bool compare(const std::tuple<float, cv::Point2f, float>& a, const std::tuple<float, cv::Point2f, float>& b) {
-    return std::get<0>(a) < std::get<0>(b);
-}
-
 int found_other_point(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>& corner_points,
-                      DetectedBarcode& corner_barcode) {
+                      cv::Point2f corner_barcode) {
     corner_points.resize(4);
 
     int found_mask = 0x00;
 
-    corner_points[BOTTOM_RIGHT] = center_of_box(corner_barcode.bounding_box);
+    corner_points[BOTTOM_RIGHT] = corner_barcode;
     found_mask |= (1 << BOTTOM_RIGHT);
 
     std::pair<float, cv::Point2f> max_distance = { 0, cv::Point2f(0, 0) };
@@ -99,20 +96,51 @@ int found_other_point(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>
         right_corner_points.push_back({ right_angle, point, angle_corner });
     }
 
-    std::sort(right_corner_points.begin(), right_corner_points.end(), compare);
+    std::sort(right_corner_points.begin(), right_corner_points.end(),
+              [](const auto& a, const auto& b) { return std::get<0>(a) < std::get<0>(b); });
+
+    bool find_a_corner = false;
 
     if (right_corner_points.size() > 0 && std::get<0>(right_corner_points[0]) < 0.1f) {
         corner_points[TOP_RIGHT] = std::get<1>(right_corner_points[0]);
         found_mask |= (1 << TOP_RIGHT);
+        find_a_corner = true;
     }
 
     if (right_corner_points.size() > 1 && std::get<0>(right_corner_points[1]) < 0.1f) {
         corner_points[BOTTOM_LEFT] = std::get<1>(right_corner_points[1]);
         found_mask |= (1 << BOTTOM_LEFT);
+        find_a_corner = true;
     }
 
-    if (std::get<2>(right_corner_points[0]) > 0) {
+    if (right_corner_points.size() > 0 && std::get<2>(right_corner_points[0]) > 0) {
         std::swap(corner_points[TOP_RIGHT], corner_points[BOTTOM_LEFT]);
+    }
+
+    if (!find_a_corner) {
+        std::vector<std::tuple<cv::Point2f, cv::Point2f, float, float>> right_corner_points;
+        corner_points[TOP_LEFT] = { 0, 0 };
+        found_mask &= ~(1 << TOP_LEFT);
+        for (int i = 0; i < points.size(); ++i) {
+            for (int j = i + 1; j < points.size(); ++j) {
+                float angle_corner = angle(points[i], corner_points[BOTTOM_RIGHT], points[j]);
+                float right_angle = abs(abs(angle_corner) - (M_PI / 2));
+                right_corner_points.push_back({ points[i], points[j], right_angle, angle_corner });
+            }
+        }
+
+        std::sort(right_corner_points.begin(), right_corner_points.end(),
+                  [](const auto& a, const auto& b) { return std::get<2>(a) < std::get<2>(b); });
+
+        if (right_corner_points.size() > 0 && std::get<2>(right_corner_points[0]) < 0.1f) {
+            corner_points[TOP_RIGHT] = std::get<0>(right_corner_points[0]);
+            corner_points[BOTTOM_LEFT] = std::get<1>(right_corner_points[0]);
+            found_mask |= (1 << TOP_RIGHT);
+            found_mask |= (1 << BOTTOM_LEFT);
+            if (std::get<3>(right_corner_points[0]) > 0) {
+                std::swap(corner_points[TOP_RIGHT], corner_points[BOTTOM_LEFT]);
+            }
+        }
     }
 
     return found_mask;
@@ -126,4 +154,43 @@ int sum_mask(int mask) {
         }
     }
     return sum;
+}
+
+cv::Mat translate(float x, float y) {
+    cv::Mat out = cv::Mat::eye(3, 3, CV_32F);
+    out.at<float>(0, 2) += x;
+    out.at<float>(1, 2) += y;
+    return out;
+}
+
+cv::Mat rotate(float angle) {
+    cv::Mat out = cv::Mat::eye(3, 3, CV_32F);
+    float rad = angle * M_PI / 180.0;
+    out.at<float>(0, 0) = cos(rad);
+    out.at<float>(0, 1) = -sin(rad);
+    out.at<float>(1, 0) = sin(rad);
+    out.at<float>(1, 1) = cos(rad);
+    return out;
+}
+
+cv::Mat rotate_center(float angle, float cx, float cy) {
+    cv::Mat out = cv::Mat::eye(3, 3, CV_32F);
+    float rad = angle * M_PI / 180.0;
+    out.at<float>(0, 0) = cos(rad);
+    out.at<float>(0, 1) = -sin(rad);
+    out.at<float>(1, 0) = sin(rad);
+    out.at<float>(1, 1) = cos(rad);
+    out.at<float>(0, 2) = cx * (1 - cos(rad)) + cy * sin(rad);
+    out.at<float>(1, 2) = cy * (1 - cos(rad)) - cx * sin(rad);
+    return out;
+}
+
+void print_mat(cv::Mat mat) {
+    for (int i = 0; i < mat.rows; i++) {
+        for (int j = 0; j < mat.cols; j++) {
+            std::cout << mat.at<float>(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }

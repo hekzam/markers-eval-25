@@ -45,7 +45,7 @@ cmake --build build-cmake -j
 - `-DCMAKE_BUILD_TYPE=Release` : Compilation optimisée.
 - `-DENABLE_ZBAR=ON` : si vous souhaitez utiliser zbar pour la détection des QR codes au lieu de ZXing.
 
-## Exécution du programme
+## 📄 Génération de copie
 
 Une fois la compilation terminée, utilisez la commande suivante pour générer les copies :
 
@@ -66,11 +66,17 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
   --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
   --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)
+  --filename NAME       : Nom du fichier de sortie (par défaut: copy)
 ```
 
 Exemple d'utilisation :
 ```sh
 ./create-copie.sh --config 3 --grey-level 50
+```
+
+Une autre exemple avec un nom de fichier personnalisé :
+```sh
+./create-copie.sh --config 3 --grey-level 50 --filename exam01
 ```
 
 ### Configurations de marqueurs disponibles
@@ -88,6 +94,30 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 
+## 📊 Exécution du benchmark
+
+Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
+
+```sh
+./run_benchmark.sh
+```
+
+L'outil vous demandera plusieurs informations interactivement :
+
+1. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
+2. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
+3. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
+4. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
+5. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
+
+### Résultats du benchmark
+
+Après l'exécution, le benchmark produit plusieurs types de sorties :
+
+- **Images calibrées** : Versions redressées des copies scannées avec les zones détectées surlignées
+- **CSV de résultats** : Fichier `benchmark_results.csv` contenant les temps d'exécution et taux de succès pour chaque image
+- **Images de débogage** (si compilé en mode DEBUG) : Visualisation du processus de détection des marqueurs
+
 ## 📂 Structure du projet
 
 ```
@@ -101,6 +131,7 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 │   ├── typst_interface.cpp # Interface avec Typst
 │   ├── utils/          # Utilitaires partagés
 │   ├── parser/         # Implémentation des parseurs de marqueurs
+|   ├── command-line-interface/  # Interface de ligne de commande
 │   └── external-tools/ # Outils externes (création de copies)
 ├── typst/              # Sources de templates Typst
 │   ├── components/     # Composants réutilisables (marqueurs, conteneurs)
@@ -114,7 +145,9 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 ├── build-cmake/        # Répertoire de build (généré)
 ├── CMakeLists.txt      # Configuration du projet CMake
 ├── create-copie.sh     # Script de génération de copies
-└── README.md           # Ce fichier
+├── run_benchmark.sh    # Script d'exécution du benchmark
+├── README.md           # Ce fichier
+└── LICENSE             # Fichier de licence
 ```
 
 ## 📖 Références techniques
@@ -123,7 +156,7 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 - **Typst** : [https://typst.app/](https://typst.app/)
 - **ZXing** : [https://github.com/zxing/zxing](https://github.com/zxing/zxing)
 
-## License
+## ⚖️ License
 
 - Code: Apache-2.0
 - Everything else, in particular documentation and measurements: CC-BY-SA-4.0

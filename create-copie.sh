@@ -11,6 +11,7 @@ show_usage() {
   echo "  --config N            : Marker configuration (1-10) (default: 10)"
   echo "  --grey-level N        : Grey level (0: black, 255: white) (default: 100)"
   echo "  --header-marker N     : Show header marker (0: hide, 1: show) (default: 1)"
+  echo "  --filename NAME       : Output filename (default: copy)"
 }
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then

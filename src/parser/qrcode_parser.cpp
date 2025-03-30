@@ -52,11 +52,11 @@ int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, const std::
     return found_mask;
 }
 
-std::optional<cv::Mat> main_qrcode(cv::Mat img,
+std::optional<cv::Mat> qrcode_parser(cv::Mat img,
 #ifdef DEBUG
-                                   cv::Mat debug_img,
+                                     cv::Mat debug_img,
 #endif
-                                   Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+                                     Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     std::string expected_content_hash = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=";
 
     auto barcodes = identify_barcodes(img);

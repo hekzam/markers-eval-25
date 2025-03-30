@@ -5,42 +5,24 @@
 #include "json_helper.h"
 #include "parser_helper.h"
 #include "string_helper.h"
-#include "math_helper.h"
+#include "math_utils.h"
 #include "draw_helper.h"
 
 #include "circle_parser.h"
 
-cv::Point2f center_of_rec(cv::Rect rect) {
-    return cv::Point2f(rect.x + rect.width / 2, rect.y + rect.height / 2);
-}
-
 std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     std::vector<cv::Vec3f> detected_circles;
 
-    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 10, 30);
-
-    // std::vector<std::vector<cv::Point>> contours;
-    // std::vector<cv::Vec4i> hierarchy; // unused; but could be used in drawContours
-    // cv::findContours(img, contours, hierarchy, cv::RETR_CCOMP, cv::CHAIN_APPROX_SIMPLE);
-
-    // for (const auto& contour : contours) {
-    //     if (contour.size() < 5)
-    //         continue;
-
-    //     cv::Rect rect = cv::boundingRect(cv::Mat(contour));
-
-    //     auto center = center_of_rec(rect);
-    //     detected_circles.push_back({ center.x, center.y, 10 });
-    // }
+    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 5, 50);
 
     return detected_circles;
 }
 
-std::optional<cv::Mat> main_circle(cv::Mat img,
+std::optional<cv::Mat> circle_parser(cv::Mat img,
 #ifdef DEBUG
-                                   cv::Mat debug_img,
+                                     cv::Mat debug_img,
 #endif
-                                   Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+                                     Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     auto barcodes = identify_barcodes(img);
 
     if (barcodes.empty()) {
@@ -95,7 +77,7 @@ std::optional<cv::Mat> main_circle(cv::Mat img,
         circle_pos.push_back(cv::Point2f(c[0], c[1]));
     }
 
-    auto mask = found_other_point(circle_pos, corner_points, corner_barcode);
+    auto mask = found_other_point(circle_pos, corner_points, center_of_box(corner_barcode.bounding_box));
 
 #ifdef DEBUG
     for (int i = 0; i < 4; ++i) {
