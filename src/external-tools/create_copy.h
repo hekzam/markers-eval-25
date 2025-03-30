@@ -1,7 +1,8 @@
-#ifndef TYPST_INTERFACE_H
-#define TYPST_INTERFACE_H
+#ifndef CREATE_COPY_H
+#define CREATE_COPY_H
 
 #include <string>
+#include <vector>
 
 enum MarkerConfig {
     QR_ALL_CORNERS = 1,        // QR codes avec données encodées dans tous les coins
@@ -20,20 +21,36 @@ enum MarkerConfig {
 };
 
 /**
- * Génère une copie de marqueurs fiduciaux et encodés
- *
+ * @brief Structure contenant les informations sur les configurations de marqueurs
+ */
+struct MarkerConfigInfo {
+    int id;
+    std::string description;
+};
+
+/**
+ * @brief Liste des configurations de marqueurs disponibles
+ */
+extern const std::vector<MarkerConfigInfo> marker_configs;
+
+/**
+ * @brief Génère et exporte une copie paramétrée, enregistrée dans le répertoire ./copies
+ * 
  * @param encoded_marker_size Taille des marqueurs encodés
- * @param fiducial_marker_size Taille des marqueurs fiduciaux
+ * @param fiducial_marker_size Taille des marqueurs fiduciaires
  * @param stroke_width Largeur du trait des marqueurs
  * @param marker_margin Marge autour des marqueurs
  * @param nb_copies Nombre de copies à générer
- * @param duplex_printing 0: impression recto, 1: impression recto-verso
+ * @param duplex_printing Mode d'impression recto-verso (0: simple face, 1: recto-verso)
  * @param marker_config Configuration des marqueurs
- * @param grey_level Niveau de gris (0: noir, 255: blanc)
- * @return true si la génération a réussi, false sinon
+ * @param grey_level Niveau de gris
+ * @param header_marker Affiche un marqueur d'entête
+ * @param filename Nom du fichier de sortie
+ * @return true si la copie a été générée avec succès
+ * @return false si une erreur est survenue
  */
-bool create_copy(int encoded_marker_size = 15, int fiducial_marker_size = 10, int stroke_width = 2,
-                 int marker_margin = 3, int nb_copies = 1, int duplex_printing = 0,
-                 int marker_config = CIRCLES_WITH_QR_BR, int grey_level = 100);
+bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
+                 int duplex_printing, int marker_config, int grey_level, int header_marker,
+                 const std::string& filename = "copy");
 
 #endif

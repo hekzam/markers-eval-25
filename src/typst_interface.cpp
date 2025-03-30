@@ -8,32 +8,20 @@ bool isValidMarkerConfig(int config) {
 }
 
 extern bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin,
-                        int nb_copies, int duplex_printing, int marker_config, int grey_level);
+                        int nb_copies, int duplex_printing, int marker_config, int grey_level, int header_marker,
+                        const std::string& filename);
 
-/**
- * Main function for marker generation utility
- * Accepts command-line arguments to customize marker generation:
- *
- * Usage: program [options]
- * Options:
- *   --encoded-size N      : Size of encoded markers (default: 15)
- *   --fiducial-size N     : Size of fiducial markers (default: 10)
- *   --stroke-width N      : Width of marker stroke (default: 2)
- *   --margin N            : Margin around markers (default: 3)
- *   --copies N            : Number of copies to generate (default: 1)
- *   --duplex N            : Duplex printing mode (0: single-sided, 1: double-sided) (default: 0)
- *   --config N            : Marker configuration (1-10) (default: 10)
- *   --grey-level N        : Grey level (0: black, 255: white) (default: 100)
- */
 int main(int argc, char* argv[]) {
     int encoded_marker_size = 15;
-    int fiducial_marker_size = 10;
+    int fiducial_marker_size = 3;
     int stroke_width = 2;
     int marker_margin = 3;
     int nb_copies = 1;
     int duplex_printing = 0;
     int marker_config = CIRCLES_WITH_QR_BR;
-    int grey_level = 255;
+    int grey_level = 0;
+    int header_marker = 1;
+    std::string filename = "copy";
 
     for (int i = 1; i < argc; i += 2) {
         std::string arg = argv[i];
@@ -43,28 +31,30 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        int value = std::atoi(argv[i + 1]);
-
         if (arg == "--encoded-size") {
-            encoded_marker_size = value;
+            encoded_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--fiducial-size") {
-            fiducial_marker_size = value;
+            fiducial_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--stroke-width") {
-            stroke_width = value;
+            stroke_width = std::atoi(argv[i + 1]);
         } else if (arg == "--margin") {
-            marker_margin = value;
+            marker_margin = std::atoi(argv[i + 1]);
         } else if (arg == "--copies") {
-            nb_copies = value;
+            nb_copies = std::atoi(argv[i + 1]);
         } else if (arg == "--duplex") {
-            duplex_printing = value;
+            duplex_printing = std::atoi(argv[i + 1]);
         } else if (arg == "--config") {
-            marker_config = value;
+            marker_config = std::atoi(argv[i + 1]);
             if (!isValidMarkerConfig(marker_config)) {
-                std::cerr << "Invalid marker configuration: " << value << " (valid range: 1-10)" << std::endl;
+                std::cerr << "Invalid marker configuration: " << argv[i + 1] << " (valid range: 1-10)" << std::endl;
                 return 1;
             }
         } else if (arg == "--grey-level") {
-            grey_level = value;
+            grey_level = std::atoi(argv[i + 1]);
+        } else if (arg == "--header-marker") {
+            header_marker = std::atoi(argv[i + 1]);
+        } else if (arg == "--filename") {
+            filename = argv[i + 1];
         } else {
             std::cerr << "Unknown argument: " << arg << std::endl;
             return 1;
@@ -72,7 +62,7 @@ int main(int argc, char* argv[]) {
     }
 
     bool success = create_copy(encoded_marker_size, fiducial_marker_size, stroke_width, marker_margin, nb_copies,
-                               duplex_printing, marker_config, grey_level);
+                               duplex_printing, marker_config, grey_level, header_marker, filename);
 
     return success ? 0 : 1;
 }

@@ -1,6 +1,6 @@
-# Hekzam Markers - Optimisation des marqueurs pour la correction d'examens 📄
+# Hekzam Markers - Optimisation des marqueurs pour la correction d'examens
 
-## 📌 Description du projet
+## Description du projet
 
 Hekzam est un ensemble de logiciels conçu pour permettre la création et la correction automatisée ou semi-automatisée des examens papier.  
 Actuellement, Hekzam utilise des **QR codes** comme marqueurs de bord pour la calibration et l'identification des pages des copies d'examen. Cependant, ces marqueurs présentent plusieurs inconvénients :
@@ -9,12 +9,12 @@ Actuellement, Hekzam utilise des **QR codes** comme marqueurs de bord pour la ca
 - **Espace occupé important** : ils réduisent la place disponible pour le contenu pédagogique.
 - **Consommation de ressources computationnelles** : leur génération et leur reconnaissance demandent un traitement relativement lourd.
 
-### 🎯 Objectif du projet
+### Objectif du projet
 
 L'objectif de ce projet est de **développer et évaluer des alternatives aux QR codes** utilisées actuellement dans Hekzam.  
 Les nouvelles solutions devront être plus sobres en encre et en espace tout en maintenant une **grande robustesse** dans leur détection.
 
-## 🛠️ Dépendances nécessaires
+## Dépendances nécessaires
 
 Avant de compiler et d'exécuter le projet, installez les dépendances suivantes :
 
@@ -45,40 +45,118 @@ cmake --build build-cmake -j
 - `-DCMAKE_BUILD_TYPE=Release` : Compilation optimisée.
 - `-DENABLE_ZBAR=ON` : si vous souhaitez utiliser zbar pour la détection des QR codes au lieu de ZXing.
 
-## Exécution du programme
+## 📄 Génération de copie
 
-Une fois la compilation terminée, utilisez la commande suivante pour générer les formulaires d'examen :
+Une fois la compilation terminée, utilisez la commande suivante pour générer les copies :
 
 ```sh
-./create-copie.sh
+./create-copie.sh [options]
 ```
 
-Ce script permet de produire des formulaires contenant les nouveaux marqueurs optimisés, tout en intégrant les métadonnées nécessaires pour leur identification et leur calibration.
+Ce script permet de produire une copie vers le dossier de sortie **copies/**.
 
-## 📂 Structure du projet (to edit)
+### Options disponibles
+
+```
+  --encoded-size N      : Taille des marqueurs encodés (par défaut: 15)
+  --fiducial-size N     : Taille des marqueurs fiduciaires (par défaut: 10)
+  --stroke-width N      : Largeur du trait des marqueurs (par défaut: 2)
+  --margin N            : Marge autour des marqueurs (par défaut: 3)
+  --duplex N            : Mode d'impression recto-verso (0: simple face, 1: recto-verso) (par défaut: 0)
+  --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
+  --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
+  --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)
+  --filename NAME       : Nom du fichier de sortie (par défaut: copy)
+```
+
+Exemple d'utilisation :
+```sh
+./create-copie.sh --config 3 --grey-level 50
+```
+
+Une autre exemple avec un nom de fichier personnalisé :
+```sh
+./create-copie.sh --config 3 --grey-level 50 --filename exam01
+```
+
+### Configurations de marqueurs disponibles
+
+Le paramètre `--config` permet de sélectionner parmi les configurations suivantes :
+
+1.  : QR codes avec données encodées dans tous les coins
+2.  : QR codes avec données encodées uniquement dans le coin bas-droit
+3.  : Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
+4.  : Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
+5.  : Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
+6.  : Différents marqueurs ArUco, QR code avec données en bas-droit
+7.  : Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
+8.  : Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+
+## 📊 Exécution du benchmark
+
+Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
+
+```sh
+./run_benchmark.sh
+```
+
+L'outil vous demandera plusieurs informations interactivement :
+
+1. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
+2. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
+3. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
+4. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
+5. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
+
+### Résultats du benchmark
+
+Après l'exécution, le benchmark produit plusieurs types de sorties :
+
+- **Images calibrées** : Versions redressées des copies scannées avec les zones détectées surlignées
+- **CSV de résultats** : Fichier `benchmark_results.csv` contenant les temps d'exécution et taux de succès pour chaque image
+- **Images de débogage** (si compilé en mode DEBUG) : Visualisation du processus de détection des marqueurs
+
+## 📂 Structure du projet
 
 ```
 .
-├── src/                # Code source principal (C++, OpenCV, ZXing)
-├── scripts/            # Scripts utiles (build, exécution, tests)
-├── docs/               # Documentation du projet
-├── CMakeLists.txt      # Configuration CMake
-└── README.md           # Ce fichier
+├── include/            # Fichiers d'en-tête (*.h, *.hpp)
+│   ├── benchmark.hpp   # En-têtes pour le benchmarking
+│   └── common.h        # Définitions de structures communes
+├── src/                # Code source C++ principal
+│   ├── benchmark.cpp   # Outil de benchmarking
+│   ├── expl_pars.cpp   # Parseur principal
+│   ├── typst_interface.cpp # Interface avec Typst
+│   ├── utils/          # Utilitaires partagés
+│   ├── parser/         # Implémentation des parseurs de marqueurs
+|   ├── command-line-interface/  # Interface de ligne de commande
+│   └── external-tools/ # Outils externes (création de copies)
+├── typst/              # Sources de templates Typst
+│   ├── components/     # Composants réutilisables (marqueurs, conteneurs)
+│   ├── common/         # Variables et utilitaires communs
+│   ├── content/        # Contenu des formulaires
+│   ├── src/            # Scripts de génération
+│   ├── style/          # Configuration de style
+│   └── template.typ    # Template principal
+├── copies/             # Dossier de sortie pour les copies générées
+├── output/             # Dossier de sortie pour les résultats d'analyse
+├── build-cmake/        # Répertoire de build (généré)
+├── CMakeLists.txt      # Configuration du projet CMake
+├── create-copie.sh     # Script de génération de copies
+├── run_benchmark.sh    # Script d'exécution du benchmark
+├── README.md           # Ce fichier
+└── LICENSE             # Fichier de licence
 ```
 
 ## 📖 Références techniques
 
 - **OpenCV** : [https://opencv.org/](https://opencv.org/)
 - **Typst** : [https://typst.app/](https://typst.app/)
-- **ZXing (Reconnaissance QR codes)** : [https://github.com/zxing/zxing](https://github.com/zxing/zxing)
+- **ZXing** : [https://github.com/zxing/zxing](https://github.com/zxing/zxing)
 
-## 🤝 Contributeurs
-
-- 📧 **Contact** : [millian.poquet@univ-tlse3.fr](mailto:millian.poquet@univ-tlse3.fr)
-- 🔬 **Université Paul Sabatier - IRIT, équipe Sepia**
-- 📍 **Projet encadré dans le cadre du Bachelor Engineering**
-
-## License
+## ⚖️ License
 
 - Code: Apache-2.0
 - Everything else, in particular documentation and measurements: CC-BY-SA-4.0

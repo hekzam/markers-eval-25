@@ -150,13 +150,14 @@
 
 // Paramètres pour la génération de copies
 #let e-m-s = float(sys.inputs.at("encoded-marker-size", default: "15")) * 1mm
-#let f-m-s = float(sys.inputs.at("fiducial-marker-size", default: "5")) * 1mm
-#let s-w = float(sys.inputs.at("stroke-width", default: "0.5")) * 1mm
+#let f-m-s = float(sys.inputs.at("fiducial-marker-size", default: "3")) * 1mm
+#let s-w = float(sys.inputs.at("stroke-width", default: "2")) * 1mm
 #let m-m = float(sys.inputs.at("marker-margin", default: "3")) * 1mm
-#let n-c = int(sys.inputs.at("nb-copies", default: "1"))
+#let n-c = int(sys.inputs.at("nb-copies", default: "1")) // Ne fonctionne pas a plus de 1 copie
 #let d-p = int(sys.inputs.at("duplex-printing", default: "0")) == 1
-#let m-c = sys.inputs.at("marker-config", default: "2")
+#let m-c = sys.inputs.at("marker-config", default: "0")
 #let g-l = int(sys.inputs.at("grey-level", default: "0"))
+#let h-m = int(sys.inputs.at("header-marker", default: "1")) == 1
 
 #gen-copies(
   "Le pire examen de tous les temps !", 
@@ -167,5 +168,6 @@
   f-m-s,
   s-w,
   m-m,
-  g-l
+  g-l,
+  header-marker: h-m
 )
