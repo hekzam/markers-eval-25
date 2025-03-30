@@ -7,6 +7,16 @@
 #include <ZXing/ReadBarcode.h>
 #endif
 
+enum class ParserType { ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, DEFAULT };
+
+/**
+ * @brief Convertit un type de parseur en sa représentation string
+ *
+ * @param parser Le type de parseur à convertir
+ * @return std::string La représentation string du type de parseur
+ */
+std::string to_string(ParserType parser);
+
 struct DetectedBarcode {
     std::string content;
     std::vector<cv::Point2f> bounding_box;

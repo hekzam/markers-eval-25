@@ -14,6 +14,24 @@
 #include "qrcode_empty_parser.h"
 #include "aruco_parser.h"
 
+std::string to_string(ParserType parser) {
+    switch (parser) {
+        case ParserType::ARUCO:
+            return "aruco";
+        case ParserType::CIRCLE:
+            return "circle";
+        case ParserType::QRCODE:
+            return "qrcode";
+        case ParserType::CUSTOM_MARKER:
+            return "custom_marker";
+        case ParserType::DEFAULT:
+            return "default";
+        default:
+            return "";
+    }
+}
+
+/// TODO: Corentin je te laisse le soin de t'en occuper stp
 std::unordered_map<std::string, Parser> parsers = {
     { "default", { default_parser } },
     { "qrcode", { main_qrcode } },
