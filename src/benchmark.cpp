@@ -16,110 +16,21 @@
 #include "utils/benchmark_helper.h"
 #include "utils/draw_helper.h"
 #include "external-tools/create_copy.h"
-
-const std::string RESET = "\033[0m";
-const std::string BOLD = "\033[1m";
-const std::string GREEN = "\033[32m";
-const std::string BLUE = "\033[34m";
-const std::string CYAN = "\033[36m";
-const std::string YELLOW = "\033[33m";
-
-const std::string PARSER_ARUCO = "aruco";
-const std::string PARSER_CIRCLE = "circle";
-const std::string PARSER_QRCODE = "qrcode";
-const std::string PARSER_CUSTOM_MARKER = "custom_marker";
-const std::string PARSER_DEFAULT = "default";
+#include "command-line-interface/command_line_interface.h"
 
 /**
- * @brief Affiche une bannière de bienvenue pour le programme
+ * @brief Structure pour stocker les paramètres de benchmark
  */
-void display_banner() {
-    std::cout << std::string(50, '-') << std::endl;
-    std::cout << BOLD << BLUE << "  BENCHMARK TOOL - MARKERS EVALUATION" << RESET << std::endl;
-    std::cout << CYAN << "  Document Processing & Analysis" << RESET << std::endl;
-    std::cout << std::string(50, '-') << std::endl << std::endl;
-}
-
-/**
- * @brief Affiche une liste de configurations disponibles
- *
- * @param marker_configs Liste des configurations à afficher
- * @param title Titre à afficher en gras avant la liste
- * @return int La configuration par défaut à utiliser
- */
-int display_configs(const std::vector<MarkerConfigInfo>& marker_configs, const int default_config,
-                    const std::string& title = "Available configurations:") {
-
-    std::cout << std::endl << BOLD << title << RESET << std::endl;
-
-    for (const auto& config : marker_configs) {
-        std::cout << std::setw(3) << config.id << ". " << config.description << std::endl;
-    }
-
-    return default_config;
-}
-
-/**
- * @brief Demande une entrée numérique à l'utilisateur avec formatage amélioré et vérification de plage
- *
- * @param prompt Message à afficher
- * @param default_value Valeur par défaut
- * @param min_value Valeur minimale autorisée
- * @param max_value Valeur maximale autorisée
- * @return int Valeur numérique entrée par l'utilisateur ou valeur par défaut
- */
-int get_user_input_int(const std::string& prompt, int default_value, int min_value, int max_value) {
-    std::string input;
-    int value = default_value;
-    bool valid_input = false;
-
-    do {
-        std::cout << BOLD << prompt << RESET << " [" << GREEN << default_value << RESET << "]: ";
-        std::getline(std::cin, input);
-
-        if (input.empty()) {
-            value = default_value;
-            valid_input = true;
-        } else {
-            try {
-                value = std::stoi(input);
-                if (value >= min_value && value <= max_value) {
-                    valid_input = true;
-                } else {
-                    std::cout << "Value must be between " << min_value << " and " << max_value << ". Please try again."
-                              << std::endl;
-                }
-            } catch (const std::exception& e) { std::cout << "Invalid input. Please enter a number." << std::endl; }
-        }
-    } while (!valid_input);
-
-    return value;
-}
-
-/**
- * @brief Vérifie si une chaîne ne contient que des espaces
- *
- * @param str Chaîne à vérifier
- * @return true si la chaîne est vide ou ne contient que des espaces
- * @return false sinon
- */
-bool is_whitespace_only(const std::string& str) {
-    return str.empty() || str.find_first_not_of(" \t\n\v\f\r") == std::string::npos;
-}
-
-/**
- * @brief Demande une entrée à l'utilisateur avec formatage amélioré
- *
- * @param prompt Message à afficher
- * @param default_value Valeur par défaut
- * @return std::string Valeur entrée par l'utilisateur ou valeur par défaut
- */
-std::string get_user_input(const std::string& prompt, const std::string& default_value) {
-    std::string input;
-    std::cout << BOLD << prompt << RESET << " [" << GREEN << default_value << RESET << "]: ";
-    std::getline(std::cin, input);
-    return is_whitespace_only(input) ? default_value : input;
-}
+struct BenchmarkParams {
+    std::string output_dir = "./output";
+    std::string atomic_boxes_file = "./original_boxes.json";
+    std::string input_dir = "./copies";
+    std::string copies_str = "1";
+    int encoded_marker_size = 15;
+    int fiducial_marker_size = 10;
+    int grey_level = 0;
+    int marker_config = ARUCO_WITH_QR_BR;
+};
 
 /**
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
@@ -131,80 +42,90 @@ std::string select_parser_for_marker_config(int marker_config) {
     switch (marker_config) {
         case QR_ALL_CORNERS:
         case QR_BOTTOM_RIGHT_ONLY:
-            return PARSER_QRCODE;
+            return to_string(ParserType::QRCODE);
         case CIRCLES_WITH_QR_BR:
         case TOP_CIRCLES_QR_BR:
         case CIRCLE_OUTLINES_WITH_QR_BR:
-            return PARSER_CIRCLE;
+            return to_string(ParserType::CIRCLE);
         case CUSTOM_SVG_WITH_QR_BR:
-            return PARSER_CUSTOM_MARKER;
+            return to_string(ParserType::CUSTOM_MARKER);
         case ARUCO_WITH_QR_BR:
         case TWO_ARUCO_WITH_QR_BR:
-            return PARSER_ARUCO;
+            return to_string(ParserType::ARUCO);
         case SQUARES_WITH_QR_BR:
         case SQUARE_OUTLINES_WITH_QR_BR:
         default:
-            return PARSER_DEFAULT;
+            return to_string(ParserType::DEFAULT);
     }
 }
 
-int main(int argc, char* argv[]) {
-    std::string output_dir_opt = "./output";
-    std::string atomic_boxes_file = "./original_boxes.json";
-    std::string input_dir = "./copies";
-    std::string copies_str = "1";
-    int encoded_marker_size = 15;
-    int fiducial_marker_size = 10;
-    int grey_level = 0;
+/**
+ * @brief Affiche la configuration actuelle du benchmark
+ *
+ * @param params Structure contenant les paramètres de benchmark
+ */
+void display_configuration(const BenchmarkParams& params) {
+    std::vector<std::pair<std::string, std::string>> config_pairs = {
+        { "Output directory", params.output_dir },
+        { "Atomic boxes file", params.atomic_boxes_file },
+        { "Input directory", params.input_dir },
+        { "Copies", params.copies_str },
+        { "Encoded marker size", std::to_string(params.encoded_marker_size) },
+        { "Fiducial marker size", std::to_string(params.fiducial_marker_size) },
+        { "Grey level", std::to_string(params.grey_level) },
+        { "Marker config", std::to_string(params.marker_config) }
+    };
 
-    std::string input;
+    display_configuration_recap("Configuration:", config_pairs);
+}
 
-    // Affichage de la bannière
-    display_banner();
+/**
+ * @brief Récupère les paramètres de benchmark à partir de l'entrée utilisateur
+ *
+ * @return BenchmarkParams Structure contenant les paramètres de benchmark
+ */
+BenchmarkParams get_benchmark_params() {
+    BenchmarkParams params;
+    params.output_dir = get_user_input("Output directory", params.output_dir);
+    params.atomic_boxes_file = get_user_input("Atomic boxes JSON file path", params.atomic_boxes_file);
+    params.input_dir = get_user_input("Input directory", params.input_dir);
+    params.copies_str = get_user_input("Number of copies", params.copies_str);
 
-    // Récupération des entrées utilisateur avec un format amélioré
-    output_dir_opt = get_user_input("Output directory", output_dir_opt);
-    atomic_boxes_file = get_user_input("Atomic boxes JSON file path", atomic_boxes_file);
-    input_dir = get_user_input("Input directory", input_dir);
-    copies_str = get_user_input("Number of copies", copies_str);
-    encoded_marker_size = get_user_input_int("Encoded marker size", encoded_marker_size, 5, 50);
-    fiducial_marker_size = get_user_input_int("Fiducial marker size", fiducial_marker_size, 5, 50);
-    grey_level = get_user_input_int("Grey level", grey_level, 0, 255);
-    int marker_config_default = display_configs(marker_configs, ARUCO_WITH_QR_BR, "Available marker configurations:");
-    int marker_config = get_user_input_int("Marker configuration (1-10)", marker_config_default, 1, 10);
+    const int min_marker_size = 5, max_marker_size = 50;
+    params.encoded_marker_size =
+        get_user_input("Encoded marker size", params.encoded_marker_size, &min_marker_size, &max_marker_size);
+    params.fiducial_marker_size =
+        get_user_input("Fiducial marker size", params.fiducial_marker_size, &min_marker_size, &max_marker_size);
 
-    // Sélectionne le parseur à utiliser en fonction de la configuration choisie
-    std::string selected_parser = select_parser_for_marker_config(marker_config);
+    const int min_grey = 0, max_grey = 255;
+    params.grey_level = get_user_input("Grey level", params.grey_level, &min_grey, &max_grey);
 
-    // Affichage du récapitulatif
-    std::cout << std::endl << BOLD << "Configuration:" << RESET << std::endl;
-    std::cout << "- Output directory: " << YELLOW << output_dir_opt << RESET << std::endl;
-    std::cout << "- Atomic boxes file: " << YELLOW << atomic_boxes_file << RESET << std::endl;
-    std::cout << "- Input directory: " << YELLOW << input_dir << RESET << std::endl;
-    std::cout << "- Copies: " << YELLOW << copies_str << RESET << std::endl;
-    std::cout << "- Encoded marker size: " << YELLOW << encoded_marker_size << RESET << std::endl;
-    std::cout << "- Fiducial marker size: " << YELLOW << fiducial_marker_size << RESET << std::endl;
-    std::cout << "- Grey level: " << YELLOW << grey_level << RESET << std::endl;
-    std::cout << "- Marker config: " << YELLOW << marker_config << RESET << std::endl << std::endl;
+    int marker_config_default =
+        display_marker_configs(marker_configs, ARUCO_WITH_QR_BR, "Available marker configurations:");
+    const int min_config = 1, max_config = 10;
+    params.marker_config =
+        get_user_input("Marker configuration (1-10)", marker_config_default, &min_config, &max_config);
 
-    // Verify values are not empty (should never happen with defaults)
-    if (output_dir_opt.empty() || atomic_boxes_file.empty() || input_dir.empty() || copies_str.empty()) {
-        std::cerr << "Required arguments cannot be empty.\n";
-        return 1;
-    }
+    return params;
+}
 
-    int nb_copies = std::stoi(copies_str);
+/**
+ * @brief Exécute le benchmark en fonction des paramètres fournis
+ *
+ * @param params Structure contenant les paramètres de benchmark
+ * @param selected_parser Le type de parseur sélectionné
+ */
+void run_benchmark(const BenchmarkParams& params, const std::string& selected_parser) {
+    int nb_copies = std::stoi(params.copies_str);
     if (nb_copies <= 0 || nb_copies > 50) {
         throw std::runtime_error("Number of copies must be between 1 and 50");
     }
 
-    generate_copies(nb_copies, static_cast<MarkerConfig>(marker_config), encoded_marker_size, fiducial_marker_size,
-                    grey_level);
+    generate_copies(nb_copies, static_cast<MarkerConfig>(params.marker_config), params.encoded_marker_size,
+                    params.fiducial_marker_size, params.grey_level);
 
-    // Création du répertoire de sortie pour les images calibrées et annotées
-    std::filesystem::path output_dir{ output_dir_opt };
-
-    // Nettoyage du répertoire de sortie s'il existe déjà
+    // Création et nettoyage des répertoires de sortie
+    std::filesystem::path output_dir{ params.output_dir };
     if (std::filesystem::exists(output_dir)) {
         std::cout << "Cleaning existing output directory..." << std::endl;
         std::filesystem::remove_all(output_dir);
@@ -213,53 +134,39 @@ int main(int argc, char* argv[]) {
     std::filesystem::path subimg_output_dir = create_subdir(output_dir, "subimg");
     std::filesystem::path csv_output_dir = create_subdir(output_dir, "csv");
 
-    std::filesystem::path benchmark_csv_path = csv_output_dir.string() + "/benchmark_results.csv";
+    std::filesystem::path benchmark_csv_path = csv_output_dir / "benchmark_results.csv";
     std::ofstream benchmark_csv(benchmark_csv_path);
     if (benchmark_csv.is_open()) {
         benchmark_csv << "File,Time(ms),Success" << std::endl;
     }
 
-    // Vérification de l'existence du fichier atomic_boxes
-    if (!std::filesystem::exists(atomic_boxes_file)) {
-        throw std::runtime_error("Atomic boxes file '" + atomic_boxes_file + "' does not exist");
+    if (!std::filesystem::exists(params.atomic_boxes_file)) {
+        throw std::runtime_error("Atomic boxes file '" + params.atomic_boxes_file + "' does not exist");
     }
 
-    // Lecture et parsing du fichier JSON des AtomicBoxes
-    json atomic_boxes_json = parse_json_file(atomic_boxes_file);
-
-    // Conversion des AtomicBox en structures
+    // Lecture et parsing du JSON
+    json atomic_boxes_json = parse_json_file(params.atomic_boxes_file);
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
     std::vector<std::shared_ptr<AtomicBox>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
-
-    // Séparation des AtomicBox en marqueurs et boîtes utilisateur
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
-    // Vérification et traitement du répertoire d'images d'entrée
-    std::filesystem::path dir_path{ input_dir };
+    std::filesystem::path dir_path{ params.input_dir };
     if (!std::filesystem::is_directory(dir_path)) {
         throw std::runtime_error("could not open directory '" + dir_path.string() + "'");
     }
 
     const cv::Point2f src_img_size{ 210, 297 };
-
-    // Traitement de chaque image
     for (const auto& entry : std::filesystem::directory_iterator(dir_path)) {
         cv::Mat img = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
         const cv::Point2f dst_img_size(img.cols, img.rows);
-
         auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
 
-        Metadata meta = {
-            0,
-            1,
-            "",
-        };
+        Metadata meta = { 0, 1, "" };
 #ifdef DEBUG
         cv::Mat debug_img;
         cv::cvtColor(img, debug_img, cv::COLOR_GRAY2BGR);
 #endif
-
         std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
         std::optional<cv::Mat> affine_transform;
         BenchmarkGuardCSV benchmark_guard(entry.path().filename().string(), &benchmark_csv);
@@ -282,23 +189,24 @@ int main(int argc, char* argv[]) {
         auto calibrated_img_col = redress_image(img, affine_transform.value());
         cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
+        /// TODO: Refactoriser cette partie
         // Annotation des boîtes utilisateur
         for (auto box : user_boxes_per_page[meta.page - 1]) {
-            const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y + box->height },
-                                                       cv::Point2f{ box->x, box->y + box->height } };
-            std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
+            std::vector<cv::Point> raster_box =
+                convert_to_raster({ cv::Point2f{ box->x, box->y }, cv::Point2f{ box->x + box->width, box->y },
+                                    cv::Point2f{ box->x + box->width, box->y + box->height },
+                                    cv::Point2f{ box->x, box->y + box->height } },
+                                  src_img_size, dimension);
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 255), 2);
         }
 
         // Annotation des marqueurs de coin
         for (auto box : corner_markers) {
-            const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y + box->height },
-                                                       cv::Point2f{ box->x, box->y + box->height } };
-            std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
+            std::vector<cv::Point> raster_box =
+                convert_to_raster({ cv::Point2f{ box->x, box->y }, cv::Point2f{ box->x + box->width, box->y },
+                                    cv::Point2f{ box->x + box->width, box->y + box->height },
+                                    cv::Point2f{ box->x, box->y + box->height } },
+                                  src_img_size, dimension);
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
             cv::circle(calibrated_img_col,
                        convert_to_raster({ cv::Point2f{ box->x + box->width / 2, box->y + box->height / 2 } },
@@ -314,5 +222,20 @@ int main(int argc, char* argv[]) {
     if (benchmark_csv.is_open()) {
         benchmark_csv.close();
     }
+}
+
+int main(int argc, char* argv[]) {
+    display_banner();
+    BenchmarkParams params = get_benchmark_params();
+    std::string selected_parser = select_parser_for_marker_config(params.marker_config);
+    display_configuration(params);
+
+    if (params.output_dir.empty() || params.atomic_boxes_file.empty() || params.input_dir.empty() ||
+        params.copies_str.empty()) {
+        throw std::runtime_error("Required arguments cannot be empty.");
+    }
+
+    run_benchmark(params, selected_parser);
     return 0;
 }
+/// TODO: load page.json
