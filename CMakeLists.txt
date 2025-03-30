@@ -37,10 +37,14 @@ find_package(nlohmann_json REQUIRED)
 # Add the source files
 set(SRC
     src/expl_pars.cpp
+    src/external-tools/create_copy.cpp
 )
 
 set(SRC_BENCH
     src/benchmark.cpp
+    src/utils/benchmark_helper.cpp
+    src/external-tools/create_copy.cpp
+    src/command-line-interface/command_line_interface.cpp
 )
 
 set(SRC_TYPST_INTERFACE
