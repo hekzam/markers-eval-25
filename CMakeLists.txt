@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard to use")
 include(FetchContent)
 
 option(ENABLE_ZBAR OFF)
+option(AUTO_DOWNLOAD_ZXING "Automatically download ZXing if not found" OFF)
 
 # Find the required dependencies
 find_package(OpenCV REQUIRED)
@@ -19,6 +20,9 @@ if(ENABLE_ZBAR)
     add_definitions(-DENABLE_ZBAR)
 else()
     find_package(ZXing QUIET)
+    if (NOT ZXing_FOUND AND NOT AUTO_DOWNLOAD_ZXING)
+        message(FATAL_ERROR "ZXing not found. Please install it or set AUTO_DOWNLOAD_ZXING to ON.")
+    endif()
     if(NOT ZXing_FOUND)
         FetchContent_Declare(
             zxing
@@ -47,6 +51,11 @@ set(SRC_BENCH
     src/command-line-interface/command_line_interface.cpp
 )
 
+set(SRC_MODIFIEUR
+    src/modifier.cpp
+    src/utils/math_utils.cpp
+)
+
 set(SRC_TYPST_INTERFACE
     src/typst_interface.cpp
     src/external-tools/create_copy.cpp
@@ -70,11 +79,13 @@ set(INCLUDE_DIRS
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
 include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
 include_directories(typst_interface PRIVATE ${INCLUDE_DIRS})
+include_directories(modifier PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
 add_executable(typst_interface ${SRC_TYPST_INTERFACE})
+add_executable(modifier ${SRC_MODIFIEUR})
 
 # Link the dependencies
 target_link_libraries(parser
@@ -90,6 +101,12 @@ target_link_libraries(benchmark
 )
 
 target_link_libraries(typst_interface
+    PRIVATE
+        ${OpenCV_LIBS}
+        nlohmann_json::nlohmann_json
+)
+
+target_link_libraries(modifier
     PRIVATE
         ${OpenCV_LIBS}
         nlohmann_json::nlohmann_json
