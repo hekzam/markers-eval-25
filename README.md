@@ -131,6 +131,7 @@ Après l'exécution, le benchmark produit plusieurs types de sorties :
 │   ├── typst_interface.cpp # Interface avec Typst
 │   ├── utils/          # Utilitaires partagés
 │   ├── parser/         # Implémentation des parseurs de marqueurs
+|   ├── command-line-interface/  # Interface de ligne de commande
 │   └── external-tools/ # Outils externes (création de copies)
 ├── typst/              # Sources de templates Typst
 │   ├── components/     # Composants réutilisables (marqueurs, conteneurs)
@@ -144,7 +145,9 @@ Après l'exécution, le benchmark produit plusieurs types de sorties :
 ├── build-cmake/        # Répertoire de build (généré)
 ├── CMakeLists.txt      # Configuration du projet CMake
 ├── create-copie.sh     # Script de génération de copies
-└── README.md           # Ce fichier
+├── run_benchmark.sh    # Script d'exécution du benchmark
+├── README.md           # Ce fichier
+└── LICENSE             # Fichier de licence
 ```
 
 ## 📖 Références techniques
