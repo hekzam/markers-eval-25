@@ -14,9 +14,9 @@ struct Config {
     std::variant<int, std::string> value;
 };
 
-void print_help_time_copy(std::unordered_map<std::string, Config> default_config);
-std::unordered_map<std::string, Config> get_config(int argc, char* argv[],
-                                                   std::unordered_map<std::string, Config> default_config);
+void print_help_config(std::unordered_map<std::string, Config> default_config);
+std::optional<std::unordered_map<std::string, Config>>
+get_config(int argc, char* argv[], std::unordered_map<std::string, Config> default_config);
 void add_missing_config(std::unordered_map<std::string, Config>& config,
                         const std::unordered_map<std::string, Config>& default_config);
 

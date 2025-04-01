@@ -37,6 +37,25 @@ std::unordered_map<std::string, Config> default_config_time_copy = {
     { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } }
 };
 
+bool constraint(std::unordered_map<std::string, Config> config) {
+    if (std::get<std::string>(config["output-dir"].value).empty() != 1 ||
+        std::get<std::string>(config["atomic-boxes-file"].value).empty() != 1 ||
+        std::get<std::string>(config["input-dir"].value).empty() != 1) {
+        return false;
+    }
+
+    if (!std::filesystem::exists(std::get<std::string>(config["atomic-boxes-file"].value))) {
+        std::cerr << "Atomic boxes file '" << std::get<std::string>(config["atomic-boxes-file"].value)
+                  << "' does not exist" << std::endl;
+        return false;
+    }
+    if (std::get<int>(config["nb-copies"].value) <= 0 || std::get<int>(config["nb-copies"].value) > 50) {
+        std::cerr << "Number of copies must be between 1 and 50" << std::endl;
+        return false;
+    }
+    return true;
+}
+
 /**
  * @brief Exécute le benchmark en fonction des paramètres fournis
  *
@@ -44,7 +63,12 @@ std::unordered_map<std::string, Config> default_config_time_copy = {
  * @param selected_parser Le type de parseur sélectionné
  */
 void run_benchmark(int argc, char* argv[]) {
-    auto config = get_config(argc, argv, default_config_time_copy);
+    auto opt_config = get_config(argc, argv, default_config_time_copy);
+    if (!opt_config.has_value()) {
+        print_help_config(default_config_time_copy);
+        return;
+    }
+    auto config = opt_config.value();
     if (argc == 1) {
         add_missing_config(config, default_config_time_copy);
     } else {
@@ -54,32 +78,27 @@ void run_benchmark(int argc, char* argv[]) {
             }
         }
     }
+
+    if (!constraint(config)) {
+        print_help_config(default_config_time_copy);
+        return;
+    }
+
     int nb_copies = std::get<int>(config["nb-copies"].value);
-    if (nb_copies <= 0 || nb_copies > 50) {
-        throw std::runtime_error("Number of copies must be between 1 and 50");
-    }
+    auto atomic_boxes_file = std::get<std::string>(config["atomic-boxes-file"].value);
+    auto input_dir = std::get<std::string>(config["input-dir"].value);
+    auto copies_str = std::to_string(std::get<int>(config["nb-copies"].value));
+    auto encoded_marker_size = std::get<int>(config["encoded-marker_size"].value);
+    auto fiducial_marker_size = std::get<int>(config["fiducial-marker_size"].value);
+    auto grey_level = std::get<int>(config["grey-level"].value);
+    auto marker_config = std::get<int>(config["marker-config"].value);
+    std::string selected_parser = select_parser_for_marker_config(marker_config);
 
-    BenchmarkParams params;
-    params.output_dir = std::get<std::string>(config["output-dir"].value);
-    params.atomic_boxes_file = std::get<std::string>(config["atomic-boxes-file"].value);
-    params.input_dir = std::get<std::string>(config["input-dir"].value);
-    params.copies_str = std::to_string(std::get<int>(config["nb-copies"].value));
-    params.encoded_marker_size = std::get<int>(config["encoded-marker_size"].value);
-    params.fiducial_marker_size = std::get<int>(config["fiducial-marker_size"].value);
-    params.grey_level = std::get<int>(config["grey-level"].value);
-    params.marker_config = std::get<int>(config["marker-config"].value);
-    std::string selected_parser = select_parser_for_marker_config(params.marker_config);
-
-    if (params.output_dir.empty() || params.atomic_boxes_file.empty() || params.input_dir.empty() ||
-        params.copies_str.empty()) {
-        throw std::runtime_error("Required arguments cannot be empty.");
-    }
-
-    generate_copies(nb_copies, static_cast<MarkerConfig>(params.marker_config), params.encoded_marker_size,
-                    params.fiducial_marker_size, params.grey_level);
+    generate_copies(nb_copies, static_cast<MarkerConfig>(marker_config), encoded_marker_size, fiducial_marker_size,
+                    grey_level);
 
     // Création et nettoyage des répertoires de sortie
-    std::filesystem::path output_dir{ params.output_dir };
+    std::filesystem::path output_dir{ std::get<std::string>(config["output-dir"].value) };
     if (std::filesystem::exists(output_dir)) {
         std::cout << "Cleaning existing output directory..." << std::endl;
         std::filesystem::remove_all(output_dir);
@@ -94,18 +113,14 @@ void run_benchmark(int argc, char* argv[]) {
         benchmark_csv << "File,Time(ms),Success" << std::endl;
     }
 
-    if (!std::filesystem::exists(params.atomic_boxes_file)) {
-        throw std::runtime_error("Atomic boxes file '" + params.atomic_boxes_file + "' does not exist");
-    }
-
     // Lecture et parsing du JSON
-    json atomic_boxes_json = parse_json_file(params.atomic_boxes_file);
+    json atomic_boxes_json = parse_json_file(atomic_boxes_file);
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
     std::vector<std::shared_ptr<AtomicBox>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
-    std::filesystem::path dir_path{ params.input_dir };
+    std::filesystem::path dir_path{ input_dir };
     if (!std::filesystem::is_directory(dir_path)) {
         throw std::runtime_error("could not open directory '" + dir_path.string() + "'");
     }

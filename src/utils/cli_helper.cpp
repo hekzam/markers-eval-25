@@ -1,6 +1,6 @@
 #include "cli_helper.h"
 
-void print_help_time_copy(std::unordered_map<std::string, Config> default_config) {
+void print_help_config(std::unordered_map<std::string, Config> default_config) {
     for (const auto& [key, config] : default_config) {
         if (std::holds_alternative<int>(config.value)) {
             std::cout << "--" << key << " <int>: " << config.description << " (default: " << std::get<int>(config.value)
@@ -12,23 +12,23 @@ void print_help_time_copy(std::unordered_map<std::string, Config> default_config
     }
 }
 
-std::unordered_map<std::string, Config> get_config(int argc, char* argv[],
-                                                   std::unordered_map<std::string, Config> default_config) {
+std::optional<std::unordered_map<std::string, Config>>
+get_config(int argc, char* argv[], std::unordered_map<std::string, Config> default_config) {
     std::unordered_map<std::string, Config> config = {};
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg.substr(0, 2) != "--") {
             std::cerr << "Invalid argument: " << arg << std::endl;
-            continue;
+            return {};
         }
         arg = arg.substr(2);
         if (default_config.find(arg) == default_config.end()) {
             std::cerr << "Unknown argument: " << arg << std::endl;
-            continue;
+            return {};
         }
         if (i + 1 >= argc) {
             std::cerr << "Missing value for argument: " << arg << std::endl;
-            continue;
+            return {};
         }
         std::string value = argv[i + 1];
         if (std::holds_alternative<int>(default_config[arg].value)) {
