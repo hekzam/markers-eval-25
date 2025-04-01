@@ -14,31 +14,42 @@
 #include "qrcode_empty_parser.h"
 #include "aruco_parser.h"
 #include "shape_parser.h"
+#include "cli_helper.h"
 
-std::string to_string(ParserType parser) {
-    switch (parser) {
-        case ParserType::ARUCO:
-            return "aruco";
-        case ParserType::CIRCLE:
-            return "circle";
-        case ParserType::QRCODE:
-            return "qrcode";
-        case ParserType::CUSTOM_MARKER:
-            return "custom_marker";
-        case ParserType::DEFAULT:
-            return "default";
+/**
+ * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
+ *
+ * @param marker_config Le numéro de configuration de marqueur (1-10)
+ * @return std::string Le type de parseur à utiliser
+ */
+std::string select_parser_for_marker_config(int marker_config) {
+    switch (marker_config) {
+        case QR_ALL_CORNERS:
+        case QR_BOTTOM_RIGHT_ONLY:
+            return QRCODE;
+        case CIRCLES_WITH_QR_BR:
+        case TOP_CIRCLES_QR_BR:
+        case CIRCLE_OUTLINES_WITH_QR_BR:
+            return CIRCLE;
+        case CUSTOM_SVG_WITH_QR_BR:
+            return CUSTOM_MARKER;
+        case ARUCO_WITH_QR_BR:
+        case TWO_ARUCO_WITH_QR_BR:
+            return ARUCO;
+        case SQUARES_WITH_QR_BR:
+        case SQUARE_OUTLINES_WITH_QR_BR:
         default:
-            return "";
+            return DEFAULT_PARSER;
     }
 }
 
 /// TODO: Corentin je te laisse le soin de t'en occuper stp
 std::unordered_map<std::string, Parser> parsers = {
-    { "default", { default_parser } },
-    { "qrcode", { qrcode_parser } },
-    { "circle", { circle_parser } },
-    { "aruco", { aruco_parser } },
-    { "shape", { shape_parser } },
+    { DEFAULT_PARSER, { default_parser } },
+    { QRCODE, { qrcode_parser } },
+    { CIRCLE, { circle_parser } },
+    { ARUCO, { aruco_parser } },
+    { SHAPE, { shape_parser } },
     // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
     { "empty", { qrcode_empty_parser } },
 };
