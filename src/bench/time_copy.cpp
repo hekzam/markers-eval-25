@@ -38,9 +38,10 @@ std::unordered_map<std::string, Config> default_config_time_copy = {
 };
 
 bool constraint(std::unordered_map<std::string, Config> config) {
-    if (std::get<std::string>(config["output-dir"].value).empty() != 1 ||
-        std::get<std::string>(config["atomic-boxes-file"].value).empty() != 1 ||
-        std::get<std::string>(config["input-dir"].value).empty() != 1) {
+    if (std::get<std::string>(config["output-dir"].value).empty() ||
+        std::get<std::string>(config["atomic-boxes-file"].value).empty() ||
+        std::get<std::string>(config["input-dir"].value).empty()) {
+        std::cerr << "Output directory, atomic boxes file and input directory must not be empty" << std::endl;
         return false;
     }
 
