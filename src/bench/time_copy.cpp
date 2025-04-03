@@ -14,17 +14,6 @@
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
 
-struct BenchmarkParams {
-    std::string output_dir = "./output";
-    std::string atomic_boxes_file = "./original_boxes.json";
-    std::string input_dir = "./copies";
-    std::string copies_str = "1";
-    int encoded_marker_size = 15;
-    int fiducial_marker_size = 10;
-    int grey_level = 0;
-    int marker_config = ARUCO_WITH_QR_BR;
-};
-
 std::unordered_map<std::string, Config> default_config_time_copy = {
     { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
     { "atomic-boxes-file",
@@ -63,23 +52,7 @@ bool constraint(std::unordered_map<std::string, Config> config) {
  * @param params Structure contenant les paramètres de benchmark
  * @param selected_parser Le type de parseur sélectionné
  */
-void run_benchmark(int argc, char* argv[]) {
-    auto opt_config = get_config(argc, argv, default_config_time_copy);
-    if (!opt_config.has_value()) {
-        print_help_config(default_config_time_copy);
-        return;
-    }
-    auto config = opt_config.value();
-    if (argc == 1) {
-        add_missing_config(config, default_config_time_copy);
-    } else {
-        for (const auto& [key, value] : default_config_time_copy) {
-            if (config.find(key) == config.end()) {
-                config[key] = value;
-            }
-        }
-    }
-
+void run_benchmark(std::unordered_map<std::string, Config> config) {
     if (!constraint(config)) {
         print_help_config(default_config_time_copy);
         return;
