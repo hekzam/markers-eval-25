@@ -7,6 +7,18 @@
 #include "utils/cli_helper.h"
 #include "bench/time_copy.h"
 
+std::unordered_map<std::string, Config> default_config_time_copy = {
+    { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
+    { "atomic-boxes-file",
+      { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } },
+    { "input-dir", { "Input directory", "The directory containing the input images", "./copies" } },
+    { "nb-copies", { "Number of copies", "The number of copies to generate", 1 } },
+    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
+    { "fiducial-marker_size", { "Fiducial marker size", "The size of the fiducial markers", 10 } },
+    { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
+    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } }
+};
+
 struct BenchmarkConfig {
     std::string name;
     void (*run)(std::unordered_map<std::string, Config>);

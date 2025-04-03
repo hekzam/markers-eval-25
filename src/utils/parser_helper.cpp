@@ -38,6 +38,7 @@ std::string select_parser_for_marker_config(int marker_config) {
             return ARUCO;
         case SQUARES_WITH_QR_BR:
         case SQUARE_OUTLINES_WITH_QR_BR:
+            return SHAPE;
         default:
             return DEFAULT_PARSER;
     }
