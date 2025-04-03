@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <variant>
 #include <common.h>
 #include "external-tools/create_copy.h"
 
