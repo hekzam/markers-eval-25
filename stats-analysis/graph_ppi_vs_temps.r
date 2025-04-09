@@ -14,20 +14,20 @@ if ("Time(ms)" %in% colnames(donnees)) {
   colnames(donnees)[colnames(donnees) == "Time(ms)"] <- "Time_ms"
 }
 
-# Vérifier la présence de PPI et Noise_Level
-if (!("PPI" %in% colnames(donnees)) || !("Noise_Level" %in% colnames(donnees))) {
-  stop("Colonnes PPI ou Noise_Level manquantes dans le fichier.")
+# Vérification des colonnes nécessaires
+if (!("PPI" %in% colnames(donnees)) || !("Parser" %in% colnames(donnees))) {
+  stop("Colonnes PPI ou Parser manquantes dans le fichier.")
 }
 
 # Création du graphique
-p <- ggplot(donnees, aes(x = PPI, y = Time_ms, color = as.factor(Noise_Level))) +
+p <- ggplot(donnees, aes(x = PPI, y = Time_ms, color = as.factor(Parser))) +
   geom_point(size = 3, alpha = 0.7) +
   labs(
     title = "Temps de parsing en fonction du PPI",
-    subtitle = "Chaque point correspond à une copie, colorée par niveau de bruit",
+    subtitle = "Chaque point correspond à une copie, colorée par type de parser",
     x = "PPI (résolution)",
     y = "Temps de parsing (ms)",
-    color = "Niveau de bruit (%)"
+    color = "Parser"
   ) +
   theme_minimal() +
   theme(
@@ -36,4 +36,4 @@ p <- ggplot(donnees, aes(x = PPI, y = Time_ms, color = as.factor(Noise_Level))) 
   )
 
 # Sauvegarde en PNG
-ggsave("temps_vs_ppi.png", plot = p, width = 10, height = 7, dpi = 300, bg = "white")
+ggsave("temps_vs_ppi_par_parser.png", plot = p, width = 10, height = 7, dpi = 300, bg = "white")
