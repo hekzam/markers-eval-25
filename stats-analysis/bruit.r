@@ -27,7 +27,8 @@ analyser_impact_bruit <- function(chemin_csv) {
   p <- ggplot() +
     # Points individuels par copie
     geom_point(data = donnees, aes(x = Noise_Level, y = Time_ms), 
-               color = "darkred", alpha = 0.6, size = 3, shape = 16) +
+           color = "darkred", alpha = 0.6, size = 3, shape = 16) +
+
     
     # Ligne moyenne
     geom_line(data = stats_bruit, aes(x = Noise_Level, y = Moyenne), 
@@ -55,7 +56,10 @@ analyser_impact_bruit <- function(chemin_csv) {
       axis.title = element_text(face = "bold", color = "darkblue")
     )
   
+  if (interactive()) {
   print(p)
+}
+
   ggsave("impact_bruit_temps_detaille.png", p, width = 10, height = 7, bg = "white")
   
   return(list(stats = stats_bruit, donnees = donnees))
