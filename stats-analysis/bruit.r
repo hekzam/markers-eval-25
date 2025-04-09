@@ -31,8 +31,8 @@ analyser_impact_bruit <- function(chemin_csv) {
 
     
     # Ligne moyenne
-    geom_line(data = stats_bruit, aes(x = Noise_Level, y = Moyenne), 
-              color = "darkblue", linewidth = 1.2) +
+    # geom_line(data = stats_bruit, aes(x = Noise_Level, y = Moyenne), 
+    #           color = "darkblue", linewidth = 1.2) +
     
     # Points moyens
     geom_point(data = stats_bruit, aes(x = Noise_Level, y = Moyenne), 
