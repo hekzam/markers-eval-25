@@ -10,6 +10,7 @@ analyser_impact_bruit <- function(chemin_csv) {
   # Renommer la colonne Time(ms) pour qu'elle soit plus facile à manipuler
   colnames(donnees)[colnames(donnees) == "Time(ms)"] <- "Time_ms"
   
+  
   # Statistiques par niveau de bruit
   stats_bruit <- donnees %>%
     group_by(Noise_Level) %>%
@@ -63,4 +64,5 @@ analyser_impact_bruit <- function(chemin_csv) {
 }
 
 # Exécution
-resultats <- analyser_impact_bruit("benchmark_bruit.csv")
+args <- commandArgs(trailingOnly = TRUE)
+resultats <- analyser_impact_bruit(args[1])

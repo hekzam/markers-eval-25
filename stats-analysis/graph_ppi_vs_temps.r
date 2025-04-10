@@ -3,7 +3,9 @@ library(ggplot2)
 library(dplyr)
 
 # Chemin vers le fichier CSV
-chemin_csv <- "benchmark_bruit.csv"
+args <- commandArgs(trailingOnly = TRUE)
+chemin_csv <- args[1]
+
 
 # Vérification et lecture
 if (!file.exists(chemin_csv)) stop("Fichier introuvable.")
