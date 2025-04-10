@@ -10,9 +10,6 @@ analyser_impact_bruit <- function(chemin_csv) {
   # Renommer la colonne Time(ms) pour qu'elle soit plus facile à manipuler
   colnames(donnees)[colnames(donnees) == "Time(ms)"] <- "Time_ms"
   
-  # [SUPPRIMÉ] Pas besoin d'extraire le niveau de bruit depuis le nom si on a déjà la colonne
-  # donnees$Noise_Level <- as.numeric(gsub(".*noise([0-9]+).*", "\\1", donnees$File))
-  
   # Statistiques par niveau de bruit
   stats_bruit <- donnees %>%
     group_by(Noise_Level) %>%
