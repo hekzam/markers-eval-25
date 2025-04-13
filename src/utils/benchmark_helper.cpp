@@ -9,7 +9,7 @@
 #include "../external-tools/create_copy.h"
 
 std::filesystem::path create_subdir(const std::filesystem::path& base_dir, const std::string& subdir_name) {
-    std::filesystem::path subdir_path = base_dir.string() + "/" + subdir_name;
+    std::filesystem::path subdir_path = base_dir / subdir_name;
     std::filesystem::create_directories(subdir_path);
     return subdir_path;
 }
