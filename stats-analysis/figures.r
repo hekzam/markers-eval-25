@@ -56,7 +56,7 @@ analyser_donnees_copies <- function(chemin_fichier) {
   
   # 1. Graphique linéaire du temps d'exécution par numéro de copie
   p1 <- ggplot(donnees, aes(x = Numero_Copie, y = Temps_ms)) +
-    geom_line(color = "royalblue", size = 1) +
+    # geom_line(color = "royalblue", size = 1) +
     geom_point(color = "darkblue", size = 3) +
     labs(title = "Temps d'exécution pour chaque copie",
          subtitle = "Évolution du temps de traitement",
@@ -69,7 +69,7 @@ analyser_donnees_copies <- function(chemin_fichier) {
     geom_hline(yintercept = temps_moyen, linetype = "dashed", color = "orangered", size = 1) +
     geom_ribbon(aes(ymin = temps_moyen - ecart_type, ymax = temps_moyen + ecart_type), 
                 fill = "lightblue", alpha = 0.3) +
-    geom_line(color = "royalblue", size = 1) +
+    # geom_line(color = "royalblue", size = 1) +
     geom_point(size = 3, aes(color = Temps_ms > temps_moyen)) +
     scale_color_manual(values = c("darkgreen", "red"),
                        labels = c("Inférieur à la moyenne", "Supérieur à la moyenne"),
