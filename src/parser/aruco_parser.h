@@ -1,7 +1,7 @@
 #ifndef ARUCO_PARSER_H
 #define ARUCO_PARSER_H
 
-std::optional<cv::Mat> aruco_parser(cv::Mat img,
+std::optional<cv::Mat> aruco_parser(const cv::Mat& img,
 #ifdef DEBUG
                                     cv::Mat debug_img,
 #endif

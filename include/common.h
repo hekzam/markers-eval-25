@@ -30,7 +30,7 @@ struct Metadata {
 };
 
 struct Parser {
-    std::optional<cv::Mat> (*parser)(cv::Mat img,
+    std::optional<cv::Mat> (*parser)(const cv::Mat& img,
 #ifdef DEBUG
                                      cv::Mat debug_img,
 #endif

@@ -10,7 +10,7 @@
 
 #include "circle_parser.h"
 
-std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
+std::vector<cv::Vec3f> detect_circles(const cv::Mat& img) {
     std::vector<cv::Vec3f> detected_circles;
 
     cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 5, 50);
@@ -18,7 +18,7 @@ std::vector<cv::Vec3f> detect_circles(cv::Mat img) {
     return detected_circles;
 }
 
-std::optional<cv::Mat> circle_parser(cv::Mat img,
+std::optional<cv::Mat> circle_parser(const cv::Mat& img,
 #ifdef DEBUG
                                      cv::Mat debug_img,
 #endif
@@ -55,7 +55,8 @@ std::optional<cv::Mat> circle_parser(cv::Mat img,
 
     meta = parse_metadata(corner_barcode.content);
 
-    auto detected_circles = detect_circles(img);
+    // auto detected_circles = detect_circles(img);
+    std::vector<cv::Vec3f> detected_circles = smaller_parse(img, detect_circles);
     if (detected_circles.empty()) {
         printf("no circle found\n");
         return {};

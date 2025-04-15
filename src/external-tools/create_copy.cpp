@@ -34,7 +34,7 @@ bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_w
 
     fs::create_directories("./copies");
 
-    std::string root = ".";
+    std::string root = "..";
     std::string doc = root + "/typst/template.typ";
     std::string redirect = getOutputRedirection();
 

@@ -1,7 +1,7 @@
 #ifndef DEFAULT_PARSER_H
 #define DEFAULT_PARSER_H
 
-std::optional<cv::Mat> default_parser(cv::Mat img,
+std::optional<cv::Mat> default_parser(const cv::Mat& img,
 #ifdef DEBUG
                                       cv::Mat debug_img,
 #endif
