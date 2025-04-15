@@ -13,5 +13,7 @@ cv::Mat translate(float x, float y);
 cv::Mat rotate(float angle);
 cv::Mat rotate_center(float angle, float cx, float cy);
 void print_mat(cv::Mat mat);
+double percentage_to_offset(int depth, double percentage);
+double percentage_to_dispersion(int depth, double percentage);
 
 #endif

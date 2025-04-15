@@ -194,3 +194,35 @@ void print_mat(cv::Mat mat) {
     }
     std::cout << std::endl;
 }
+
+double percentage_to_offset(int depth, double percentage) {
+    double max_value;
+    
+    if (depth == CV_8U) {
+        max_value = 255.0;
+    } else if (depth== CV_16U) {
+        max_value = 65535.0;
+    } else if (depth == CV_32F) {
+        max_value = 1.0;  // Si normalisé entre 0 et 1
+    } else {
+        CV_Error(cv::Error::StsBadArg, "Unsupported image type");
+    }
+    
+    return (percentage / 100.0) * max_value;
+}
+
+double percentage_to_dispersion(int depth, double percentage) {
+    double max_value;
+    
+    if (depth == CV_8U) {
+        max_value = 255.0;
+    } else if (depth == CV_16U) {
+        max_value = 65535.0;
+    } else if (depth == CV_32F) {
+        max_value = 1.0;  // Si l'image est normalisée entre 0 et 1
+    } else {
+        CV_Error(cv::Error::StsBadArg, "Type d'image non supporté");
+    }
+    
+    return (percentage / 100.0) * max_value;
+}
