@@ -4,6 +4,7 @@
 #include "utils/math_utils.h"
 
 int img_depth;
+int seed=0;
 
 /**
  * @brief Ajout de bruit poivre et sel
@@ -32,7 +33,6 @@ void add_salt_pepper_noise(cv::Mat &img, int max_pepper, int max_salt)      //ch
 
 
 
-
 /**
  * @brief Ajout de bruit gaussien
  *
@@ -44,14 +44,10 @@ void add_salt_pepper_noise(cv::Mat &img, int max_pepper, int max_salt)      //ch
 
 void add_gaussian_noise(cv::Mat &img, int dispersion, int offset) {
     cv::Mat noise = cv::Mat::zeros(img.size(), CV_32FC(img.channels())); 
-    
     cv::RNG rng(static_cast<unsigned int>(cv::getTickCount()));
-    
     rng.fill(noise, cv::RNG::NORMAL, percentage_to_dispersion(img_depth, dispersion), percentage_to_offset(img_depth, offset));
-    
     cv::Mat img_float;
     img.convertTo(img_float, CV_32F);
-    
     img_float += noise;
     img_float.convertTo(img, img.type());
 }
@@ -60,19 +56,23 @@ void add_gaussian_noise(cv::Mat &img, int dispersion, int offset) {
  * @brief Modification contraste et luminosité d'une image
  *
  * @param img Image à modifier
- * @param contrast contrast = 1 : Pas de changement; contrast > 1 : Augmente le contraste; 0 < contrast < 1 : Réduit le contraste
+ * @param contrast contrast = 100 : Pas de changement; contrast > 100 : Augmente le contraste; 0 < contrast < 100 : Réduit le contraste
  * @param bright bright = 0 : Neutre; bright > 0 : Éclaircit; bright < 0 : Assombrit
  *
  */
 
-void contrast_brightness_modifier(cv::Mat &img, float contrast, float bright)         
+void contrast_brightness_modifier(cv::Mat &img, int contrast, int bright)
 {
-    // if(contrast==0 && bright==0)
-    // {
-    //     contrast = rand()%70;
-    //     bright = rand()%50;
-    // }
-    img.convertTo(img, -1, contrast, bright);
+    // Clamp les valeurs pour éviter les dépassements
+    if(contrast>0 && contrast<=100)
+        contrast+=50;
+    contrast = std::max(-100, std::min(100, contrast));
+    bright = std::max(-100, std::min(100, bright));
+
+    float alpha = 1.0f + (float(contrast) / 100.0f);  // [0.0, 2.0]
+    float beta = float(bright) * 1.3f;                // [-130, 130]
+
+    img.convertTo(img, -1, alpha, beta);
 }
 
 void ajouterTaches(cv::Mat& image, int nombreTaches = 10, int rayonMin = 5, int rayonMax = 20) {
@@ -82,7 +82,7 @@ void ajouterTaches(cv::Mat& image, int nombreTaches = 10, int rayonMin = 5, int 
         cv::Point centre(rng.uniform(rayonMax, image.cols - rayonMax), rng.uniform(rayonMax, image.rows - rayonMax));
         int rayon = rng.uniform(rayonMin, rayonMax);
         cv::Scalar color = cv::Scalar(1, 1, 1);
-    
+        
         
         cv::circle(image, centre, rayon, color, -1);
     }
@@ -90,7 +90,7 @@ void ajouterTaches(cv::Mat& image, int nombreTaches = 10, int rayonMin = 5, int 
 
 //si aleatoire pur  : Initialisation avec l'horloge système = srand(time(0));
 
-int main(int argc, char const* argv[]) 
+int main(int argc, char const* argv[])
 {
     if (argc < 2)
     {
@@ -102,17 +102,17 @@ int main(int argc, char const* argv[])
     img_depth = img.depth();
     cv::Mat calibrated_img = img.clone();
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
-    identity *= rotate_center(5, img.cols / 2, img.rows / 2);
+    // identity *= rotate_center(5, img.cols / 2, img.rows / 2);
     //print_mat(identity);
-    identity *= translate(3, 0);
+    // identity *= translate(3, 0);
     //print_mat(identity);
     identity = identity(cv::Rect(0, 0, 3, 2));
     //print_mat(identity);
     cv::Mat noisy_img = img.clone();
     // ajouterTaches(noisy_img);  // Ajoute le bruit
-    // contrast_brightness_modifier(noisy_img,10.0f,0);
+    //contrast_brightness_modifier(noisy_img,atoi(argv[2]),atoi(argv[3]));
     //add_gaussian_noise(noisy_img, 20, 20);
-     add_salt_pepper_noise(noisy_img, 1, 10);
+    //  add_salt_pepper_noise(noisy_img, 1, 10);
     cv::warpAffine(noisy_img, calibrated_img, identity, noisy_img.size(), cv::INTER_LINEAR);
     cv::imwrite("calibrated_img.png",calibrated_img);
 
