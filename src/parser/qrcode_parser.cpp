@@ -61,8 +61,8 @@ std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
                                      Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
     std::string expected_content_hash = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=";
 
-    // auto barcodes = identify_barcodes(img);
-    auto barcodes = smaller_parse(img, get_barcodes);
+    auto barcodes = identify_barcodes(img);
+    // auto barcodes = smaller_parse(img, get_barcodes);
 #ifdef DEBUG
     draw_qrcode(barcodes, debug_img);
 #endif
