@@ -1,7 +1,7 @@
 #import "../style/const.typ": PAGE_WIDTH, PAGE_HEIGHT, MARGIN_X, MARGIN_Y
 #import "../common/global_variables.typ": copy-counter, generating-content
 #import "../common/utils.typ": check-type, update-page-state, finalize-states
-#import "../components/corner_markers.typ": setup-corner-markers
+#import "../components/corner_markers.typ": setup-corner-markers, place-header-marker
 #import "../content/content.typ": content
 
 /**
@@ -103,11 +103,8 @@
         place-corner(corner)
       }
       if header-marker {
-        import "../components/corner_markers.typ": place-header-marker
         place-header-marker(
-          exam-id,
-          30mm,
-          10mm,
+          7mm,
           3mm,
           grey-level
         )
