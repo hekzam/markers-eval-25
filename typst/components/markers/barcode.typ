@@ -1,6 +1,9 @@
 #import "@preview/tiaoma:0.2.1"
 #import "../container.typ": gen-box
 
+#let HEADER_MARKER_TYPE = ("rmqr", "barcode", "pdf417-comp")
+#let CORNER_MARKER_TYPE = ("qrcode", "aztec", "datamatrix")
+
 /**
  * Génère un barcode à partir des données fournies et l'encapsule dans une boîte.
  * @param label Un identifiant ou une étiquette pour la boîte
@@ -23,10 +26,8 @@
     default: tiaoma.qrcode,
   )
 
-  let rectangular_types = ("rmqr", "barcode", "pdf417-comp")
-
-  let box_width = if rectangular_types.contains(type) { 120mm } else { height }
-  let box_height = if rectangular_types.contains(type) { 10mm } else { height }
+  let box_width = if HEADER_MARKER_TYPE.contains(type) { 120mm } else { height }
+  let box_height = if HEADER_MARKER_TYPE.contains(type) { 10mm } else { height }
   let options = (fg-color: color)
 
   let barcode = barcode_fns.at(type)(data, height: height, options: options)
