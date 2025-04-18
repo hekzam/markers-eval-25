@@ -1,173 +1,41 @@
 #import "src/gen_copy.typ": gen-copies
 
-// Images pour les marqueurs SVG
-#let AR_1 = image("assets/4x4_1000-190.svg")
-#let AR_2 = image("assets/4x4_1000-997.svg")
-#let AR_3 = image("assets/4x4_1000-999.svg")
-#let CUSTOM_MARKER = image("assets/marker-custom.svg")
-
 /**
- * Génère une configuration standard pour un marqueur.
- * @param {string} type - Type de marqueur ("qrcode", "circle", "svg")
- * @param {bool} is_data_encoded - Si true, des données supplémentaires sont encodées
- * @param {image} svg_image - L'image SVG à utiliser (obligatoire si type="svg")
- * @return {dict} - Configuration du marqueur
+ * Parse une string de types de marqueurs et retourne une configuration complète.
+ * Format attendu : "(type_tl,type_tr,type_bl,type_br,type_header)"
  */
-#let create-marker-config(type, is_data_encoded: false, svg_image: none) = {
-  let config = (
-    type: type,
-    is-data-encoded: is_data_encoded
-  )
-  
-  if type == "svg" {
-    assert(svg_image != none, message: "Une image SVG doit être fournie pour le type 'svg'")
-    config.insert("svg", svg_image)
-  }
-  
-  return config
-}
-
-/**
- * Génère une configuration complète avec les marqueurs aux quatre coins.
- * @param {dict} top_left - Configuration du marqueur en haut à gauche
- * @param {dict} top_right - Configuration du marqueur en haut à droite
- * @param {dict} bottom_left - Configuration du marqueur en bas à gauche
- * @param {dict} bottom_right - Configuration du marqueur en bas à droite
- * @return {dict} - Configuration complète des marqueurs
- */
-#let create-full-marker-config(top_left, top_right, bottom_left, bottom_right) = {
-  return (
-    top-left: top_left,
-    top-right: top_right,
-    bottom-left: bottom_left,
-    bottom-right: bottom_right
+#let parse-marker-types(types-str) = {
+  let clean = types-str.trim().slice(1, -1)
+  let parts = clean.split(",").map((x)=>{x.trim()})
+  (
+    top-left: parts.at(0, default: "none"),
+    top-right: parts.at(1, default: "none"),
+    bottom-left: parts.at(2, default: "none"),
+    bottom-right: parts.at(3, default: "none"),
+    header: parts.at(4, default: "none")
   )
 }
 
-/**
- * Génère une configuration de marqueurs uniforme pour tous les coins.
- * @param {string} type - Type de marqueur pour tous les coins
- * @param {bool} is_data_encoded - Si true, des données supplémentaires sont encodées
- * @param {bool} only_bottom_right_encoded - Si true, seul le coin en bas à droite encode des données
- * @return {dict} - Configuration uniforme des marqueurs
- */
-#let create-uniform-config(type, is_data_encoded: false, only_bottom_right_encoded: false) = {
-  let base_config = create-marker-config(type, is_data_encoded: if only_bottom_right_encoded { false } else { is_data_encoded })
-  let br_config = if only_bottom_right_encoded {
-    create-marker-config(type, is_data_encoded: true)
-  } else {
-    base_config
-  }
-  
-  return create-full-marker-config(base_config, base_config, base_config, br_config)
-}
-
-#let marker_configs = (
-  // Config 1: QR codes avec données encodées dans tous les coins
-  create-uniform-config("qrcode", is_data_encoded: true),
-  
-  // Config 2: QR codes avec données encodées uniquement dans le coin bas-droit
-  create-uniform-config("qrcode", only_bottom_right_encoded: true),
-  
-  // Config 3: Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-  create-full-marker-config(
-    create-marker-config("circle"),
-    create-marker-config("circle"),
-    create-marker-config("circle"),
-    create-marker-config("qrcode", is_data_encoded: true)
-  ),
-  
-  // Config 4: Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-  create-full-marker-config(
-    create-marker-config("circle"),
-    create-marker-config("circle"),
-    {},
-    create-marker-config("qrcode", is_data_encoded: true)
-  ),
-  
-  // Config 5: Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-  create-full-marker-config(
-    create-marker-config("svg", svg_image: CUSTOM_MARKER),
-    create-marker-config("svg", svg_image: CUSTOM_MARKER),
-    create-marker-config("svg", svg_image: CUSTOM_MARKER),
-    create-marker-config("qrcode", is_data_encoded: true)
-  ),
-  
-  // Config 6: Différents marqueurs ArUco, QR code avec données en bas-droit
-  create-full-marker-config(
-    create-marker-config("svg", svg_image: AR_1),
-    create-marker-config("svg", svg_image: AR_2),
-    create-marker-config("svg", svg_image: AR_3),
-    create-marker-config("qrcode", is_data_encoded: true)
-  ),
-  
-  // Config 7: Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-  create-full-marker-config(
-    create-marker-config("svg", svg_image: AR_1),
-    create-marker-config("svg", svg_image: AR_2),
-    {},
-    create-marker-config("qrcode", is_data_encoded: true)
-  ),
-
-  // Config 8: Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-  create-full-marker-config(
-    create-marker-config("circle-outline"),
-    create-marker-config("circle-outline"),
-    create-marker-config("circle-outline"),
-    create-marker-config("qrcode", is_data_encoded: true)
-  ),
-
-  // Config 9: Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-    create-full-marker-config(
-      create-marker-config("square"),
-      create-marker-config("square"),
-      create-marker-config("square"),
-      create-marker-config("qrcode", is_data_encoded: true)
-  ),
-
-  // Config 10: Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-  create-full-marker-config(
-    create-marker-config("square-outline"),
-    create-marker-config("square-outline"),
-    create-marker-config("square-outline"),
-    create-marker-config("qrcode", is_data_encoded: true)
-  )
+#let style-params = (
+  encoded_marker_size: float(sys.inputs.at("encoded-marker-size", default: "15")) * 1mm,
+  fiducial_marker_size: float(sys.inputs.at("fiducial-marker-size", default: "3")) * 1mm,
+  header_marker_size: float(sys.inputs.at("header-marker-size", default: "7")) * 1mm,
+  stroke_width: float(sys.inputs.at("stroke-width", default: "2")) * 1mm,
+  marker_margin: float(sys.inputs.at("marker-margin", default: "3")) * 1mm,
+  grey_level: int(sys.inputs.at("grey-level", default: "0"))
 )
 
-/**
- * Sélectionne une configuration de marqueur selon un index.
- * @param {string} config_index - Indice de la configuration à utiliser
- * @return {dict} - Configuration de marqueur correspondante
- */
-#let get-marker-config(config_index) = {
-  let idx = int(config_index)
-  if idx >= 1 and idx <= marker_configs.len() {
-    return marker_configs.at(idx - 1)
-  } else {
-    return marker_configs.last()
-  }
-}
+// Paramètres de génération
+#let nb-copies = int(sys.inputs.at("nb-copies", default: "1")) // Ne fonctionne pas a plus de 1 copie
+#let duplex-printing = int(sys.inputs.at("duplex-printing", default: "0")) == 1
+#let marker-types = sys.inputs.at("marker-types", default: "(qrcode,qrcode,qrcode,qrcode,rmqr)")
 
-// Paramètres pour la génération de copies
-#let e-m-s = float(sys.inputs.at("encoded-marker-size", default: "15")) * 1mm
-#let f-m-s = float(sys.inputs.at("fiducial-marker-size", default: "3")) * 1mm
-#let s-w = float(sys.inputs.at("stroke-width", default: "2")) * 1mm
-#let m-m = float(sys.inputs.at("marker-margin", default: "3")) * 1mm
-#let n-c = int(sys.inputs.at("nb-copies", default: "1")) // Ne fonctionne pas a plus de 1 copie
-#let d-p = int(sys.inputs.at("duplex-printing", default: "0")) == 1
-#let m-c = sys.inputs.at("marker-config", default: "0")
-#let g-l = int(sys.inputs.at("grey-level", default: "0"))
-#let h-m = int(sys.inputs.at("header-marker", default: "1")) == 1
+#let marker-config = parse-marker-types(marker-types)
 
 #gen-copies(
   "Le pire examen de tous les temps !", 
-  nb-copies: n-c, 
-  duplex-printing: d-p,
-  get-marker-config(m-c),
-  e-m-s,
-  f-m-s,
-  s-w,
-  m-m,
-  g-l,
-  header-marker: h-m
+  nb-copies, 
+  duplex-printing,
+  marker-config,
+  style-params
 )

@@ -15,11 +15,11 @@
   assert.eq(rgb(stroke-color).components().at(3), 100%, message: "stroke-color must be fully opaque (no alpha or alpha=100%)")
   assert.eq(type(stroke-width), length, message: "stroke must be a length")
 
-  set align(left+top)
+  // set align(left+top)
   rect(width: width, height: height, fill: fill-color, stroke: stroke-width + stroke-color, radius: 0mm, inset: 0mm, outset: 0mm, {
     context if copy-counter.get().at(0) == 0 {
       layout(size => {
-        set align(left+top)
+        // set align(left+top)
         let pos = here().position()
         let box = (
           page: pos.page,

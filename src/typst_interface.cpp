@@ -7,21 +7,42 @@ bool isValidMarkerConfig(int config) {
     return config >= QR_ALL_CORNERS && config <= SQUARE_OUTLINES_WITH_QR_BR;
 }
 
-extern bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin,
-                        int nb_copies, int duplex_printing, int marker_config, int grey_level, int header_marker,
-                        const std::string& filename);
+Marker parseMarker(const std::string& spec) {
+    if (spec.empty() || spec == "none") {
+        return Marker();
+    }
+    
+    std::string type = spec;
+    bool encoded = false;
+    bool outlined = false;
+    
+    size_t encodedPos = spec.find(":encoded");
+    if (encodedPos != std::string::npos) {
+        encoded = true;
+        type = spec.substr(0, encodedPos);
+    }
+    
+    size_t outlinedPos = spec.find(":outlined");
+    if (outlinedPos != std::string::npos) {
+        outlined = true;
+        if (encodedPos != std::string::npos && outlinedPos < encodedPos) {
+            type = spec.substr(0, outlinedPos);
+        } else if (encodedPos == std::string::npos) {
+            type = spec.substr(0, outlinedPos);
+        }
+    }
+    
+    return Marker(type, encoded, outlined);
+}
 
 int main(int argc, char* argv[]) {
-    int encoded_marker_size = 15;
-    int fiducial_marker_size = 3;
-    int stroke_width = 2;
-    int marker_margin = 3;
-    int nb_copies = 1;
+    CopyStyleParams style_params;
     int duplex_printing = 0;
-    int marker_config = CIRCLES_WITH_QR_BR;
-    int grey_level = 0;
-    int header_marker = 1;
+    int marker_config = -1;
     std::string filename = "copy";
+    
+    Marker top_left, top_right, bottom_left, bottom_right, header;
+    bool custom_markers = false;
 
     for (int i = 1; i < argc; i += 2) {
         std::string arg = argv[i];
@@ -32,15 +53,15 @@ int main(int argc, char* argv[]) {
         }
 
         if (arg == "--encoded-size") {
-            encoded_marker_size = std::atoi(argv[i + 1]);
+            style_params.encoded_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--fiducial-size") {
-            fiducial_marker_size = std::atoi(argv[i + 1]);
+            style_params.fiducial_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--stroke-width") {
-            stroke_width = std::atoi(argv[i + 1]);
+            style_params.stroke_width = std::atoi(argv[i + 1]);
         } else if (arg == "--margin") {
-            marker_margin = std::atoi(argv[i + 1]);
+            style_params.marker_margin = std::atoi(argv[i + 1]);
         } else if (arg == "--copies") {
-            nb_copies = std::atoi(argv[i + 1]);
+            style_params.nb_copies = std::atoi(argv[i + 1]);
         } else if (arg == "--duplex") {
             duplex_printing = std::atoi(argv[i + 1]);
         } else if (arg == "--config") {
@@ -49,10 +70,25 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Invalid marker configuration: " << argv[i + 1] << " (valid range: 1-10)" << std::endl;
                 return 1;
             }
+        } else if (arg == "--top-left") {
+            top_left = parseMarker(argv[i + 1]);
+            custom_markers = true;
+        } else if (arg == "--top-right") {
+            top_right = parseMarker(argv[i + 1]);
+            custom_markers = true;
+        } else if (arg == "--bottom-left") {
+            bottom_left = parseMarker(argv[i + 1]);
+            custom_markers = true;
+        } else if (arg == "--bottom-right") {
+            bottom_right = parseMarker(argv[i + 1]);
+            custom_markers = true;
+        } else if (arg == "--header") {
+            header = parseMarker(argv[i + 1]);
+            custom_markers = true;
         } else if (arg == "--grey-level") {
-            grey_level = std::atoi(argv[i + 1]);
-        } else if (arg == "--header-marker") {
-            header_marker = std::atoi(argv[i + 1]);
+            style_params.grey_level = std::atoi(argv[i + 1]);
+        } else if (arg == "--header-size") {
+            style_params.header_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--filename") {
             filename = argv[i + 1];
         } else {
@@ -60,9 +96,15 @@ int main(int argc, char* argv[]) {
             return 1;
         }
     }
+    
+    CopyMarkerConfig markerConfig;
+    if (custom_markers) {
+        markerConfig = CopyMarkerConfig(top_left, top_right, bottom_left, bottom_right, header);
+    } else {
+        markerConfig = CopyMarkerConfig::getConfigById(marker_config);
+    }
 
-    bool success = create_copy(encoded_marker_size, fiducial_marker_size, stroke_width, marker_margin, nb_copies,
-                               duplex_printing, marker_config, grey_level, header_marker, filename);
+    bool success = create_copy(style_params, duplex_printing, markerConfig, filename);
 
     return success ? 0 : 1;
 }
