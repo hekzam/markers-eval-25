@@ -28,8 +28,7 @@ std::string getOutputRedirection() {
 #endif
 }
 
-bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
-                 int duplex_printing, int marker_config, int grey_level, int header_marker,
+bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const CopyMarkerConfig& marker_config,
                  const std::string& filename) {
 
     fs::create_directories("./copies");
@@ -38,15 +37,15 @@ bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_w
     std::string root = ".";
     std::string redirect = getOutputRedirection();
 
-    std::string params = "--input encoded-marker-size=" + std::to_string(encoded_marker_size) + " " +
-                         "--input fiducial-marker-size=" + std::to_string(fiducial_marker_size) + " " +
-                         "--input stroke-width=" + std::to_string(stroke_width) + " " +
-                         "--input marker-margin=" + std::to_string(marker_margin) + " " +
-                         "--input nb-copies=" + std::to_string(nb_copies) + " " +
+    std::string params = "--input encoded-marker-size=" + std::to_string(style_params.encoded_marker_size) + " " +
+                         "--input fiducial-marker-size=" + std::to_string(style_params.fiducial_marker_size) + " " +
+                         "--input header-marker-size=" + std::to_string(style_params.header_marker_size) + " " +
+                         "--input stroke-width=" + std::to_string(style_params.stroke_width) + " " +
+                         "--input marker-margin=" + std::to_string(style_params.marker_margin) + " " +
+                         "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
+                         "--input nb-copies=" + std::to_string(style_params.nb_copies) + " " +
                          "--input duplex-printing=" + std::to_string(duplex_printing) + " " +
-                         "--input marker-config=" + std::to_string(marker_config) + " " +
-                         "--input grey-level=" + std::to_string(grey_level) + " " +
-                         "--input header-marker=" + std::to_string(header_marker);
+                         "--input marker-types=" + "\"" + marker_config.toString() + "\"";
 
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +
                               filename + ".png\" --format png" + redirect;

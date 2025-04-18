@@ -1,10 +1,15 @@
 #import "../common/global_variables.typ": generating-content
 #import "../common/utils.typ": get-indexes, get-exam-id
-#import "markers/barcode.typ": barcode
+#import "markers/barcode.typ": barcode, HEADER_MARKER_TYPE, CORNER_MARKER_TYPE
 #import "./markers/circle.typ": circle-box
 #import "./markers/svg_marker.typ": gen-svg-box
 #import "./container.typ": gen-box
-#import "@preview/tiaoma:0.2.1"
+
+// Images pour les marqueurs SVG
+#let AR_1 = image("../assets/4x4_1000-190.svg")
+#let AR_2 = image("../assets/4x4_1000-997.svg")
+#let AR_3 = image("../assets/4x4_1000-999.svg")
+#let CUSTOM_MARKER = image("../assets/marker-custom.svg")
 
 #let PREFIX_TOP_LEFT = "hztl"
 #let PREFIX_TOP_RIGHT = "hztr"
@@ -35,74 +40,54 @@
 /**
  * Crée un marqueur de type Tiaoma carré
  * @param prefix-position Préfixe de la position du marqueur
- * @param marker-config Configuration du marqueur
- * @param encoded-marker-size Taille du marqueur encodé
- * @param fiducial-marker-size Taille du marqueur fiducial
- * @param color Couleur du marqueur
+ * @param type Type de marqueur (ex: "qrcode")
+ * @param marker-size Taille du marqueur
+ * @param grey-level Niveau de gris du marqueur (0-255)
  */
-#let create-tiaoma-sqr-marker(prefix-position, marker-config, encoded-marker-size, fiducial-marker-size, color) = {
-  let type = marker-config.at("type", default: "qrcode")
-  let is-data-encoded = marker-config.at("is-data-encoded", default: false)
+#let create-tiaoma-barcode(prefix-position, type, marker-size, color) = {
   let (copy-i, page-i) = get-indexes()
-  let barcode-data = (prefix-position, ..if is-data-encoded {
-    (str(copy-i), str(page-i), get-exam-id())
-  })
-  let marker-size = if is-data-encoded {encoded-marker-size} else {fiducial-marker-size}
+   let barcode-data = (prefix-position, ..if type.contains("encoded") {
+     (str(copy-i), str(page-i), get-exam-id())
+   })
   barcode(prefix-position, barcode-data, marker-size, type: type, color)
 }
 
-/**
- * Crée un marqueur de type Tiaoma rectangle (code-barre, QRcode rectangulaire etc.)
- * @param prefix-position Préfixe de la position du marqueur
- * @param type Type de marqueur (ex: "barcode")
- * @param maker-height Hauteur du marqueur
- * @param grey-level Niveau de gris du marqueur (0-255)
- */
-#let create-tiaoma-rect-marker(prefix-position, type, maker-height, grey-level) = {
-  let color = luma(grey-level)
-  let (copy-i, page-i) = get-indexes()
-  let barcode-data = (prefix-position, str(copy-i), str(page-i), get-exam-id())
-  barcode(prefix-position, barcode-data, maker-height, type: type, color)
-}
 
-/**
- * Crée un marqueur SVG à partir de sa configuration
- * @param prefix-position Préfixe de la position du marqueur
- * @param marker-config Configuration du marqueur
- * @param fiducial-marker-size Taille du marqueur fiducial
- */
-#let create-svg-marker(prefix-position, marker-config, fiducial-marker-size) = {
-  let svg-image = marker-config.at("svg", default: none)
+#let create-svg-marker(prefix-position, type, marker-size) = {
+  
+  let svg-image = if type.contains("custom") {
+    CUSTOM_MARKER
+  } else if type.contains("aruco") and prefix-position == PREFIX_TOP_LEFT {
+    AR_1
+  } else if type.contains("aruco") and prefix-position == PREFIX_TOP_RIGHT {
+    AR_2
+  } else if type.contains("aruco") and prefix-position == PREFIX_BOTTOM_LEFT {
+    AR_3
+  }
+
   let position-rotation = get-config(prefix-position).rotation
   assert(svg-image != none, message: "SVG image must be provided")
   gen-svg-box(
     prefix-position,
     rotate(position-rotation, svg-image),
-    fiducial-marker-size
+    marker-size
   )
 }
 
 /**
  * Crée un marqueur à partir de sa configuration
  * @param prefix-position Préfixe de la position du marqueur
- * @param marker-config Configuration du marqueur
  * @param size Taille par défaut du marqueur
  */
-#let create-corner-marker(prefix-position, marker-config, encoded-marker-size,
-  fiducial-marker-size, stroke-width, grey-level) = {
-  let color = luma(grey-level)
-  if marker-config == none { return none }
-  let type = marker-config.at("type", default: "qrcode")
+#let create-corner-marker(prefix-position, type, style-params) = {
+  if type == none { return none }
+  let color = luma(style-params.grey_level)
   let fill-color = if type.contains("outline") { white } else { color }
+  let stroke-width = if type.contains("outline") { style-params.stroke_width } else { 0mm }
+  let encoded-marker-size = style-params.encoded_marker_size
+  let fiducial-marker-size = style-params.fiducial_marker_size
 
-  if type == "qrcode" or type == "datamatrix" or type == "aztec" or type == "pdf417-comp" {
-    create-tiaoma-sqr-marker(
-      prefix-position,
-      marker-config,
-      encoded-marker-size,
-      fiducial-marker-size,
-      color)
-  } else if type.contains("circle") {
+  if type.contains("circle") {
     circle-box(
       prefix-position,
       fiducial-marker-size,
@@ -117,85 +102,35 @@
       fill-color: fill-color,
       stroke-width: stroke-width,
       stroke-color: color)
-  } else if type == "svg" {
+  } else if type.contains("svg") {
     create-svg-marker(
       prefix-position,
-      marker-config,
+      type,
       fiducial-marker-size)
   } else {
-    panic("Unknown marker type: " + type)
+    create-tiaoma-barcode(
+      prefix-position,
+      type,
+      encoded-marker-size,
+      color)
   }
 }
 
 /**
- * Place un marqueur d'entête au centre haut de la page
- * @param width Largeur du marqueur
- * @param height Hauteur du marqueur
- * @param margin Marge entre le marqueur et le bord de la page
- * @param grey_level Niveau de gris du marqueur (0-255)
- */
-#let place-header-marker(
-  height,
-  margin,
-  grey-level
-) = {
-  context if generating-content.get() {
-    
-    let marker = create-tiaoma-rect-marker(
-      PREFIX_TOP_CENTER,
-      "pdf417-comp",
-      height,
-      grey-level)
-
-    if marker == none { return }
-    
-    let position_config = get-config(PREFIX_TOP_CENTER)
-    let alignment = position_config.align
-    
-    let dy = position_config.dy-sign * margin
-    let dx = position_config.dx-sign * 0mm
-    
-    place(
-      alignment,
-      dy: dy,
-      dx: dx,
-      marker
-    )
-  }
-}
-
-/**
- * Place un marqueur dans un coin spécifique avec une marge
+ * Place un marqueur sur la page selon sa position
  * @param prefix-position Préfixe de la position du marqueur
- * @param marker-config Configuration du marqueur
- * @param marker-size Taille du marqueur
- * @param marker-margin Marge entre le marqueur et le bord de la page
+ * @param marker Marqueur à placer
+ * @param margin-x Marge horizontale
+ * @param margin-y Marge verticale
  */
-#let place-corner-marker(
-  prefix-position,
-  marker-config,
-  encoded-marker-size,
-  fiducial-marker-size,
-  stroke-width,
-  marker-margin,
-  grey-level
-) = {
-  if marker-config == none { return }
-  
-  let marker = create-corner-marker(
-    prefix-position, 
-    marker-config, 
-    encoded-marker-size, 
-    fiducial-marker-size, 
-    stroke-width, 
-    grey-level)
+#let place-marker(prefix-position, marker, margin-x, margin-y) = {
   if marker == none { return }
   
-  let corner-config = get-config(prefix-position)
-  let alignment = corner-config.align
+  let position-config = get-config(prefix-position)
+  let alignment = position-config.align
   
-  let dx = corner-config.dx-sign * marker-margin
-  let dy = corner-config.dy-sign * marker-margin
+  let dx = position-config.dx-sign * margin-x
+  let dy = position-config.dy-sign * margin-y
   
   place(
     alignment,
@@ -206,21 +141,43 @@
 }
 
 /**
+ * Place un marqueur d'en-tête au centre de la page
+ * @param type Type de marqueur (ex: "rmqr", "barcode")
+ */
+#let place-header-marker(type, style-params) = {
+  context if generating-content.get() {
+    if type == none { return }
+    
+    let marker = create-tiaoma-barcode(
+      PREFIX_TOP_CENTER,
+      type,
+      style-params.header_marker_size,
+      luma(style-params.grey_level))
+    
+    place-marker(PREFIX_TOP_CENTER, marker, 0mm, style-params.marker_margin)
+  }
+}
+
+/**
+ * Place un marqueur dans un coin de la page
+ * @param prefix-position Préfixe de la position du marqueur
+ * @param type Type de marqueur (ex: "qrcode", "aztec")
+ */
+#let place-corner-marker(prefix-position, type, style-params) = {
+  if type == none { return }
+  let marker = create-corner-marker(prefix-position, type, style-params)
+  place-marker(prefix-position, marker, style-params.marker_margin, style-params.marker_margin)
+}
+
+/**
  * Place des marqueurs dans les coins de la page
  * @param config_key Clé de configuration (ex: "top-left-config") 
  * @param marker_config Configuration du marqueur pour ce coin
- * @param encoded_marker_size Taille des marqueurs encodés
- * @param fiducial_marker_size Taille des marqueurs fiduciaires
- * @param marker_margin Marge entre les marqueurs et le bord de la page
  */
 #let setup-corner-markers(
-  config_key,
+  corner-ident,
   marker_config,
-  encoded_marker_size,
-  fiducial_marker_size,
-  stroke-width,
-  marker_margin,
-  grey_level
+  style-params
 ) = {
   let CORNER_MAPPING = (
     "top-left": PREFIX_TOP_LEFT,
@@ -229,18 +186,13 @@
     "bottom-right": PREFIX_BOTTOM_RIGHT
   )
   context if generating-content.get() {
-    let corner_label = config_key.slice(0, -7)
-    let prefix_position = CORNER_MAPPING.at(corner_label, default: none)
+    let prefix_position = CORNER_MAPPING.at(corner-ident)
     
     if prefix_position != none and marker_config != none {
       place-corner-marker(
         prefix_position, 
-        marker_config, 
-        encoded_marker_size, 
-        fiducial_marker_size,
-        stroke-width,
-        marker_margin,
-        grey_level
+        marker_config,
+        style-params
       )
     }
   }

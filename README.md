@@ -67,16 +67,34 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
   --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)
   --filename NAME       : Nom du fichier de sortie (par défaut: copy)
+  
+  Options de configuration personnalisée des marqueurs:
+  --top-left TYPE       : Type de marqueur pour le coin supérieur gauche
+  --top-right TYPE      : Type de marqueur pour le coin supérieur droit
+  --bottom-left TYPE    : Type de marqueur pour le coin inférieur gauche
+  --bottom-right TYPE   : Type de marqueur pour le coin inférieur droit
+  --header TYPE         : Type de marqueur pour l'en-tête
 ```
 
-Exemple d'utilisation :
+Format TYPE pour les marqueurs: type[:encoded][:outlined]
+- Types disponibles: qrcode, datamatrix, aztec, pdf417-comp, rmqr, barcode, circle, square, aruco-svg, custom-svg
+- Exemple: `qrcode:encoded` - Un QR code encodé
+- Exemple: `circle:outlined` - Un cercle non rempli
+- Exemple: `none` - Pas de marqueur
+
+Exemple d'utilisation avec la configuration prédéfinie:
 ```sh
 ./create-copie.sh --config 3 --grey-level 50
 ```
 
-Une autre exemple avec un nom de fichier personnalisé :
+Exemple avec un nom de fichier personnalisé:
 ```sh
 ./create-copie.sh --config 3 --grey-level 50 --filename exam01
+```
+
+Exemple avec une configuration personnalisée des marqueurs:
+```sh
+./create-copie.sh --top-left circle:outlined --top-right circle:outlined --bottom-left none --bottom-right qrcode:encoded --header qrcode:encoded
 ```
 
 ### Configurations de marqueurs disponibles

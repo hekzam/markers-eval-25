@@ -16,6 +16,10 @@
   let sep = ","
   let data = parts.join(sep)
 
+  // Netoyyer le type : Enlever le suffixe "-encoded" si présent
+  let type = type.split("-encoded").at(0)
+
+
   let barcode_fns = (
     "qrcode": tiaoma.qrcode,
     "aztec": tiaoma.micro-qr,
