@@ -23,7 +23,7 @@ enum MarkerConfig {
 /**
  * @brief Constantes pour les types de marqueurs sous forme de chaînes
  */
-const std::string QRCODE = "qrcode";
+const std::string QR_CODE = "qrcode";
 const std::string DATAMATRIX = "datamatrix";
 const std::string AZTEC = "aztec";
 const std::string PDF417 = "pdf417-comp";
@@ -31,7 +31,7 @@ const std::string RMQR = "rmqr";
 const std::string BARCODE = "barcode";
 const std::string CIRCLE = "circle";
 const std::string SQUARE = "square";
-const std::string ARUCO = "aruco-svg";
+const std::string ARUCO_SVG = "aruco-svg";
 const std::string CUSTOM_SVG = "custom-svg";
 
 /**
@@ -95,92 +95,92 @@ struct CopyMarkerConfig {
     static CopyMarkerConfig getConfigById(int configId) {
         switch (configId) {
             case QR_ALL_CORNERS:
-                return CopyMarkerConfig(Marker(QRCODE),    // top_left
-                                        Marker(QRCODE),    // top_right
-                                        Marker(QRCODE),    // bottom_left
-                                        Marker(QRCODE),    // bottom_right
+                return CopyMarkerConfig(Marker(QR_CODE),   // top_left
+                                        Marker(QR_CODE),   // top_right
+                                        Marker(QR_CODE),   // bottom_left
+                                        Marker(QR_CODE),   // bottom_right
                                         Marker(RMQR, true) // header
                 );
 
             case QR_BOTTOM_RIGHT_ONLY:
-                return CopyMarkerConfig(Marker(),                            // top_left
-                                        Marker(),                            // top_right
-                                        Marker(),                            // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(),              // top_left
+                                        Marker(),              // top_right
+                                        Marker(),              // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
 
             case CIRCLES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(CIRCLE),       // top_left
-                                        Marker(CIRCLE),       // top_right
-                                        Marker(CIRCLE),       // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(CIRCLE),        // top_left
+                                        Marker(CIRCLE),        // top_right
+                                        Marker(CIRCLE),        // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
 
             case TOP_CIRCLES_QR_BR:
-                return CopyMarkerConfig(Marker(CIRCLE),       // top_left
-                                        Marker(CIRCLE),       // top_right
-                                        Marker(),                            // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(CIRCLE),        // top_left
+                                        Marker(CIRCLE),        // top_right
+                                        Marker(),              // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
 
             case CUSTOM_SVG_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(CUSTOM_SVG),   // top_left
-                                        Marker(CUSTOM_SVG),   // top_right
-                                        Marker(CUSTOM_SVG),   // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(CUSTOM_SVG),    // top_left
+                                        Marker(CUSTOM_SVG),    // top_right
+                                        Marker(CUSTOM_SVG),    // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
 
             case ARUCO_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(ARUCO),        // top_left
-                                        Marker(ARUCO),        // top_right
-                                        Marker(ARUCO),        // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(ARUCO_SVG),     // top_left
+                                        Marker(ARUCO_SVG),     // top_right
+                                        Marker(ARUCO_SVG),     // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
 
             case TWO_ARUCO_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(ARUCO),        // top_left
-                                        Marker(ARUCO),        // top_right
-                                        Marker(),                            // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(ARUCO_SVG),     // top_left
+                                        Marker(ARUCO_SVG),     // top_right
+                                        Marker(),              // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
 
             case CIRCLE_OUTLINES_WITH_QR_BR:
                 return CopyMarkerConfig(Marker(CIRCLE, false, true), // top_left (outlined)
                                         Marker(CIRCLE, false, true), // top_right (outlined)
                                         Marker(CIRCLE, false, true), // bottom_left (outlined)
-                                        Marker(QRCODE, true),        // bottom_right
-                                        Marker(QRCODE, true)         // header
+                                        Marker(QR_CODE, true),       // bottom_right
+                                        Marker(QR_CODE, true)        // header
                 );
 
             case SQUARES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(SQUARE),       // top_left
-                                        Marker(SQUARE),       // top_right
-                                        Marker(SQUARE),       // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(SQUARE),        // top_left
+                                        Marker(SQUARE),        // top_right
+                                        Marker(SQUARE),        // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
 
             case SQUARE_OUTLINES_WITH_QR_BR:
                 return CopyMarkerConfig(Marker(SQUARE, false, true), // top_left (outlined)
                                         Marker(SQUARE, false, true), // top_right (outlined)
                                         Marker(SQUARE, false, true), // bottom_left (outlined)
-                                        Marker(QRCODE, true),        // bottom_right
-                                        Marker(QRCODE, true)         // header
+                                        Marker(QR_CODE, true),       // bottom_right
+                                        Marker(QR_CODE, true)        // header
                 );
 
             default:
                 // Configuration par défaut: QR code encodé dans tous les coins
-                return CopyMarkerConfig(Marker(QRCODE, true), // top_left
-                                        Marker(QRCODE, true), // top_right
-                                        Marker(QRCODE, true), // bottom_left
-                                        Marker(QRCODE, true), // bottom_right
-                                        Marker(QRCODE, true)  // header
+                return CopyMarkerConfig(Marker(QR_CODE, true), // top_left
+                                        Marker(QR_CODE, true), // top_right
+                                        Marker(QR_CODE, true), // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
                 );
         }
     }
