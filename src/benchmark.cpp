@@ -90,6 +90,7 @@ struct BenchmarkParams {
     int marker_config = ARUCO_WITH_QR_BR;
     ImageFormat image_format = ImageFormat::A4;
     CopyStyleParams style_params = CopyStyleParams(15, 10, 7, 2, 5, 0);
+    int warmup_iterations = 2;
 };
 
 /**
@@ -135,7 +136,8 @@ void display_configuration(const BenchmarkParams& params) {
         { "Encoded marker size", std::to_string(params.style_params.encoded_marker_size) },
         { "Fiducial marker size", std::to_string(params.style_params.fiducial_marker_size) },
         { "Grey level", std::to_string(params.style_params.grey_level) },
-        { "Marker config", std::to_string(params.marker_config) }
+        { "Marker config", std::to_string(params.marker_config) },
+        { "Warmup iterations", std::to_string(params.warmup_iterations) }
     };
 
     display_configuration_recap("Configuration:", config_pairs);
@@ -172,6 +174,10 @@ BenchmarkParams get_benchmark_params() {
     const int min_config = 1, max_config = 10;
     params.marker_config =
         get_user_input("Marker configuration (1-10)", marker_config_default, &min_config, &max_config);
+        
+    const int min_warmup = 0, max_warmup = 50;
+    params.warmup_iterations = 
+        get_user_input("Warmup iterations", params.warmup_iterations, &min_warmup, &max_warmup);
 
     return params;
 }
@@ -215,7 +221,7 @@ struct BenchmarkContext {
     std::ofstream benchmark_csv;
     std::vector<std::shared_ptr<AtomicBox>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
-    cv::Point2f src_img_size; // Dimensions de l'image source
+    cv::Point2f src_img_size;
 };
 
 /**
@@ -280,8 +286,30 @@ void run_benchmark(const BenchmarkParams& params, const std::string& selected_pa
     if (!std::filesystem::is_directory(dir_path)) {
         throw std::runtime_error("could not open directory '" + dir_path.string() + "'");
     }
-
+    
+    // Collecter tous les fichiers dans un vecteur
+    std::vector<std::filesystem::directory_entry> all_entries;
     for (const auto& entry : std::filesystem::directory_iterator(dir_path)) {
+        all_entries.push_back(entry);
+    }
+    
+    // Vérifier si le nombre d'itérations de warmup est valide
+    int warmup_iterations = params.warmup_iterations;
+    if (warmup_iterations >= all_entries.size()) {
+        std::cout << "Warning: Warmup iterations (" << warmup_iterations << ") is greater than or equal to the number of files (" 
+                  << all_entries.size() << ")." << std::endl;
+        std::cout << "Reducing warmup iterations to " << (all_entries.size() - 1) << " to ensure at least one result is recorded." << std::endl;
+        warmup_iterations = (all_entries.size() > 1) ? all_entries.size() - 1 : 0;
+    }
+    
+    // Afficher les informations sur le warmup
+    if (warmup_iterations > 0) {
+        std::cout << "Performing " << warmup_iterations << " warmup iterations to stabilize cache..." << std::endl;
+    }
+
+    int current_iteration = 0;
+    
+    for (const auto& entry : all_entries) {
         cv::Mat img = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
         const cv::Point2f dst_img_size(img.cols, img.rows);
         auto dst_corner_points = calculate_center_of_marker(context.corner_markers, context.src_img_size, dst_img_size);
@@ -293,7 +321,25 @@ void run_benchmark(const BenchmarkParams& params, const std::string& selected_pa
 #endif
         std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
         std::optional<cv::Mat> affine_transform;
-        {
+        
+        // Déterminer si cette itération est une itération de warmup
+        bool is_warmup = current_iteration < warmup_iterations;
+        
+        if (is_warmup) {
+            std::cout << "Warmup iteration " << (current_iteration + 1) << "/" << warmup_iterations 
+                      << " with file: " << entry.path().filename().string() << std::endl;
+                      
+            // Pour les itérations de warmup, on exécute l'analyse sans enregistrer dans le CSV
+            affine_transform = run_parser(selected_parser, img,
+#ifdef DEBUG
+                                          debug_img,
+#endif
+                                          meta, dst_corner_points);
+            
+            // On peut toujours écrire la sortie dans le terminal pour informer l'utilisateur
+            std::cout << "  Result: " << (affine_transform.has_value() ? "Success" : "Failed") << std::endl;
+        } else {
+            // Pour les itérations normales, on utilise le BenchmarkGuardCSV pour enregistrer dans le CSV
             BenchmarkGuardCSV benchmark_guard(entry.path().filename().string(), &context.benchmark_csv);
             affine_transform = run_parser(selected_parser, img,
 #ifdef DEBUG
@@ -302,11 +348,13 @@ void run_benchmark(const BenchmarkParams& params, const std::string& selected_pa
                                           meta, dst_corner_points);
             benchmark_guard.setSuccess(affine_transform.has_value());
         }
+        
         if (!affine_transform.has_value()) {
 #ifdef DEBUG
             save_debug_img(debug_img, context.output_dir, output_img_path_fname);
 #endif
             fprintf(stderr, "could not find the markers\n");
+            current_iteration++;
             continue;
         }
 
@@ -323,10 +371,16 @@ void run_benchmark(const BenchmarkParams& params, const std::string& selected_pa
 #ifdef DEBUG
         save_debug_img(debug_img, context.output_dir, output_img_path_fname);
 #endif
+
+        current_iteration++;
     }
+    
     if (context.benchmark_csv.is_open()) {
         context.benchmark_csv.close();
     }
+    
+    std::cout << "Benchmark completed with " << warmup_iterations << " warmup iterations and " 
+              << (all_entries.size() - warmup_iterations) << " measured iterations." << std::endl;
 }
 
 int main(int argc, char* argv[]) {

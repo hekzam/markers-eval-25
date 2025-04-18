@@ -54,21 +54,18 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
     std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" + doc +
                              "\" '<page>' --pretty > page.json" + redirect;
 
-    std::cout << "Executing: " << compile_cmd << std::endl;
     int compile_result = system(compile_cmd.c_str());
     if (compile_result != 0) {
         std::cerr << "Error during compilation command" << std::endl;
         return false;
     }
 
-    std::cout << "Executing: " << query_atomic_boxes << std::endl;
     int query1_result = system(query_atomic_boxes.c_str());
     if (query1_result != 0) {
         std::cerr << "Error during query atomic boxes command" << std::endl;
         return false;
     }
 
-    std::cout << "Executing: " << query_page << std::endl;
     int query2_result = system(query_page.c_str());
     if (query2_result != 0) {
         std::cerr << "Error during query page command" << std::endl;
