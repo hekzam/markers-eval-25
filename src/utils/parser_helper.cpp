@@ -55,7 +55,7 @@ std::unordered_map<std::string, Parser> parsers = {
     { "empty", { qrcode_empty_parser } },
 };
 
-std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
+std::vector<DetectedBarcode> identify_barcodes(const cv::Mat& img,
 #ifdef ENABLE_ZBAR
                                                zbar_symbol_type_t flags
 #else

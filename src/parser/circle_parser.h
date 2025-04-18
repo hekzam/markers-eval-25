@@ -1,7 +1,7 @@
 #ifndef CIRCLE_PARSER_H
 #define CIRCLE_PARSER_H
 
-std::optional<cv::Mat> circle_parser(cv::Mat img,
+std::optional<cv::Mat> circle_parser(const cv::Mat& img,
 #ifdef DEBUG
                                      cv::Mat debug_img,
 #endif

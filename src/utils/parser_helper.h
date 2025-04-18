@@ -21,7 +21,7 @@ struct DetectedBarcode {
     std::vector<cv::Point2f> bounding_box;
 };
 
-std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
+std::vector<DetectedBarcode> identify_barcodes(const cv::Mat& img,
 #ifdef ENABLE_ZBAR
                                                zbar_symbol_type_t flags = zbar::ZBAR_QRCODE
 #else
@@ -43,5 +43,32 @@ std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
 #endif
                                   Metadata& meta, std::vector<cv::Point2f>& dst_corner_points);
 std::optional<DetectedBarcode> select_bottom_right_corner(const std::vector<DetectedBarcode>& barcodes);
+
+template <typename T>
+std::vector<T> smaller_parse(const cv::Mat& img, std::vector<T> (*parse_func)(const cv::Mat&), float size = 0.2) {
+    std::vector<T> parsed_data;
+
+    // top-left corner
+    cv::Mat img_tl = img(cv::Rect(0, 0, img.cols * size, img.rows * size));
+    auto parsed_tl = parse_func(img_tl);
+    parsed_data.insert(parsed_data.end(), parsed_tl.begin(), parsed_tl.end());
+
+    // top-right corner
+    cv::Mat img_tr = img(cv::Rect(img.cols * (1 - size), 0, img.cols * size, img.rows * size));
+    auto parsed_tr = parse_func(img_tr);
+    parsed_data.insert(parsed_data.end(), parsed_tr.begin(), parsed_tr.end());
+
+    // bottom-left corner
+    cv::Mat img_bl = img(cv::Rect(0, img.rows * (1 - size), img.cols * size, img.rows * size));
+    auto parsed_bl = parse_func(img_bl);
+    parsed_data.insert(parsed_data.end(), parsed_bl.begin(), parsed_bl.end());
+
+    // bottom-right corner
+    cv::Mat img_br = img(cv::Rect(img.cols * (1 - size), img.rows * (1 - size), img.cols * size, img.rows * size));
+    auto parsed_br = parse_func(img_br);
+    parsed_data.insert(parsed_data.end(), parsed_br.begin(), parsed_br.end());
+
+    return parsed_data;
+}
 
 #endif

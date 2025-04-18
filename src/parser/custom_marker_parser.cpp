@@ -57,7 +57,7 @@ std::vector<std::vector<cv::Point>> detect_marker(cv::Mat img_gray) {
     return filtered_contours;
 }
 
-std::optional<cv::Mat> custom_marker_parser(cv::Mat img,
+std::optional<cv::Mat> custom_marker_parser(const cv::Mat& img,
 #ifdef DEBUG
                                             cv::Mat debug_img,
 #endif

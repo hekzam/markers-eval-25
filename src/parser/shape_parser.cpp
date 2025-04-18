@@ -50,7 +50,7 @@ std::vector<cv::Point2f> detect_shape(cv::Mat img) {
     return detected_shapes;
 }
 
-std::optional<cv::Mat> shape_parser(cv::Mat img,
+std::optional<cv::Mat> shape_parser(const cv::Mat& img,
 #ifdef DEBUG
                                     cv::Mat debug_img,
 #endif
