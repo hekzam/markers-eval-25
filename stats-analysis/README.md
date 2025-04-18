@@ -93,7 +93,7 @@ install.packages(c("ggplot2", "dplyr", "tidyr", "corrplot"))
    ```
 4. Exécutez le script:
    ```r
-   source("Lecture_csv.r")
+   source("figures.r")
    ```
 5. Les graphiques générés seront sauvegardés dans votre répertoire de travail
 

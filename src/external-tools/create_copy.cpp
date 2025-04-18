@@ -33,8 +33,8 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
 
     fs::create_directories("./copies");
 
-    std::string doc = "template.typ";
     std::string root = ".";
+    std::string doc = root + "/typst/template.typ";
     std::string redirect = getOutputRedirection();
 
     std::string params = "--input encoded-marker-size=" + std::to_string(style_params.encoded_marker_size) + " " +
@@ -45,13 +45,15 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
                          "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
                          "--input marker-types=" + "\"" + marker_config.toString() + "\"";
 
+
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +
                               filename + ".png\" --format png --ppi " + std::to_string(style_params.dpi) + redirect;
 
-    std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" +
-                                     doc + "\" '<atomic-boxes>' --pretty > original_boxes.json" + redirect;
 
-    std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" + doc +
+    std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"" + doc +
+                                     "\" '<atomic-boxes>' --pretty > original_boxes.json" + redirect;
+
+    std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"" + doc +
                              "\" '<page>' --pretty > page.json" + redirect;
 
     int compile_result = system(compile_cmd.c_str());
