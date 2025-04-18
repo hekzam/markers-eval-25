@@ -105,11 +105,6 @@ std::optional<cv::Mat> aruco_parser(cv::Mat img,
     std::vector<cv::Point2f> corner_points;
     auto found_mask = identify_corner_aruco(markerIds, markerCorners, corner_points);
 
-    if (found_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF)) {
-        printf("not all corner markers found\n");
-        return {};
-    }
-
     corner_points[BOTTOM_RIGHT] = center_of_box(corner_barcode.bounding_box);
     found_mask |= BOTTOM_RIGHT_BF;
 
