@@ -13,14 +13,14 @@
 #let process-copies-with-pagination(nb-copies, duplex-printing, content-wrapper: (c) => c) = {
   
   // Initialisation des états
-  copy-counter.update(1)
+  copy-counter.update(0)
   generating-content.update(true)
   
   // Affichage de la première copie
   content-wrapper(content)
   
   // Génération des copies suivantes
-  for i in range(2, nb-copies + 1) {
+  for i in range(1, nb-copies) {
     if duplex-printing and calc.odd(i) {
       pagebreak(to: "odd")
     } else {
