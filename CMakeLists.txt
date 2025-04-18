@@ -48,7 +48,6 @@ set(SRC_BENCH
     src/benchmark.cpp
     src/utils/benchmark_helper.cpp
     src/external-tools/create_copy.cpp
-    src/command-line-interface/command_line_interface.cpp
 )
 
 set(SRC_MODIFIEUR
@@ -63,6 +62,7 @@ set(SRC_TYPST_INTERFACE
 
 file(GLOB UTILS_SRC src/utils/*.cpp)
 file(GLOB PARSER_SRC src/parser/*.cpp)
+file(GLOB BENCHMARK_SRC src/bench/*.cpp)
 
 # add debug definitions
 if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -83,7 +83,7 @@ include_directories(modifier PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
-add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC})
+add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC} ${BENCHMARK_SRC})
 add_executable(typst_interface ${SRC_TYPST_INTERFACE})
 add_executable(modifier ${SRC_MODIFIEUR})
 

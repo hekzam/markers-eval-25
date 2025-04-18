@@ -256,9 +256,7 @@ BenchmarkContext prepare_benchmark(const BenchmarkParams& params) {
         context.benchmark_csv << "File,Time(ms),Success" << std::endl;
     }
 
-    if (!std::filesystem::exists(params.atomic_boxes_file)) {
-        throw std::runtime_error("Atomic boxes file '" + params.atomic_boxes_file + "' does not exist");
-    }
+    std::string benchmark_name = "time-copy";
 
     // Lecture et parsing du JSON
     json atomic_boxes_json = parse_json_file(params.atomic_boxes_file);
@@ -286,9 +284,10 @@ void run_benchmark(const BenchmarkParams& params, const std::string& selected_pa
 
     BenchmarkContext context = prepare_benchmark(params);
 
-    std::filesystem::path dir_path{ params.input_dir };
-    if (!std::filesystem::is_directory(dir_path)) {
-        throw std::runtime_error("could not open directory '" + dir_path.string() + "'");
+    auto opt_config = get_config(argc, argv, default_config);
+    if (!opt_config.has_value()) {
+        print_help_config(default_config);
+        return 1;
     }
     
     // Collecter tous les fichiers dans un vecteur
@@ -398,7 +397,8 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error("Required arguments cannot be empty.");
     }
 
-    run_benchmark(params, selected_parser);
+    benchmark_map[benchmark_name].run(config);
+    std::cout << "Benchmark completed." << std::endl;
     return 0;
 }
 /// TODO: load page.json

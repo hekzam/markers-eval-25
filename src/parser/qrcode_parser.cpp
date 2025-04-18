@@ -33,8 +33,6 @@ int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, const std::
         } else if (starts_with(barcode.content, "hzbl")) {
             pos_found = BOTTOM_LEFT;
         } else if (starts_with(barcode.content, "hzbr")) {
-            if (barcode.content.find(content_hash) == std::string::npos)
-                continue;
             pos_found = BOTTOM_RIGHT;
         } else {
             continue;
@@ -69,10 +67,12 @@ std::optional<cv::Mat> qrcode_parser(cv::Mat img,
     std::vector<DetectedBarcode*> corner_barcodes;
     int found_corner_mask = identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
 
-    if (found_corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF))
-        throw std::invalid_argument("not all corner barcodes were found");
+    if (found_corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF)) {
+        std::cerr << "not all corner points were found" << std::endl;
+        return {};
+    }
 
-    meta = parse_metadata(corner_barcodes[BOTTOM_LEFT]->content);
+    meta = parse_metadata(corner_barcodes[BOTTOM_RIGHT]->content);
 
     auto affine_transform = get_affine_transform(found_corner_mask, dst_corner_points, corner_points);
     return affine_transform;
