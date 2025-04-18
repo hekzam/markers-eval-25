@@ -21,6 +21,172 @@ enum MarkerConfig {
 };
 
 /**
+ * @brief Constantes pour les types de marqueurs sous forme de chaînes
+ */
+const std::string QR_CODE = "qrcode";
+const std::string DATAMATRIX = "datamatrix";
+const std::string AZTEC = "aztec";
+const std::string PDF417 = "pdf417-comp";
+const std::string RMQR = "rmqr";
+const std::string BARCODE = "barcode";
+const std::string CIRCLE = "circle";
+const std::string SQUARE = "square";
+const std::string ARUCO_SVG = "aruco-svg";
+const std::string CUSTOM_SVG = "custom-svg";
+
+/**
+ * @brief Structure représentant un marqueur avec son statut d'encodage
+ */
+struct Marker {
+    std::string type; // Type du marqueur (sous forme de chaîne)
+    bool encoded;     // Indique si le marqueur est encodé
+    bool outlined;    // Indique si le marqueur est affiché uniquement avec son contour (non rempli)
+
+    // Constructeur par défaut: pas de marqueur, non encodé, non contouré
+    Marker() : type(""), encoded(false), outlined(false) {
+    }
+
+    // Constructeur avec paramètres
+    Marker(const std::string& t, bool enc = false, bool out = false) : type(t), encoded(enc), outlined(out) {
+    }
+};
+
+/**
+ * @brief Structure pour configurer précisément les marqueurs sur une copie
+ */
+struct CopyMarkerConfig {
+    Marker top_left;     // Marqueur coin supérieur gauche
+    Marker top_right;    // Marqueur coin supérieur droit
+    Marker bottom_left;  // Marqueur coin inférieur gauche
+    Marker bottom_right; // Marqueur coin inférieur droit
+    Marker header;       // Marqueur d'en-tête
+
+    // Constructeur par défaut: aucun marqueur
+    CopyMarkerConfig() {
+    }
+
+    // Constructeur avec marqueurs
+    CopyMarkerConfig(Marker tl, Marker tr, Marker bl, Marker br, Marker h)
+        : top_left(tl), top_right(tr), bottom_left(bl), bottom_right(br), header(h) {
+    }
+
+    // Méthode pour convertir la configuration en chaîne de caractères
+    std::string toString() const {
+        auto formatMarker = [](const Marker& m) -> std::string {
+            if (m.type.empty()) {
+                return "none";
+            }
+
+            std::string result = m.type;
+            if (m.outlined) {
+                result += "-outlined";
+            }
+            if (m.encoded) {
+                result += "-encoded";
+            }
+            return result;
+        };
+
+        return "(" + formatMarker(top_left) + "," + formatMarker(top_right) + "," + formatMarker(bottom_left) + "," +
+               formatMarker(bottom_right) + "," + formatMarker(header) + ")";
+    }
+
+    // Configurations prédéfinies selon les valeurs de MarkerConfig
+    static CopyMarkerConfig getConfigById(int configId) {
+        switch (configId) {
+            case QR_ALL_CORNERS:
+                return CopyMarkerConfig(Marker(QR_CODE),   // top_left
+                                        Marker(QR_CODE),   // top_right
+                                        Marker(QR_CODE),   // bottom_left
+                                        Marker(QR_CODE),   // bottom_right
+                                        Marker(RMQR, true) // header
+                );
+
+            case QR_BOTTOM_RIGHT_ONLY:
+                return CopyMarkerConfig(Marker(),              // top_left
+                                        Marker(),              // top_right
+                                        Marker(),              // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+
+            case CIRCLES_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(CIRCLE),        // top_left
+                                        Marker(CIRCLE),        // top_right
+                                        Marker(CIRCLE),        // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+
+            case TOP_CIRCLES_QR_BR:
+                return CopyMarkerConfig(Marker(CIRCLE),        // top_left
+                                        Marker(CIRCLE),        // top_right
+                                        Marker(),              // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+
+            case CUSTOM_SVG_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(CUSTOM_SVG),    // top_left
+                                        Marker(CUSTOM_SVG),    // top_right
+                                        Marker(CUSTOM_SVG),    // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+
+            case ARUCO_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(ARUCO_SVG),     // top_left
+                                        Marker(ARUCO_SVG),     // top_right
+                                        Marker(ARUCO_SVG),     // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+
+            case TWO_ARUCO_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(ARUCO_SVG),     // top_left
+                                        Marker(ARUCO_SVG),     // top_right
+                                        Marker(),              // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+
+            case CIRCLE_OUTLINES_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(CIRCLE, false, true), // top_left (outlined)
+                                        Marker(CIRCLE, false, true), // top_right (outlined)
+                                        Marker(CIRCLE, false, true), // bottom_left (outlined)
+                                        Marker(QR_CODE, true),       // bottom_right
+                                        Marker(QR_CODE, true)        // header
+                );
+
+            case SQUARES_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(SQUARE),        // top_left
+                                        Marker(SQUARE),        // top_right
+                                        Marker(SQUARE),        // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+
+            case SQUARE_OUTLINES_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(SQUARE, false, true), // top_left (outlined)
+                                        Marker(SQUARE, false, true), // top_right (outlined)
+                                        Marker(SQUARE, false, true), // bottom_left (outlined)
+                                        Marker(QR_CODE, true),       // bottom_right
+                                        Marker(QR_CODE, true)        // header
+                );
+
+            default:
+                // Configuration par défaut: QR code encodé dans tous les coins
+                return CopyMarkerConfig(Marker(QR_CODE, true), // top_left
+                                        Marker(QR_CODE, true), // top_right
+                                        Marker(QR_CODE, true), // bottom_left
+                                        Marker(QR_CODE, true), // bottom_right
+                                        Marker(QR_CODE, true)  // header
+                );
+        }
+    }
+};
+
+/**
  * @brief Structure contenant les informations sur les configurations de marqueurs
  */
 struct MarkerConfigInfo {
@@ -34,23 +200,35 @@ struct MarkerConfigInfo {
 extern const std::vector<MarkerConfigInfo> marker_configs;
 
 /**
+ * @brief Structure contenant les paramètres de style pour la génération de copies
+ */
+struct CopyStyleParams {
+    int encoded_marker_size;  // Taille du marqueur encodé
+    int fiducial_marker_size; // Taille du marqueur de fiduciel
+    int header_marker_size;   // Taille du marqueur d'en-tête
+    int stroke_width;         // Largeur du trait
+    int marker_margin;        // Marge du marqueur
+    int grey_level;           // Niveau de gris
+    int nb_copies;            // Nombre de copies à générer
+
+    // Constructeur avec valeurs par défaut
+    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int nc = 1)
+        : encoded_marker_size(ems), fiducial_marker_size(fms), header_marker_size(hms), stroke_width(sw),
+          marker_margin(mm), grey_level(gl), nb_copies(nc) {
+    }
+};
+
+/**
  * @brief Génère et exporte une copie paramétrée, enregistrée dans le répertoire ./copies
- * 
- * @param encoded_marker_size Taille des marqueurs encodés
- * @param fiducial_marker_size Taille des marqueurs fiduciaires
- * @param stroke_width Largeur du trait des marqueurs
- * @param marker_margin Marge autour des marqueurs
- * @param nb_copies Nombre de copies à générer
- * @param duplex_printing Mode d'impression recto-verso (0: simple face, 1: recto-verso)
- * @param marker_config Configuration des marqueurs
- * @param grey_level Niveau de gris
- * @param header_marker Affiche un marqueur d'entête
+ *
+ * @param style_params Paramètres de style pour la génération
+ * @param duplex_printing Impression recto-verso (0 ou 1)
+ * @param marker_config Configuration des marqueurs à utiliser
  * @param filename Nom du fichier de sortie
  * @return true si la copie a été générée avec succès
  * @return false si une erreur est survenue
  */
-bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
-                 int duplex_printing, int marker_config, int grey_level, int header_marker,
+bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const CopyMarkerConfig& marker_config,
                  const std::string& filename = "copy");
 
 #endif
