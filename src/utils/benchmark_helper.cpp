@@ -37,8 +37,7 @@ json parse_json_file(const std::string& filepath) {
     }
 }
 
-bool generate_copies(int nb_copies, int marker_config_id, int encoded_marker_size, int fiducial_marker_size,
-                     int grey_level) {
+bool generate_copies(int nb_copies, int marker_config_id, const CopyStyleParams& style_params) {
     std::filesystem::path copies_dir = "copies";
     if (std::filesystem::exists(copies_dir)) {
         std::cout << "Cleaning existing copies directory..." << std::endl;
@@ -48,15 +47,6 @@ bool generate_copies(int nb_copies, int marker_config_id, int encoded_marker_siz
 
     std::cout << "Generating " << nb_copies << " copies..." << std::endl;
     bool all_success = true;
-    
-    // Créer la configuration de style
-    CopyStyleParams style_params;
-    style_params.encoded_marker_size = encoded_marker_size;
-    style_params.fiducial_marker_size = fiducial_marker_size;
-    style_params.header_marker_size = 7;  // Valeur par défaut
-    style_params.stroke_width = 2;        // Valeur par défaut
-    style_params.marker_margin = 5;       // Valeur par défaut
-    style_params.grey_level = grey_level;
     
     // Récupérer la configuration des marqueurs
     CopyMarkerConfig marker_config = CopyMarkerConfig::getConfigById(marker_config_id);

@@ -89,7 +89,7 @@ struct BenchmarkParams {
     std::string csv_filename = "benchmark_results.csv";
     int marker_config = ARUCO_WITH_QR_BR;
     ImageFormat image_format = ImageFormat::A4;
-    CopyStyleParams style_params = CopyStyleParams(15, 10, 7, 2, 5, 0);
+    CopyStyleParams style_params = CopyStyleParams(15, 10, 7, 2, 5, 0, 300);
     int warmup_iterations = 2;
 };
 
@@ -136,6 +136,7 @@ void display_configuration(const BenchmarkParams& params) {
         { "Encoded marker size", std::to_string(params.style_params.encoded_marker_size) },
         { "Fiducial marker size", std::to_string(params.style_params.fiducial_marker_size) },
         { "Grey level", std::to_string(params.style_params.grey_level) },
+        { "DPI", std::to_string(params.style_params.dpi) },
         { "Marker config", std::to_string(params.marker_config) },
         { "Warmup iterations", std::to_string(params.warmup_iterations) }
     };
@@ -169,8 +170,12 @@ BenchmarkParams get_benchmark_params() {
     const int min_grey = 0, max_grey = 255;
     params.style_params.grey_level = get_user_input("Grey level", params.style_params.grey_level, &min_grey, &max_grey);
 
+    const int min_dpi = 72, max_dpi = 1200;
+    params.style_params.dpi = get_user_input("DPI", params.style_params.dpi, &min_dpi, &max_dpi);
+
     int marker_config_default =
-        display_marker_configs(marker_configs, ARUCO_WITH_QR_BR, "Available marker configurations:");
+    display_marker_configs(marker_configs, ARUCO_WITH_QR_BR, "Available marker configurations:");
+
     const int min_config = 1, max_config = 10;
     params.marker_config =
         get_user_input("Marker configuration (1-10)", marker_config_default, &min_config, &max_config);
@@ -277,8 +282,7 @@ void run_benchmark(const BenchmarkParams& params, const std::string& selected_pa
         throw std::runtime_error("Number of copies must be between 1 and 50");
     }
 
-    generate_copies(nb_copies, static_cast<MarkerConfig>(params.marker_config), params.style_params.encoded_marker_size,
-                    params.style_params.fiducial_marker_size, params.style_params.grey_level);
+    generate_copies(nb_copies, static_cast<MarkerConfig>(params.marker_config), params.style_params);
 
     BenchmarkContext context = prepare_benchmark(params);
 

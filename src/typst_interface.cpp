@@ -86,6 +86,8 @@ int main(int argc, char* argv[]) {
             style_params.header_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--filename") {
             filename = argv[i + 1];
+        } else if (arg == "--dpi") {
+            style_params.dpi = std::atoi(argv[i + 1]);
         } else {
             std::cerr << "Unknown argument: " << arg << std::endl;
             return 1;

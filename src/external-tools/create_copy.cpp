@@ -46,7 +46,7 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
                          "--input marker-types=" + "\"" + marker_config.toString() + "\"";
 
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +
-                              filename + ".png\" --format png" + redirect;
+                              filename + ".png\" --format png --ppi " + std::to_string(style_params.dpi) + redirect;
 
     std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" +
                                      doc + "\" '<atomic-boxes>' --pretty > original_boxes.json" + redirect;

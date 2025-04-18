@@ -209,11 +209,12 @@ struct CopyStyleParams {
     int stroke_width;         // Largeur du trait
     int marker_margin;        // Marge du marqueur
     int grey_level;           // Niveau de gris
+    int dpi;            // DPI (points par pouce) pour l'image générée
 
     // Constructeur avec valeurs par défaut
-    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0)
+    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int dpi = 300)
         : encoded_marker_size(ems), fiducial_marker_size(fms), header_marker_size(hms), stroke_width(sw),
-          marker_margin(mm), grey_level(gl) {
+          marker_margin(mm), grey_level(gl), dpi(dpi) {
     }
 };
 
