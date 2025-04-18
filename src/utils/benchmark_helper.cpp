@@ -57,7 +57,6 @@ bool generate_copies(int nb_copies, int marker_config_id, int encoded_marker_siz
     style_params.stroke_width = 2;        // Valeur par défaut
     style_params.marker_margin = 5;       // Valeur par défaut
     style_params.grey_level = grey_level;
-    style_params.nb_copies = 1;           // Générer une copie à la fois
     
     // Récupérer la configuration des marqueurs
     CopyMarkerConfig marker_config = CopyMarkerConfig::getConfigById(marker_config_id);
@@ -67,7 +66,6 @@ bool generate_copies(int nb_copies, int marker_config_id, int encoded_marker_siz
         copy_name << "copy" << std::setw(2) << std::setfill('0') << i;
 
         bool success = create_copy(style_params,     // Paramètres de style
-                                   0,                // duplex_printing (0 = non)
                                    marker_config,    // Configuration des marqueurs
                                    copy_name.str()   // Nom du fichier
         );

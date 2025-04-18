@@ -209,12 +209,11 @@ struct CopyStyleParams {
     int stroke_width;         // Largeur du trait
     int marker_margin;        // Marge du marqueur
     int grey_level;           // Niveau de gris
-    int nb_copies;            // Nombre de copies à générer
 
     // Constructeur avec valeurs par défaut
-    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int nc = 1)
+    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0)
         : encoded_marker_size(ems), fiducial_marker_size(fms), header_marker_size(hms), stroke_width(sw),
-          marker_margin(mm), grey_level(gl), nb_copies(nc) {
+          marker_margin(mm), grey_level(gl) {
     }
 };
 
@@ -222,13 +221,12 @@ struct CopyStyleParams {
  * @brief Génère et exporte une copie paramétrée, enregistrée dans le répertoire ./copies
  *
  * @param style_params Paramètres de style pour la génération
- * @param duplex_printing Impression recto-verso (0 ou 1)
  * @param marker_config Configuration des marqueurs à utiliser
  * @param filename Nom du fichier de sortie
  * @return true si la copie a été générée avec succès
  * @return false si une erreur est survenue
  */
-bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const CopyMarkerConfig& marker_config,
+bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
                  const std::string& filename = "copy");
 
 #endif

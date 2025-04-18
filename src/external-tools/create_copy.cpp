@@ -28,7 +28,7 @@ std::string getOutputRedirection() {
 #endif
 }
 
-bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const CopyMarkerConfig& marker_config,
+bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
                  const std::string& filename) {
 
     fs::create_directories("./copies");
@@ -43,8 +43,6 @@ bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const
                          "--input stroke-width=" + std::to_string(style_params.stroke_width) + " " +
                          "--input marker-margin=" + std::to_string(style_params.marker_margin) + " " +
                          "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
-                         "--input nb-copies=" + std::to_string(style_params.nb_copies) + " " +
-                         "--input duplex-printing=" + std::to_string(duplex_printing) + " " +
                          "--input marker-types=" + "\"" + marker_config.toString() + "\"";
 
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +
