@@ -29,8 +29,8 @@ const std::string AZTEC = "aztec";
 const std::string PDF417 = "pdf417-comp";
 const std::string RMQR = "rmqr";
 const std::string BARCODE = "barcode";
-const std::string CIRCLE = "circle";
-const std::string SQUARE = "square";
+const std::string CIRCLE_FORM = "circle";
+const std::string SQUARE_FORM = "square";
 const std::string ARUCO_SVG = "aruco-svg";
 const std::string CUSTOM_SVG = "custom-svg";
 
@@ -111,16 +111,16 @@ struct CopyMarkerConfig {
                 );
 
             case CIRCLES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(CIRCLE),        // top_left
-                                        Marker(CIRCLE),        // top_right
-                                        Marker(CIRCLE),        // bottom_left
+                return CopyMarkerConfig(Marker(CIRCLE_FORM),        // top_left
+                                        Marker(CIRCLE_FORM),        // top_right
+                                        Marker(CIRCLE_FORM),        // bottom_left
                                         Marker(QR_CODE, true), // bottom_right
                                         Marker(QR_CODE, true)  // header
                 );
 
             case TOP_CIRCLES_QR_BR:
-                return CopyMarkerConfig(Marker(CIRCLE),        // top_left
-                                        Marker(CIRCLE),        // top_right
+                return CopyMarkerConfig(Marker(CIRCLE_FORM),        // top_left
+                                        Marker(CIRCLE_FORM),        // top_right
                                         Marker(),              // bottom_left
                                         Marker(QR_CODE, true), // bottom_right
                                         Marker(QR_CODE, true)  // header
@@ -151,25 +151,25 @@ struct CopyMarkerConfig {
                 );
 
             case CIRCLE_OUTLINES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(CIRCLE, false, true), // top_left (outlined)
-                                        Marker(CIRCLE, false, true), // top_right (outlined)
-                                        Marker(CIRCLE, false, true), // bottom_left (outlined)
+                return CopyMarkerConfig(Marker(CIRCLE_FORM, false, true), // top_left (outlined)
+                                        Marker(CIRCLE_FORM, false, true), // top_right (outlined)
+                                        Marker(CIRCLE_FORM, false, true), // bottom_left (outlined)
                                         Marker(QR_CODE, true),       // bottom_right
                                         Marker(QR_CODE, true)        // header
                 );
 
             case SQUARES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(SQUARE),        // top_left
-                                        Marker(SQUARE),        // top_right
-                                        Marker(SQUARE),        // bottom_left
+                return CopyMarkerConfig(Marker(SQUARE_FORM),        // top_left
+                                        Marker(SQUARE_FORM),        // top_right
+                                        Marker(SQUARE_FORM),        // bottom_left
                                         Marker(QR_CODE, true), // bottom_right
                                         Marker(QR_CODE, true)  // header
                 );
 
             case SQUARE_OUTLINES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(SQUARE, false, true), // top_left (outlined)
-                                        Marker(SQUARE, false, true), // top_right (outlined)
-                                        Marker(SQUARE, false, true), // bottom_left (outlined)
+                return CopyMarkerConfig(Marker(SQUARE_FORM, false, true), // top_left (outlined)
+                                        Marker(SQUARE_FORM, false, true), // top_right (outlined)
+                                        Marker(SQUARE_FORM, false, true), // bottom_left (outlined)
                                         Marker(QR_CODE, true),       // bottom_right
                                         Marker(QR_CODE, true)        // header
                 );
