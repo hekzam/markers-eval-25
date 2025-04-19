@@ -34,6 +34,9 @@ const std::string SQUARE = "square";
 const std::string ARUCO_SVG = "aruco-svg";
 const std::string CUSTOM_SVG = "custom-svg";
 
+
+///TODO: Pour les structures : Supprimer les constructeurs et remplacer par des = "default" pour les structures
+
 /**
  * @brief Structure représentant un marqueur avec son statut d'encodage
  */

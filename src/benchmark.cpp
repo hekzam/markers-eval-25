@@ -18,6 +18,8 @@
 #include "external-tools/create_copy.h"
 #include "command-line-interface/command_line_interface.h"
 
+/// TODO: Adapter les formats d'image au dictionnaire de configuration
+
 /**
  * @brief Formats d'image supportés
  */
@@ -78,6 +80,7 @@ std::string image_format_to_string(ImageFormat format) {
     }
 }
 
+/// TODO: Adapter cette structure au dictionnaire de configuration
 /**
  * @brief Structure pour stocker les paramètres de benchmark
  */
@@ -120,6 +123,7 @@ std::string select_parser_for_marker_config(int marker_config) {
     }
 }
 
+/// TODO: Adapter cette fonction au dictionnaire de configuration
 /**
  * @brief Affiche la configuration actuelle du benchmark
  *
@@ -270,6 +274,8 @@ BenchmarkContext prepare_benchmark(const BenchmarkParams& params) {
     return context;
 }
 
+
+/// TODO: Adpater le système de temps de chauffe : ne pas soustraire les itérations de warmup du nombre total d'itérations -> les rajouter
 /**
  * @brief Exécute le benchmark en fonction des paramètres fournis
  *
