@@ -47,18 +47,14 @@ bool generate_copies(int nb_copies, int marker_config_id, const CopyStyleParams&
 
     std::cout << "Generating " << nb_copies << " copies..." << std::endl;
     bool all_success = true;
-    
-    // Récupérer la configuration des marqueurs
+
     CopyMarkerConfig marker_config = CopyMarkerConfig::getConfigById(marker_config_id);
-    
+
     for (int i = 1; i <= nb_copies; i++) {
         std::ostringstream copy_name;
         copy_name << "copy" << std::setw(2) << std::setfill('0') << i;
 
-        bool success = create_copy(style_params,     // Paramètres de style
-                                   marker_config,    // Configuration des marqueurs
-                                   copy_name.str()   // Nom du fichier
-        );
+        bool success = create_copy(style_params, marker_config, copy_name.str());
 
         if (!success) {
             std::cerr << "Failed to generate " << copy_name.str() << std::endl;

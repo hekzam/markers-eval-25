@@ -35,14 +35,14 @@ bool constraint(std::unordered_map<std::string, Config> config) {
 }
 
 /**
- * @brief Draw an outline around a box
+ * @brief Dessine un contour autour d'une boîte
  *
- * @param box The atomic box to draw
- * @param image The image to draw on
- * @param src_size Source image dimensions
- * @param dst_size Destination image dimensions
- * @param color Color of the outline
- * @param thickness Line thickness
+ * @param box La boîte atomique à dessiner
+ * @param image L'image sur laquelle dessiner
+ * @param src_size Dimensions de l'image source
+ * @param dst_size Dimensions de l'image de destination
+ * @param color Couleur du contour
+ * @param thickness Épaisseur de la ligne
  */
 void draw_box_outline(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
                       const cv::Point2f& dst_size, const cv::Scalar& color, int thickness = 2) {
@@ -54,15 +54,15 @@ void draw_box_outline(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, con
 }
 
 /**
- * @brief Draw a circle at the center of a box
+ * @brief Dessine un cercle au centre d'une boîte
  *
- * @param box The atomic box
- * @param image The image to draw on
- * @param src_size Source image dimensions
- * @param dst_size Destination image dimensions
- * @param color Circle color
- * @param radius Circle radius
- * @param thickness Circle thickness (-1 for filled)
+ * @param box La boîte atomique
+ * @param image L'image sur laquelle dessiner
+ * @param src_size Dimensions de l'image source
+ * @param dst_size Dimensions de l'image de destination
+ * @param color Couleur du cercle
+ * @param radius Rayon du cercle
+ * @param thickness Épaisseur du cercle (-1 pour rempli)
  */
 void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
                      const cv::Point2f& dst_size, const cv::Scalar& color, int radius = 3, int thickness = -1) {
@@ -71,12 +71,6 @@ void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, cons
     cv::circle(image, center, radius, color, thickness);
 }
 
-/**
- * @brief Exécute le benchmark en fonction des paramètres fournis
- *
- * @param params Structure contenant les paramètres de benchmark
- * @param selected_parser Le type de parseur sélectionné
- */
 void run_benchmark(std::unordered_map<std::string, Config> config) {
     if (!constraint(config)) {
         // print_help_config(default_config_time_copy);

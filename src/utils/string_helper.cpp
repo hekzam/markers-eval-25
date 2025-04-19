@@ -1,13 +1,6 @@
 #include <vector>
 #include <string>
 
-/**
- * @brief Split a string by a delimiter
- *
- * @param s
- * @param delimiter
- * @return std::vector<std::string>
- */
 std::vector<std::string> split(std::string s, std::string delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;

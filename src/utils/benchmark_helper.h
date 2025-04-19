@@ -1,10 +1,19 @@
 #ifndef BENCHMARK_HELPER_H
 #define BENCHMARK_HELPER_H
 
+/**
+ * @file benchmark_helper.h
+ * @brief Utilitaires pour l'exécution et la gestion des benchmarks.
+ *
+ * Ce fichier contient des fonctions utilitaires pour faciliter la mise en place
+ * et l'exécution de benchmarks, notamment pour la génération de copies, la sauvegarde
+ * des résultats et la manipulation des fichiers et répertoires nécessaires aux tests.
+ */
+
 #include <filesystem>
 #include <string>
 #include <common.h>
-#include "../external-tools/create_copy.h"  // Ajout de cette inclusion pour CopyStyleParams
+#include "../external-tools/create_copy.h"
 
 /**
  * @brief Sauvegarde une image dans le répertoire de sortie

@@ -1,6 +1,16 @@
 #ifndef CREATE_COPY_H
 #define CREATE_COPY_H
 
+/**
+ * @file create_copy.h
+ * @brief Module de génération de copies avec différents types de marqueurs.
+ *
+ * Ce fichier définit les structures et fonctions nécessaires pour créer des copies
+ * de documents avec divers types de marqueurs (QR codes, cercles, carrés, ArUco, etc.).
+ * Il propose une interface flexible pour configurer l'apparence et le placement des marqueurs,
+ * ainsi que différentes configurations prédéfinies pour s'adapter à diverses utilisations.
+ */
+
 #include <string>
 #include <vector>
 
@@ -11,9 +21,12 @@
 #define CUSTOM_SVG_WITH_QR_BR 5 // Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
 #define ARUCO_WITH_QR_BR 6      // Différents marqueurs ArUco, QR code avec données en bas-droit
 #define TWO_ARUCO_WITH_QR_BR 7  // Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-#define CIRCLE_OUTLINES_WITH_QR_BR 8 // Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-#define SQUARES_WITH_QR_BR 9         // Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-#define SQUARE_OUTLINES_WITH_QR_BR 10  // Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+#define CIRCLE_OUTLINES_WITH_QR_BR \
+    8 // Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+#define SQUARES_WITH_QR_BR \
+    9 // Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+#define SQUARE_OUTLINES_WITH_QR_BR \
+    10 // Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 
 // Remplacer les macros de types de marqueurs par un enum class
 enum class MarkerType {
@@ -33,18 +46,30 @@ enum class MarkerType {
 // Fonction auxiliaire pour convertir les types d'énumération en chaînes
 inline std::string toString(MarkerType type) {
     switch (type) {
-        case MarkerType::QR_CODE: return "qrcode";
-        case MarkerType::DATAMATRIX: return "datamatrix";
-        case MarkerType::AZTEC: return "aztec";
-        case MarkerType::PDF417: return "pdf417-comp";
-        case MarkerType::RMQR: return "rmqr";
-        case MarkerType::BARCODE: return "barcode";
-        case MarkerType::CIRCLE: return "circle";
-        case MarkerType::SQUARE: return "square";
-        case MarkerType::ARUCO_SVG: return "aruco-svg";
-        case MarkerType::CUSTOM_SVG: return "custom-svg";
-        case MarkerType::NONE: return "";
-        default: return "";
+        case MarkerType::QR_CODE:
+            return "qrcode";
+        case MarkerType::DATAMATRIX:
+            return "datamatrix";
+        case MarkerType::AZTEC:
+            return "aztec";
+        case MarkerType::PDF417:
+            return "pdf417-comp";
+        case MarkerType::RMQR:
+            return "rmqr";
+        case MarkerType::BARCODE:
+            return "barcode";
+        case MarkerType::CIRCLE:
+            return "circle";
+        case MarkerType::SQUARE:
+            return "square";
+        case MarkerType::ARUCO_SVG:
+            return "aruco-svg";
+        case MarkerType::CUSTOM_SVG:
+            return "custom-svg";
+        case MarkerType::NONE:
+            return "";
+        default:
+            return "";
     }
 }
 
@@ -52,15 +77,17 @@ inline std::string toString(MarkerType type) {
  * @brief Structure représentant un marqueur avec son statut d'encodage
  */
 struct Marker {
-    MarkerType type;    // Type du marqueur (enum)
-    bool encoded;       // Indique si le marqueur est encodé
-    bool outlined;      // Indique si le marqueur est affiché uniquement avec son contour (non rempli)
+    MarkerType type; // Type du marqueur (enum)
+    bool encoded;    // Indique si le marqueur est encodé
+    bool outlined;   // Indique si le marqueur est affiché uniquement avec son contour (non rempli)
 
     // Constructeur par défaut: pas de marqueur, non encodé, non contouré
-    Marker() : type(MarkerType::NONE), encoded(false), outlined(false) {}
+    Marker() : type(MarkerType::NONE), encoded(false), outlined(false) {
+    }
 
     // Constructeur avec paramètres
-    Marker(MarkerType t, bool enc = false, bool out = false) : type(t), encoded(enc), outlined(out) {}
+    Marker(MarkerType t, bool enc = false, bool out = false) : type(t), encoded(enc), outlined(out) {
+    }
 };
 
 /**
@@ -115,9 +142,9 @@ struct CopyMarkerConfig {
                 );
 
             case QR_BOTTOM_RIGHT_ONLY:
-                return CopyMarkerConfig(Marker(),              // top_left
-                                        Marker(),              // top_right
-                                        Marker(),              // bottom_left
+                return CopyMarkerConfig(Marker(),                          // top_left
+                                        Marker(),                          // top_right
+                                        Marker(),                          // bottom_left
                                         Marker(MarkerType::QR_CODE, true), // bottom_right
                                         Marker(MarkerType::QR_CODE, true)  // header
                 );
@@ -133,7 +160,7 @@ struct CopyMarkerConfig {
             case TOP_CIRCLES_QR_BR:
                 return CopyMarkerConfig(Marker(MarkerType::CIRCLE),        // top_left
                                         Marker(MarkerType::CIRCLE),        // top_right
-                                        Marker(),              // bottom_left
+                                        Marker(),                          // bottom_left
                                         Marker(MarkerType::QR_CODE, true), // bottom_right
                                         Marker(MarkerType::QR_CODE, true)  // header
                 );
@@ -157,7 +184,7 @@ struct CopyMarkerConfig {
             case TWO_ARUCO_WITH_QR_BR:
                 return CopyMarkerConfig(Marker(MarkerType::ARUCO_SVG),     // top_left
                                         Marker(MarkerType::ARUCO_SVG),     // top_right
-                                        Marker(),              // bottom_left
+                                        Marker(),                          // bottom_left
                                         Marker(MarkerType::QR_CODE, true), // bottom_right
                                         Marker(MarkerType::QR_CODE, true)  // header
                 );
