@@ -162,12 +162,12 @@ Les images calibrées montrent les zones détectées avec les codes couleur suiv
 │   ├── benchmark.hpp   # En-têtes pour le benchmarking
 │   └── common.h        # Définitions de structures communes
 ├── src/                # Code source C++ principal
+│   ├── bench/          # Code source des benchmarks
 │   ├── benchmark.cpp   # Outil de benchmarking
 │   ├── expl_pars.cpp   # Parseur principal
 │   ├── typst_interface.cpp # Interface avec Typst
 │   ├── utils/          # Utilitaires partagés
 │   ├── parser/         # Implémentation des parseurs de marqueurs
-|   ├── command-line-interface/  # Interface de ligne de commande
 │   └── external-tools/ # Outils externes (création de copies)
 ├── typst/              # Sources de templates Typst
 │   ├── components/     # Composants réutilisables (marqueurs, conteneurs)
@@ -176,6 +176,7 @@ Les images calibrées montrent les zones détectées avec les codes couleur suiv
 │   ├── src/            # Scripts de génération
 │   ├── style/          # Configuration de style
 │   └── template.typ    # Template principal
+├── stats-analysis/     # Scripts et outils d'analyse statistique
 ├── copies/             # Dossier de sortie pour les copies générées
 ├── output/             # Dossier de sortie pour les résultats d'analyse
 ├── build-cmake/        # Répertoire de build (généré)
