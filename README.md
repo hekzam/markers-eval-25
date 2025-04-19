@@ -65,6 +65,8 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
   --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
   --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)
+  --header-size N       : Taille du marqueur d'entête (par défaut: 15)
+  --dpi N               : Résolution en points par pouce (par défaut: 300)
   --filename NAME       : Nom du fichier de sortie (par défaut: copy)
   
   Options de configuration personnalisée des marqueurs:
@@ -75,25 +77,12 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --header TYPE         : Type de marqueur pour l'en-tête
 ```
 
-Format TYPE pour les marqueurs: type[:encoded][:outlined]
-- Types disponibles: qrcode, datamatrix, aztec, pdf417-comp, rmqr, barcode, circle, square, aruco-svg, custom-svg
-- Exemple: `qrcode:encoded` - Un QR code encodé
-- Exemple: `circle:outlined` - Un cercle non rempli
-- Exemple: `none` - Pas de marqueur
 
-Exemple d'utilisation avec la configuration prédéfinie:
-```sh
-./create-copie.sh --config 3 --grey-level 50
 ```
 
-Exemple avec un nom de fichier personnalisé:
+Exemple avec une configuration complète personnalisée:
 ```sh
-./create-copie.sh --config 3 --grey-level 50 --filename exam01
-```
-
-Exemple avec une configuration personnalisée des marqueurs:
-```sh
-./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded
+./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --fiducial-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
 ```
 
 ### Configurations de marqueurs disponibles
@@ -126,6 +115,21 @@ L'outil vous demandera plusieurs informations interactivement :
 3. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
 4. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
 5. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
+6. **Warmup iterations** : Nombre d'itérations d'échauffement (par défaut: `0`)
+7. **Encoded marker size** : Taille des marqueurs encodés en mm (par défaut: `15`)
+8. **Fiducial marker size** : Taille des marqueurs fiduciaires en mm (par défaut: `10`)
+9. **Header marker size** : Taille du marqueur d'en-tête en mm (par défaut: `7`)
+10. **Grey level** : Niveau de gris pour les marqueurs (0: noir, 255: blanc) (par défaut: `0`)
+11. **DPI** : Résolution en points par pouce (par défaut: `300`)
+
+Vous pouvez également passer ces paramètres directement en ligne de commande:
+`--output-dir`, `--atomic-boxes-file`, `--input-dir`, `--nb-copies`, `--marker-config`, `--warmup-iterations`, `--encoded-size`, `--fiducial-size`, `--header-size`, `--grey-level`, `--dpi`.
+
+```sh
+./build-cmake/benchmark --output-dir=./mon_output --atomic-boxes-file=./boxes.json --input-dir=./mes_copies --nb-copies=5 --marker-config=3
+```
+
+L'option `--warmup-iterations` est particulièrement utile pour obtenir des mesures plus précises. Les itérations d'échauffement exécutent le même code que les itérations de mesure, mais leurs résultats ne sont pas comptabilisés dans les statistiques finales. Cela permet d'éviter que les coûts de démarrage (chargement initial des bibliothèques, initialisation des caches, etc.) n'affectent les mesures de performance.
 
 ### Résultats du benchmark
 
@@ -134,6 +138,21 @@ Après l'exécution, le benchmark produit plusieurs types de sorties :
 - **Images calibrées** : Versions redressées des copies scannées avec les zones détectées surlignées
 - **CSV de résultats** : Fichier `benchmark_results.csv` contenant les temps d'exécution et taux de succès pour chaque image
 - **Images de débogage** (si compilé en mode DEBUG) : Visualisation du processus de détection des marqueurs
+
+Le fichier CSV contient trois colonnes:
+- **File**: Nom du fichier traité
+- **Time(ms)**: Temps d'exécution en millisecondes
+- **Success**: Indique si la détection des marqueurs a réussi (1) ou échoué (0)
+
+Ces données vous permettent d'analyser:
+- Le taux de succès global de la détection pour chaque configuration de marqueurs
+- Le temps moyen de traitement
+- L'impact des différents paramètres (taille, niveau de gris, etc.) sur les performances
+
+Les images calibrées montrent les zones détectées avec les codes couleur suivants:
+- **Rose**: Zones utilisateur (zones de réponse)
+- **Bleu**: Marqueurs de coin
+- **Vert**: Centre des marqueurs de coin
 
 ## 📂 Structure du projet
 
