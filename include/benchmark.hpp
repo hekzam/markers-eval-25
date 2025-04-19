@@ -51,7 +51,7 @@ class BenchmarkGuardCSV {
         : name_(name), csv_(csv), success_(false), start_(std::chrono::high_resolution_clock::now()) {
     }
 
-    // à faire : Utiliser un ptr
+    ///TODO: Utiliser un ptr 
     void setSuccess(bool success) {
         success_ = success;
     }

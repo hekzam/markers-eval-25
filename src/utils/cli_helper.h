@@ -17,7 +17,9 @@ struct Config {
 
 void print_help_config(std::unordered_map<std::string, Config> default_config);
 std::optional<std::unordered_map<std::string, Config>>
+
 get_config(int argc, char* argv[], std::unordered_map<std::string, Config> default_config);
+
 void add_missing_config(std::unordered_map<std::string, Config>& config,
                         const std::unordered_map<std::string, Config>& default_config);
 
