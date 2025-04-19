@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implémentation des fonctions de dessin et sauvegarde d'images de débogage
+ */
+
 #include <vector>
 #include <common.h>
 #include <stdio.h>

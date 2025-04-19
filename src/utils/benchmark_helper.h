@@ -1,9 +1,19 @@
 #ifndef BENCHMARK_HELPER_H
 #define BENCHMARK_HELPER_H
 
+/**
+ * @file benchmark_helper.h
+ * @brief Utilitaires pour l'exécution et la gestion des benchmarks.
+ *
+ * Ce fichier contient des fonctions utilitaires pour faciliter la mise en place
+ * et l'exécution de benchmarks, notamment pour la génération de copies, la sauvegarde
+ * des résultats et la manipulation des fichiers et répertoires nécessaires aux tests.
+ */
+
 #include <filesystem>
 #include <string>
 #include <common.h>
+#include "../external-tools/create_copy.h"
 
 /**
  * @brief Sauvegarde une image dans le répertoire de sortie
@@ -34,12 +44,9 @@ json parse_json_file(const std::string& filepath);
  * @brief Génère des copies de marqueurs avec une configuration spécifique
  * @param nb_copies Nombre de copies à générer
  * @param marker_config_id ID de la configuration des marqueurs à utiliser
- * @param encoded_marker_size Taille du marqueur encodé
- * @param fiducial_marker_size Taille du marqueur fiducial
- * @param grey_level Niveau de gris
+ * @param style_params Paramètres de style pour la génération
  * @return true si toutes les copies ont été générées avec succès, false sinon
  */
-bool generate_copies(int nb_copies, int marker_config_id, int encoded_marker_size = 15, int fiducial_marker_size = 10,
-                     int grey_level = 0);
+bool generate_copies(int nb_copies, int marker_config_id, const CopyStyleParams& style_params);
 
 #endif
