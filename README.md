@@ -68,10 +68,10 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --filename NAME       : Nom du fichier de sortie (par défaut: copy)
   
   Options de configuration personnalisée des marqueurs:
-  --top-left TYPE       : Type de marqueur pour le coin supérieur gauche
-  --top-right TYPE      : Type de marqueur pour le coin supérieur droit
-  --bottom-left TYPE    : Type de marqueur pour le coin inférieur gauche
-  --bottom-right TYPE   : Type de marqueur pour le coin inférieur droit
+  --tl TYPE       : Type de marqueur pour le coin supérieur gauche
+  --tr TYPE      : Type de marqueur pour le coin supérieur droit
+  --bl TYPE    : Type de marqueur pour le coin inférieur gauche
+  --br TYPE   : Type de marqueur pour le coin inférieur droit
   --header TYPE         : Type de marqueur pour l'en-tête
 ```
 
@@ -93,7 +93,7 @@ Exemple avec un nom de fichier personnalisé:
 
 Exemple avec une configuration personnalisée des marqueurs:
 ```sh
-./create-copie.sh --top-left circle:outlined --top-right circle:outlined --bottom-left none --bottom-right qrcode:encoded --header qrcode:encoded
+./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded
 ```
 
 ### Configurations de marqueurs disponibles

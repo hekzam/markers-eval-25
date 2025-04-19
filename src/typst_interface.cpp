@@ -95,16 +95,16 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Invalid marker configuration: " << argv[i + 1] << " (valid range: 1-10)" << std::endl;
                 return 1;
             }
-        } else if (arg == "--top-left") {
+        } else if (arg == "--tl") {
             top_left = parseMarker(argv[i + 1]);
             custom_markers = true;
-        } else if (arg == "--top-right") {
+        } else if (arg == "--tr") {
             top_right = parseMarker(argv[i + 1]);
             custom_markers = true;
-        } else if (arg == "--bottom-left") {
+        } else if (arg == "--bl") {
             bottom_left = parseMarker(argv[i + 1]);
             custom_markers = true;
-        } else if (arg == "--bottom-right") {
+        } else if (arg == "--br") {
             bottom_right = parseMarker(argv[i + 1]);
             custom_markers = true;
         } else if (arg == "--header") {
