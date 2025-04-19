@@ -37,7 +37,6 @@ Marker parseMarker(const std::string& spec) {
 
 int main(int argc, char* argv[]) {
     CopyStyleParams style_params;
-    int duplex_printing = 0;
     int marker_config = -1;
     std::string filename = "copy";
     
@@ -60,10 +59,6 @@ int main(int argc, char* argv[]) {
             style_params.stroke_width = std::atoi(argv[i + 1]);
         } else if (arg == "--margin") {
             style_params.marker_margin = std::atoi(argv[i + 1]);
-        } else if (arg == "--copies") {
-            style_params.nb_copies = std::atoi(argv[i + 1]);
-        } else if (arg == "--duplex") {
-            duplex_printing = std::atoi(argv[i + 1]);
         } else if (arg == "--config") {
             marker_config = std::atoi(argv[i + 1]);
             if (!isValidMarkerConfig(marker_config)) {
@@ -91,6 +86,8 @@ int main(int argc, char* argv[]) {
             style_params.header_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--filename") {
             filename = argv[i + 1];
+        } else if (arg == "--dpi") {
+            style_params.dpi = std::atoi(argv[i + 1]);
         } else {
             std::cerr << "Unknown argument: " << arg << std::endl;
             return 1;
@@ -104,7 +101,7 @@ int main(int argc, char* argv[]) {
         markerConfig = CopyMarkerConfig::getConfigById(marker_config);
     }
 
-    bool success = create_copy(style_params, duplex_printing, markerConfig, filename);
+    bool success = create_copy(style_params, markerConfig, filename);
 
     return success ? 0 : 1;
 }

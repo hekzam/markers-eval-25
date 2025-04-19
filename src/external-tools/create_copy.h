@@ -34,6 +34,9 @@ const std::string SQUARE = "square";
 const std::string ARUCO_SVG = "aruco-svg";
 const std::string CUSTOM_SVG = "custom-svg";
 
+
+///TODO: Pour les structures : Supprimer les constructeurs et remplacer par des = "default" pour les structures
+
 /**
  * @brief Structure représentant un marqueur avec son statut d'encodage
  */
@@ -209,12 +212,12 @@ struct CopyStyleParams {
     int stroke_width;         // Largeur du trait
     int marker_margin;        // Marge du marqueur
     int grey_level;           // Niveau de gris
-    int nb_copies;            // Nombre de copies à générer
+    int dpi;            // DPI (points par pouce) pour l'image générée
 
     // Constructeur avec valeurs par défaut
-    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int nc = 1)
+    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int dpi = 300)
         : encoded_marker_size(ems), fiducial_marker_size(fms), header_marker_size(hms), stroke_width(sw),
-          marker_margin(mm), grey_level(gl), nb_copies(nc) {
+          marker_margin(mm), grey_level(gl), dpi(dpi) {
     }
 };
 
@@ -222,13 +225,12 @@ struct CopyStyleParams {
  * @brief Génère et exporte une copie paramétrée, enregistrée dans le répertoire ./copies
  *
  * @param style_params Paramètres de style pour la génération
- * @param duplex_printing Impression recto-verso (0 ou 1)
  * @param marker_config Configuration des marqueurs à utiliser
  * @param filename Nom du fichier de sortie
  * @return true si la copie a été générée avec succès
  * @return false si une erreur est survenue
  */
-bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const CopyMarkerConfig& marker_config,
+bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
                  const std::string& filename = "copy");
 
 #endif

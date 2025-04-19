@@ -28,13 +28,13 @@ std::string getOutputRedirection() {
 #endif
 }
 
-bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const CopyMarkerConfig& marker_config,
+bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
                  const std::string& filename) {
 
     fs::create_directories("./copies");
 
+    std::string doc = "template.typ";
     std::string root = ".";
-    std::string doc = root + "/typst/template.typ";
     std::string redirect = getOutputRedirection();
 
     std::string params = "--input encoded-marker-size=" + std::to_string(style_params.encoded_marker_size) + " " +
@@ -43,34 +43,29 @@ bool create_copy(const CopyStyleParams& style_params, int duplex_printing, const
                          "--input stroke-width=" + std::to_string(style_params.stroke_width) + " " +
                          "--input marker-margin=" + std::to_string(style_params.marker_margin) + " " +
                          "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
-                         "--input nb-copies=" + std::to_string(style_params.nb_copies) + " " +
-                         "--input duplex-printing=" + std::to_string(duplex_printing) + " " +
                          "--input marker-types=" + "\"" + marker_config.toString() + "\"";
 
-    std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"" + doc + "\" \"./copies/" +
-                              filename + ".png\" --format png" + redirect;
+    std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +
+                              filename + ".png\" --format png --ppi " + std::to_string(style_params.dpi) + redirect;
 
-    std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"" + doc +
-                                     "\" '<atomic-boxes>' --pretty > original_boxes.json" + redirect;
+    std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" +
+                                     doc + "\" '<atomic-boxes>' --pretty > original_boxes.json" + redirect;
 
-    std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"" + doc +
+    std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"typst/" + doc +
                              "\" '<page>' --pretty > page.json" + redirect;
 
-    std::cout << "Executing: " << compile_cmd << std::endl;
     int compile_result = system(compile_cmd.c_str());
     if (compile_result != 0) {
         std::cerr << "Error during compilation command" << std::endl;
         return false;
     }
 
-    std::cout << "Executing: " << query_atomic_boxes << std::endl;
     int query1_result = system(query_atomic_boxes.c_str());
     if (query1_result != 0) {
         std::cerr << "Error during query atomic boxes command" << std::endl;
         return false;
     }
 
-    std::cout << "Executing: " << query_page << std::endl;
     int query2_result = system(query_page.c_str());
     if (query2_result != 0) {
         std::cerr << "Error during query page command" << std::endl;

@@ -62,7 +62,6 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --fiducial-size N     : Taille des marqueurs fiduciaires (par défaut: 10)
   --stroke-width N      : Largeur du trait des marqueurs (par défaut: 2)
   --margin N            : Marge autour des marqueurs (par défaut: 3)
-  --duplex N            : Mode d'impression recto-verso (0: simple face, 1: recto-verso) (par défaut: 0)
   --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
   --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
   --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)

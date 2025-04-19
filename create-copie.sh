@@ -8,7 +8,6 @@ show_usage() {
   echo "  --stroke-width N      : Width of marker stroke (default: 2)"
   echo "  --margin N            : Margin around markers (default: 3)"
   echo "  --copies N            : Number of copies to generate (default: 1)"
-  echo "  --duplex N            : Duplex printing mode (0: single-sided, 1: double-sided) (default: 0)"
   echo "  --config N            : Marker configuration (default: 1)"
   echo "                          1: QR codes in all corners"
   echo "                          2: QR code only in bottom-right corner"
