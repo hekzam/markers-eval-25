@@ -7,14 +7,17 @@
 #include <ZXing/ReadBarcode.h>
 #endif
 
-#define ARUCO "aruco"
-#define CIRCLE "circle"
-#define QRCODE "qrcode"
-#define CUSTOM_MARKER "custom_marker"
-#define SHAPE "shape"
-#define DEFAULT_PARSER "default"
+enum class ParserType {
+    ARUCO,
+    CIRCLE,
+    QRCODE,
+    CUSTOM_MARKER,
+    SHAPE,
+    DEFAULT_PARSER,
+    EMPTY
+};
 
-std::string select_parser_for_marker_config(int marker_config);
+ParserType select_parser_for_marker_config(int marker_config);
 
 struct DetectedBarcode {
     std::string content;
@@ -37,7 +40,7 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
 std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
                                                     const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size);
 cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform);
-std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
+std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,
 #endif

@@ -1,10 +1,40 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include <unordered_map>
 #include "external-tools/create_copy.h"
 
 bool isValidMarkerConfig(int config) {
     return config >= QR_ALL_CORNERS && config <= SQUARE_OUTLINES_WITH_QR_BR;
+}
+
+/**
+ * @brief Convertit une chaîne de caractères en type MarkerType
+ * 
+ * @param typeStr Chaîne représentant le type de marqueur
+ * @return MarkerType Type de marqueur correspondant
+ */
+MarkerType markerTypeFromString(const std::string& typeStr) {
+    static const std::unordered_map<std::string, MarkerType> markerTypeMap = {
+        {"qrcode", MarkerType::QR_CODE},
+        {"datamatrix", MarkerType::DATAMATRIX},
+        {"aztec", MarkerType::AZTEC},
+        {"pdf417-comp", MarkerType::PDF417},
+        {"rmqr", MarkerType::RMQR},
+        {"barcode", MarkerType::BARCODE},
+        {"circle", MarkerType::CIRCLE},
+        {"square", MarkerType::SQUARE},
+        {"aruco-svg", MarkerType::ARUCO_SVG},
+        {"custom-svg", MarkerType::CUSTOM_SVG}
+    };
+    
+    auto it = markerTypeMap.find(typeStr);
+    if (it != markerTypeMap.end()) {
+        return it->second;
+    }
+    
+    // Par défaut, si type inconnu, on retourne NONE
+    return MarkerType::NONE;
 }
 
 Marker parseMarker(const std::string& spec) {
@@ -32,7 +62,7 @@ Marker parseMarker(const std::string& spec) {
         }
     }
     
-    return Marker(type, encoded, outlined);
+    return Marker(markerTypeFromString(type), encoded, outlined);
 }
 
 int main(int argc, char* argv[]) {

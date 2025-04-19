@@ -7,19 +7,6 @@
 
 namespace fs = std::filesystem;
 
-const std::vector<MarkerConfigInfo> marker_configs = {
-    { QR_ALL_CORNERS, "QR codes in all corners" },
-    { QR_BOTTOM_RIGHT_ONLY, "QR code only in bottom-right corner" },
-    { CIRCLES_WITH_QR_BR, "Circles in first three corners, QR code in bottom-right" },
-    { TOP_CIRCLES_QR_BR, "Circles on top, nothing in bottom-left, QR code in bottom-right" },
-    { CUSTOM_SVG_WITH_QR_BR, "Custom SVG markers in three corners, QR code in bottom-right" },
-    { ARUCO_WITH_QR_BR, "ArUco markers, QR code in bottom-right" },
-    { TWO_ARUCO_WITH_QR_BR, "Two ArUco markers, nothing in bottom-left, QR code in bottom-right" },
-    { CIRCLE_OUTLINES_WITH_QR_BR, "Circle outlines in first three corners, QR code in bottom-right" },
-    { SQUARES_WITH_QR_BR, "Squares in first three corners, QR code in bottom-right" },
-    { SQUARE_OUTLINES_WITH_QR_BR, "Square outlines in first three corners, QR code in bottom-right" }
-};
-
 std::string getOutputRedirection() {
 #ifdef _WIN32
     return " 2> NUL";

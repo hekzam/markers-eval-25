@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
         std::filesystem::path output_img_path_fname = input_img_path.filename().replace_extension(".png");
 
         Metadata meta;
-        auto affine_transform = run_parser("shape", img,
+        auto affine_transform = run_parser(ParserType::SHAPE, img,
 #ifdef DEBUG
                                            debug_img,
 #endif

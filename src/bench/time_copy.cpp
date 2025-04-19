@@ -54,7 +54,7 @@ void run_benchmark(std::unordered_map<std::string, Config> config) {
     auto fiducial_marker_size = std::get<int>(config["fiducial-marker_size"].value);
     auto grey_level = std::get<int>(config["grey-level"].value);
     auto marker_config = std::get<int>(config["marker-config"].value);
-    std::string selected_parser = select_parser_for_marker_config(marker_config);
+    ParserType selected_parser = select_parser_for_marker_config(marker_config);
 
     generate_copies(nb_copies, static_cast<MarkerConfig>(marker_config), encoded_marker_size, fiducial_marker_size,
                     grey_level);
