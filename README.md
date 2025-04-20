@@ -93,6 +93,7 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   - triangle
   - aruco
   - qr-eye
+  - cross
   - custom
 ```
 

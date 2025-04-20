@@ -31,7 +31,7 @@ show_usage() {
   echo "  --header TYPE         : Marker type for header"
   echo ""
   echo "Marker TYPE format: type[:encoded][:outlined]"
-  echo "  Available types: qrcode, micro-qr, datamatrix, aztec, pdf417, rmqr, code128, circle, square, triangle, aruco, qr-eye, custom"
+  echo "  Available types: qrcode, micro-qr, datamatrix, aztec, pdf417, rmqr, code128, circle, square, triangle, aruco, qr-eye, cross, custom"
   echo "  Example: qrcode:encoded - An encoded QR code"
   echo "  Example: circle:outlined - A circle outline (not filled)"
 }

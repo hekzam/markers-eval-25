@@ -12,6 +12,7 @@
 #let AR_3 = image("../assets/4x4_1000-999.svg")
 #let CUSTOM_MARKER = image("../assets/marker-custom.svg")
 #let QR_EYE = image("../assets/qr_eye.svg")
+#let CROSS = image("../assets/cross.svg")
 
 #let PREFIX_TOP_LEFT = "hztl"
 #let PREFIX_TOP_RIGHT = "hztr"
@@ -73,6 +74,8 @@
     AR_3
   } else if type.contains("qr-eye") {
     QR_EYE
+  } else if type.contains("cross") {
+    CROSS
   } else {
     none
   }
@@ -121,7 +124,7 @@
       fill-color: fill-color,
       stroke-width: stroke-width,
       stroke-color: color)
-  } else if type.contains("custom") or type.contains("aruco") or type.contains("qr-eye") {
+  } else if type.contains("custom") or type.contains("aruco") or type.contains("qr-eye") or type.contains("cross") {
     create-svg-marker(
       prefix-position,
       type,

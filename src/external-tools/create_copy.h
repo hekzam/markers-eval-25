@@ -42,6 +42,7 @@ enum class MarkerType {
     TRIANGLE,
     ARUCO,
     QR_EYE,
+    CROSS,
     CUSTOM,
     NONE // Pour représenter l'absence de marqueur
 };
@@ -73,6 +74,8 @@ inline std::string toString(MarkerType type) {
             return "aruco";
         case MarkerType::QR_EYE:
             return "qr-eye";
+        case MarkerType::CROSS:
+            return "cross";
         case MarkerType::CUSTOM:
             return "custom";
         case MarkerType::NONE:
