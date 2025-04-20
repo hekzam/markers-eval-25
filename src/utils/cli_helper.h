@@ -1,6 +1,15 @@
 #ifndef COMMAND_LINE_INTERFACE_H
 #define COMMAND_LINE_INTERFACE_H
 
+/**
+ * @file cli_helper.h
+ * @brief Utilitaires pour la gestion de l'interface en ligne de commande.
+ *
+ * Ce fichier contient des structures et fonctions pour faciliter la gestion
+ * des arguments de ligne de commande, l'affichage formaté dans le terminal,
+ * et l'interaction avec l'utilisateur via des entrées/sorties console.
+ */
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -9,22 +18,56 @@
 #include <common.h>
 #include "external-tools/create_copy.h"
 
+/**
+ * @brief Structure représentant un paramètre de configuration
+ *
+ * Cette structure permet de stocker les informations relatives à un paramètre
+ * de configuration, y compris son nom, sa description et sa valeur (qui peut être
+ * de type entier ou chaîne de caractères).
+ */
 struct Config {
     std::string name;
     std::string description;
     std::variant<int, std::string> value;
 };
 
+/**
+ * @brief Affiche l'aide pour les paramètres de configuration disponibles
+ *
+ * @param default_config Dictionnaire des paramètres de configuration par défaut
+ */
 void print_help_config(std::unordered_map<std::string, Config> default_config);
+
+/**
+ * @brief Extrait les paramètres de configuration depuis les arguments de la ligne de commande
+ *
+ * @param argc Nombre d'arguments
+ * @param argv Tableau des arguments
+ * @param default_config Dictionnaire des paramètres de configuration par défaut
+ * @return std::optional<std::unordered_map<std::string, Config>> Configuration extraite ou nullopt en cas d'erreur
+ */
 std::optional<std::unordered_map<std::string, Config>>
 get_config(int argc, char* argv[], std::unordered_map<std::string, Config> default_config);
+
+/**
+ * @brief Ajoute les paramètres de configuration manquants en demandant à l'utilisateur
+ *
+ * @param config Dictionnaire de configuration à compléter
+ * @param default_config Dictionnaire des paramètres de configuration par défaut
+ */
 void add_missing_config(std::unordered_map<std::string, Config>& config,
                         const std::unordered_map<std::string, Config>& default_config);
 
+/**
+ * @brief Formats de texte disponibles pour l'affichage dans le terminal
+ */
 enum class TerminalFormat { RESET, BOLD, GREEN, BLUE, CYAN, YELLOW };
 
 /**
  * @brief Convertit un format de terminal en sa représentation string ANSI
+ *
+ * @param format Format à convertir
+ * @return std::string Code ANSI correspondant au format
  */
 std::string to_string(TerminalFormat format);
 
@@ -70,6 +113,10 @@ bool is_whitespace_only(const std::string& str);
 
 /**
  * @brief Demande une entrée à l'utilisateur avec formatage amélioré et validation optionnelle
+ *
+ * Cette fonction affiche un prompt à l'utilisateur et attend sa saisie. Elle gère
+ * l'affichage de la valeur par défaut et peut effectuer une validation sur les valeurs
+ * numériques (min/max).
  *
  * @tparam T Type de la valeur à retourner (std::string ou int)
  * @param prompt Message à afficher

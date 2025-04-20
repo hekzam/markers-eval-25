@@ -20,39 +20,39 @@
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
  *
  * @param marker_config Le numéro de configuration de marqueur (1-10)
- * @return std::string Le type de parseur à utiliser
+ * @return ParserType Le type de parseur à utiliser
  */
-std::string select_parser_for_marker_config(int marker_config) {
+ParserType select_parser_for_marker_config(int marker_config) {
     switch (marker_config) {
         case QR_ALL_CORNERS:
         case QR_BOTTOM_RIGHT_ONLY:
-            return QRCODE;
+            return ParserType::QRCODE;
         case CIRCLES_WITH_QR_BR:
         case TOP_CIRCLES_QR_BR:
         case CIRCLE_OUTLINES_WITH_QR_BR:
-            return CIRCLE;
-        case CUSTOM_SVG_WITH_QR_BR:
-            return CUSTOM_MARKER;
+            return ParserType::CIRCLE;
+        case CUSTOM_WITH_QR_BR:
+            return ParserType::CUSTOM_MARKER;
         case ARUCO_WITH_QR_BR:
         case TWO_ARUCO_WITH_QR_BR:
-            return ARUCO;
+            return ParserType::ARUCO;
         case SQUARES_WITH_QR_BR:
         case SQUARE_OUTLINES_WITH_QR_BR:
-            return SHAPE;
+            return ParserType::SHAPE;
         default:
-            return DEFAULT_PARSER;
+            return ParserType::DEFAULT_PARSER;
     }
 }
 
 /// TODO: Corentin je te laisse le soin de t'en occuper stp
-std::unordered_map<std::string, Parser> parsers = {
-    { DEFAULT_PARSER, { default_parser } },
-    { QRCODE, { qrcode_parser } },
-    { CIRCLE, { circle_parser } },
-    { ARUCO, { aruco_parser } },
-    { SHAPE, { shape_parser } },
-    // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
-    { "empty", { qrcode_empty_parser } },
+std::unordered_map<ParserType, Parser> parsers = {
+    { ParserType::DEFAULT_PARSER, { default_parser } },
+    { ParserType::QRCODE, { qrcode_parser } },
+    { ParserType::CIRCLE, { circle_parser } },
+    { ParserType::ARUCO, { aruco_parser } },
+    { ParserType::SHAPE, { shape_parser } },
+    // { ParserType::CUSTOM_MARKER, { custom_marker_parser, draw_custom_marker } }, // drop custom parser because of his complexity
+    { ParserType::EMPTY, { qrcode_empty_parser } },
 };
 
 std::vector<DetectedBarcode> identify_barcodes(const cv::Mat& img,
@@ -265,12 +265,12 @@ cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
     return calibrated_img_col;
 }
 
-std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
+std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,
 #endif
                                   Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
-    auto parser = parsers[parser_name];
+    auto parser = parsers[parser_type];
     return parser.parser(img,
 #ifdef DEBUG
                          debug_img,

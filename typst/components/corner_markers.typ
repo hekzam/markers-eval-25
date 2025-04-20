@@ -4,18 +4,33 @@
 #import "./markers/circle.typ": circle-box
 #import "./markers/svg_marker.typ": gen-svg-box
 #import "./container.typ": gen-box
+#import "./markers/triangle.typ": triangle-box
 
 // Images pour les marqueurs SVG
 #let AR_1 = image("../assets/4x4_1000-190.svg")
 #let AR_2 = image("../assets/4x4_1000-997.svg")
 #let AR_3 = image("../assets/4x4_1000-999.svg")
-#let CUSTOM_MARKER = image("../assets/marker-custom.svg")
+#let CUSTOM = image("../assets/marker-custom.svg")
+#let QR_EYE = image("../assets/qr_eye.svg")
+#let CROSS = image("../assets/cross.svg")
 
 #let PREFIX_TOP_LEFT = "hztl"
 #let PREFIX_TOP_RIGHT = "hztr"
 #let PREFIX_BOTTOM_LEFT = "hzbl"
 #let PREFIX_BOTTOM_RIGHT = "hzbr"
 #let PREFIX_TOP_CENTER = "hztc"
+
+#let ARUCO = "aruco"
+#let QR_EYE_TYPE = "qr-eye"
+#let CROSS_TYPE = "cross"
+#let CUSTOM_TYPE = "custom"
+
+#let SVG_TYPES = (
+  ARUCO,
+  QR_EYE_TYPE,
+  CROSS_TYPE,
+  CUSTOM_TYPE
+)
 
 /**
  * Configuration des coins
@@ -41,28 +56,40 @@
  * Crée un marqueur de type Tiaoma carré
  * @param prefix-position Préfixe de la position du marqueur
  * @param type Type de marqueur (ex: "qrcode")
- * @param marker-size Taille du marqueur
+ * @param unencoded-marker-size Taille du marqueur non encodé
+ * @param encoded-marker-size Taille du marqueur encodé
  * @param grey-level Niveau de gris du marqueur (0-255)
  */
-#let create-tiaoma-barcode(prefix-position, type, marker-size, color) = {
+#let create-tiaoma-barcode(prefix-position, type, unencoded-marker-size, encoded-marker-size, color) = {
   let (copy-i, page-i) = get-indexes()
-   let barcode-data = (prefix-position, ..if type.contains("encoded") {
-     (str(copy-i), str(page-i), get-exam-id())
-   })
+  let barcode-data = (prefix-position, ..if type.contains("encoded") {
+    (str(copy-i), str(page-i), get-exam-id())
+  })
+  let marker-size = if type.contains("encoded") {
+    encoded-marker-size
+  } else {
+    unencoded-marker-size
+  }
   barcode(prefix-position, barcode-data, marker-size, type: type, color)
 }
 
 
 #let create-svg-marker(prefix-position, type, marker-size) = {
   
-  let svg-image = if type.contains("custom") {
-    CUSTOM_MARKER
-  } else if type.contains("aruco") and prefix-position == PREFIX_TOP_LEFT {
+  let svg-image = if type.contains(CUSTOM_TYPE) {
+    CUSTOM
+  } else if type.contains(ARUCO) and prefix-position == PREFIX_TOP_LEFT {
     AR_1
-  } else if type.contains("aruco") and prefix-position == PREFIX_TOP_RIGHT {
+  } else if type.contains(ARUCO) and prefix-position == PREFIX_TOP_RIGHT {
     AR_2
-  } else if type.contains("aruco") and prefix-position == PREFIX_BOTTOM_LEFT {
+  } else if type.contains(ARUCO) and prefix-position == PREFIX_BOTTOM_LEFT {
     AR_3
+  } else if type.contains(QR_EYE_TYPE) {
+    QR_EYE
+  } else if type.contains(CROSS_TYPE) {
+    CROSS
+  } else {
+    none
   }
 
   let position-rotation = get-config(prefix-position).rotation
@@ -85,32 +112,40 @@
   let fill-color = if type.contains("outline") { white } else { color }
   let stroke-width = if type.contains("outline") { style-params.stroke_width } else { 0mm }
   let encoded-marker-size = style-params.encoded_marker_size
-  let fiducial-marker-size = style-params.fiducial_marker_size
+  let unencoded-marker-size = style-params.unencoded_marker_size
 
   if type.contains("circle") {
     circle-box(
       prefix-position,
-      fiducial-marker-size,
+      unencoded-marker-size,
       fill-color: fill-color,
       stroke-width: stroke-width,
       stroke-color: color)
   } else if type.contains("square") {
     gen-box(
       prefix-position,
-      fiducial-marker-size,
-      fiducial-marker-size,
+      unencoded-marker-size,
+      unencoded-marker-size,
       fill-color: fill-color,
       stroke-width: stroke-width,
       stroke-color: color)
-  } else if type.contains("svg") {
+  } else if type.contains("triangle") {
+    triangle-box(
+      prefix-position,
+      unencoded-marker-size,
+      fill-color: fill-color,
+      stroke-width: stroke-width,
+      stroke-color: color)
+  } else if SVG_TYPES.contains(type){
     create-svg-marker(
       prefix-position,
       type,
-      fiducial-marker-size)
+      unencoded-marker-size)
   } else {
     create-tiaoma-barcode(
       prefix-position,
       type,
+      unencoded-marker-size,
       encoded-marker-size,
       color)
   }
@@ -151,6 +186,7 @@
     let marker = create-tiaoma-barcode(
       PREFIX_TOP_CENTER,
       type,
+      style-params.header_marker_size,
       style-params.header_marker_size,
       luma(style-params.grey_level))
     

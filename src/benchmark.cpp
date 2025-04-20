@@ -1,3 +1,13 @@
+/**
+ * @file benchmark.cpp
+ * @brief Module de tests de performance pour l'analyse des copies
+ *
+ * Ce module permet d'effectuer des tests de performance (benchmarks) sur
+ * différentes fonctionnalités du système, notamment sur la génération et
+ * l'analyse des copies avec marqueurs. Il fournit une interface en ligne
+ * de commande configurable pour différents types de benchmarks.
+ */
+
 #include <unordered_map>
 #include <string>
 
@@ -5,29 +15,66 @@
 
 #include "utils/cli_helper.h"
 #include "bench/time_copy.h"
+#include "external-tools/create_copy.h"
 
+/**
+ * @brief Configuration par défaut pour le benchmark "time-copy"
+ *
+ * Cette map associe chaque paramètre du benchmark à sa configuration complète
+ * (nom, description, valeur par défaut).
+ */
 std::unordered_map<std::string, Config> default_config_time_copy = {
     { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
     { "atomic-boxes-file",
       { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } },
     { "input-dir", { "Input directory", "The directory containing the input images", "./copies" } },
     { "nb-copies", { "Number of copies", "The number of copies to generate", 1 } },
+    { "warmup-iterations", { "Warm-up iterations", "Number of warm-up iterations to run before benchmarking", 0 } },
     { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
-    { "fiducial-marker_size", { "Fiducial marker size", "The size of the fiducial markers", 10 } },
+    { "unencoded-marker_size", { "Fiducial marker size", "The size of the unencoded markers", 10 } },
+    { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
     { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } }
 };
 
+/**
+ * @brief Structure définissant un type de benchmark disponible
+ *
+ * Cette structure représente un type de benchmark pouvant être exécuté,
+ * avec son nom, sa fonction d'exécution et sa configuration par défaut.
+ */
 struct BenchmarkConfig {
     std::string name;
     void (*run)(std::unordered_map<std::string, Config>);
     std::unordered_map<std::string, Config> default_config;
 };
 
+/**
+ * @brief Map des benchmarks disponibles dans le système
+ *
+ * Cette map associe chaque nom de benchmark à sa configuration complète
+ * (nom complet, fonction d'exécution, configuration par défaut).
+ */
 std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
     { "time-copy", { "Time copy benchmark", run_benchmark, default_config_time_copy } },
 };
 
+/**
+ * @brief Point d'entrée principal du programme de benchmark
+ *
+ * Cette fonction affiche la bannière du programme, charge la configuration
+ * par défaut pour le benchmark demandé, traite les arguments de ligne de commande
+ * pour personnaliser cette configuration, puis exécute le benchmark sélectionné.
+ *
+ * Si aucun argument n'est fourni, le benchmark "time-copy" est exécuté avec
+ * sa configuration par défaut. Si des arguments invalides sont fournis, l'aide
+ * d'utilisation est affichée.
+ *
+ * @param argc Nombre d'arguments passés au programme
+ * @param argv Tableau des arguments passés au programme
+ * @return int Code de retour (0 en cas de succès, 1 en cas d'erreur)
+ */
 int main(int argc, char* argv[]) {
     display_banner();
 
