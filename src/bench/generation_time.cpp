@@ -40,27 +40,33 @@ void generation_benchmark(std::map<std::string, Config> config) {
 
     int nb_copies = std::get<int>(config["nb-copies"].value);
     int warmup_iterations = std::get<int>(config["warmup-iterations"].value);
-    auto output_dir = std::get<std::string>(config["output-dir"].value);
     auto encoded_marker_size = std::get<int>(config["encoded-marker_size"].value);
     auto unencoded_marker_size = std::get<int>(config["unencoded-marker_size"].value);
     auto grey_level = std::get<int>(config["grey-level"].value);
     auto dpi = std::get<int>(config["dpi"].value);
     auto marker_config_id = std::get<int>(config["marker-config"].value);
 
-    std::filesystem::path output_path{ output_dir };
-    if (std::filesystem::exists(output_path)) {
+    // Création et nettoyage des répertoires de sortie
+    std::filesystem::path output_dir{ std::get<std::string>(config["output-dir"].value) };
+    if (std::filesystem::exists(output_dir)) {
         std::cout << "Cleaning existing output directory..." << std::endl;
-        std::filesystem::remove_all(output_path);
+        std::filesystem::remove_all(output_dir);
     }
-    std::filesystem::create_directories(output_path);
-    std::filesystem::path copies_dir = create_subdir(output_path, "copies");
-    std::filesystem::path csv_output_dir = create_subdir(output_path, "csv");
+    std::filesystem::create_directories(output_dir);
+    std::filesystem::path csv_output_dir = create_subdir(output_dir, "csv");
 
-    std::filesystem::path benchmark_csv_path = csv_output_dir / "generation_results.csv";
+    std::filesystem::path benchmark_csv_path = csv_output_dir / "benchmark_results.csv";
     std::ofstream benchmark_csv(benchmark_csv_path);
     if (benchmark_csv.is_open()) {
-        benchmark_csv << "Copy,Time(ms)" << std::endl;
+        benchmark_csv << "File,Time(ms)" << std::endl;
     }
+
+    std::filesystem::path copies_dir = "copies";
+    if (std::filesystem::exists(copies_dir)) {
+        std::cout << "Cleaning existing copies directory..." << std::endl;
+        std::filesystem::remove_all(copies_dir);
+    }
+    std::filesystem::create_directories(copies_dir);
 
     CopyStyleParams style_params;
     style_params = CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi);
@@ -88,15 +94,14 @@ void generation_benchmark(std::map<std::string, Config> config) {
             bool success = create_copy(style_params, marker_config, copy_name.str());
             std::cout << "  Result: " << (success ? "Success" : "Failed") << std::endl;
         } else {
-            int actual_copy_number = i - warmup_iterations;
-            std::ostringstream benchmark_copy_name;
-            benchmark_copy_name << "copy" << std::setw(2) << std::setfill('0') << actual_copy_number;
-
-            BenchmarkGuardCSV benchmark_guard(benchmark_copy_name.str(), &benchmark_csv);
-            bool success = create_copy(style_params, marker_config, benchmark_copy_name.str());
+            std::cout << "Benchmark iteration " << (i - warmup_iterations) << "/" << nb_copies 
+                      << " generating: " << copy_name.str() << std::endl;
+                      
+            BenchmarkGuardSimple benchmark_guard(copy_name.str(), &benchmark_csv);
+            bool success = create_copy(style_params, marker_config, copy_name.str());
 
             if (!success) {
-                std::cerr << "Failed to generate " << benchmark_copy_name.str() << std::endl;
+                std::cerr << "Failed to generate " << copy_name.str() << std::endl;
             }
         }
     }

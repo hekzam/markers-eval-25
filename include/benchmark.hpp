@@ -147,3 +147,50 @@ class BenchmarkGuardCSV {
  * Crée un objet BenchmarkGuardCSV avec un nom unique basé sur le numéro de ligne
  */
 #define BENCHMARK_BLOCK_CSV(name, csv_ptr) BenchmarkGuardCSV benchmark_guard_csv##__LINE__(name, csv_ptr)
+
+/**
+ * @brief Classe RAII simplifiée pour le benchmark avec sortie CSV sans état de succès
+ *
+ * Version allégée de BenchmarkGuardCSV qui n'écrit que le nom et le temps dans le CSV
+ */
+class BenchmarkGuardSimple {
+  public:
+    /**
+     * @brief Constructeur qui démarre le chronomètre du benchmark
+     *
+     * @param name Nom du benchmark à afficher dans les résultats
+     * @param csv Pointeur vers un flux de fichier de sortie pour les données CSV
+     */
+    BenchmarkGuardSimple(const std::string& name, std::ofstream* csv)
+        : name_(name), csv_(csv), start_(std::chrono::high_resolution_clock::now()) {
+    }
+
+    /**
+     * @brief Destructeur qui calcule et affiche le temps d'exécution
+     *
+     * Écrit les résultats à la fois sur la console et dans le fichier CSV si fourni
+     */
+    ~BenchmarkGuardSimple() {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
+        double milliseconds = microseconds / 1000.0;
+
+        std::cout << name_ << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds"
+                  << std::endl;
+        if (csv_) {
+            *csv_ << name_ << "," << std::fixed << std::setprecision(3) << milliseconds << std::endl;
+        }
+    }
+
+  private:
+    std::string name_;                                                  // Nom du benchmark
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_; // Temps de démarrage
+    std::ofstream* csv_; // Flux de fichier de sortie pour les données CSV
+};
+
+/**
+ * @brief Macro pour faciliter le benchmark simple avec sortie CSV
+ *
+ * Crée un objet BenchmarkGuardSimple avec un nom unique basé sur le numéro de ligne
+ */
+#define BENCHMARK_BLOCK_SIMPLE_CSV(name, csv_ptr) BenchmarkGuardSimple benchmark_guard_simple##__LINE__(name, csv_ptr)
