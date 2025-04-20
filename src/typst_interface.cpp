@@ -42,8 +42,9 @@ MarkerType markerTypeFromString(const std::string& typeStr) {
                                                                                { "circle", MarkerType::CIRCLE },
                                                                                { "square", MarkerType::SQUARE },
                                                                                { "triangle", MarkerType::TRIANGLE },
-                                                                               { "aruco-svg", MarkerType::ARUCO },
-                                                                               { "custom-svg", MarkerType::CUSTOM },
+                                                                               { "aruco", MarkerType::ARUCO },
+                                                                               { "custom", MarkerType::CUSTOM },
+                                                                               { "qr-eye", MarkerType::QR_EYE },
                                                                                { "micro-qr",
                                                                                  MarkerType::MICRO_QR_CODE },
                                                                                { "none", MarkerType::NONE } };

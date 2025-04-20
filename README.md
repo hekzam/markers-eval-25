@@ -91,8 +91,9 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   - circle
   - square
   - triangle
-  - aruco-svg
-  - custom-svg
+  - aruco
+  - qr-eye
+  - custom
 ```
 
 

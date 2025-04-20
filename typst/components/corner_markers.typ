@@ -11,6 +11,7 @@
 #let AR_2 = image("../assets/4x4_1000-997.svg")
 #let AR_3 = image("../assets/4x4_1000-999.svg")
 #let CUSTOM_MARKER = image("../assets/marker-custom.svg")
+#let QR_EYE = image("../assets/qr_eye.svg")
 
 #let PREFIX_TOP_LEFT = "hztl"
 #let PREFIX_TOP_RIGHT = "hztr"
@@ -70,6 +71,10 @@
     AR_2
   } else if type.contains("aruco") and prefix-position == PREFIX_BOTTOM_LEFT {
     AR_3
+  } else if type.contains("qr-eye") {
+    QR_EYE
+  } else {
+    none
   }
 
   let position-rotation = get-config(prefix-position).rotation
@@ -116,7 +121,7 @@
       fill-color: fill-color,
       stroke-width: stroke-width,
       stroke-color: color)
-  } else if type.contains("svg") {
+  } else if type.contains("custom") or type.contains("aruco") or type.contains("qr-eye") {
     create-svg-marker(
       prefix-position,
       type,
