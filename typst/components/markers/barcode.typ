@@ -1,8 +1,8 @@
 #import "@preview/tiaoma:0.2.1"
 #import "../container.typ": gen-box
 
-#let HEADER_MARKER_TYPE = ("rmqr", "barcode", "pdf417-comp")
-#let CORNER_MARKER_TYPE = ("qrcode", "aztec", "datamatrix")
+#let HEADER_MARKER_TYPE = ("rmqr", "code128", "pdf417")
+#let CORNER_MARKER_TYPE = ("qrcode", "micro-qr", "aztec", "datamatrix")
 
 /**
  * Génère un barcode à partir des données fournies et l'encapsule dans une boîte.
@@ -22,11 +22,12 @@
 
   let barcode_fns = (
     "qrcode": tiaoma.qrcode,
-    "aztec": tiaoma.micro-qr,
+    "micro-qr": tiaoma.micro-qr,
+    "aztec": tiaoma.aztec,
     "datamatrix": tiaoma.data-matrix,
-    "pdf417-comp": tiaoma.pdf417-comp,
+    "pdf417": tiaoma.pdf417,
     "rmqr": tiaoma.rmqr,
-    "barcode": tiaoma.code128,
+    "code128": tiaoma.code128,
     default: tiaoma.qrcode,
   )
 

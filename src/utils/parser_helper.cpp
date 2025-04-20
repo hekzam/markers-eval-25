@@ -31,7 +31,7 @@ ParserType select_parser_for_marker_config(int marker_config) {
         case TOP_CIRCLES_QR_BR:
         case CIRCLE_OUTLINES_WITH_QR_BR:
             return ParserType::CIRCLE;
-        case CUSTOM_SVG_WITH_QR_BR:
+        case CUSTOM_WITH_QR_BR:
             return ParserType::CUSTOM_MARKER;
         case ARUCO_WITH_QR_BR:
         case TWO_ARUCO_WITH_QR_BR:

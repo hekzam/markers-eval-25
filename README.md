@@ -59,22 +59,39 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
 
 ```
   --encoded-size N      : Taille des marqueurs encodés (par défaut: 15)
-  --fiducial-size N     : Taille des marqueurs fiduciaires (par défaut: 10)
+  --unencoded-size N     : Taille des marqueurs non encodés (par défaut: 3)
+  --header-size N       : Taille du marqueur d'entête (par défaut: 7)
   --stroke-width N      : Largeur du trait des marqueurs (par défaut: 2)
   --margin N            : Marge autour des marqueurs (par défaut: 3)
-  --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
-  --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
-  --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)
-  --header-size N       : Taille du marqueur d'entête (par défaut: 15)
+  --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
   --dpi N               : Résolution en points par pouce (par défaut: 300)
+  --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
   --filename NAME       : Nom du fichier de sortie (par défaut: copy)
   
   Options de configuration personnalisée des marqueurs:
-  --tl TYPE       : Type de marqueur pour le coin supérieur gauche
-  --tr TYPE      : Type de marqueur pour le coin supérieur droit
-  --bl TYPE    : Type de marqueur pour le coin inférieur gauche
-  --br TYPE   : Type de marqueur pour le coin inférieur droit
+  --tl TYPE             : Type de marqueur pour le coin supérieur gauche
+  --tr TYPE             : Type de marqueur pour le coin supérieur droit
+  --bl TYPE             : Type de marqueur pour le coin inférieur gauche
+  --br TYPE             : Type de marqueur pour le coin inférieur droit
   --header TYPE         : Type de marqueur pour l'en-tête
+
+  Format des types de marqueurs: type[:encoded][:outlined]
+  - type:outlined     : Marqueur non rempli (Ne fonctionne que pour les formes géométriques simples)
+  - type:encoded      : Marqueur avec données encodées
+  - type:unencoded    : Marqueur sans données encodées
+
+  Types de marqueurs disponibles:
+  - qrcode
+  - micro-qr
+  - datamatrix
+  - aztec
+  - pdf417
+  - rmqr
+  - code128
+  - circle
+  - square
+  - aruco-svg
+  - custom-svg
 ```
 
 
@@ -82,7 +99,7 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
 
 Exemple avec une configuration complète personnalisée:
 ```sh
-./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --fiducial-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
+./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
 ```
 
 ### Configurations de marqueurs disponibles
@@ -123,7 +140,7 @@ L'outil vous demandera plusieurs informations interactivement :
 11. **DPI** : Résolution en points par pouce (par défaut: `300`)
 
 Vous pouvez également passer ces paramètres directement en ligne de commande:
-`--output-dir`, `--atomic-boxes-file`, `--input-dir`, `--nb-copies`, `--marker-config`, `--warmup-iterations`, `--encoded-size`, `--fiducial-size`, `--header-size`, `--grey-level`, `--dpi`.
+`--output-dir`, `--atomic-boxes-file`, `--input-dir`, `--nb-copies`, `--marker-config`, `--warmup-iterations`, `--encoded-size`, `--unencoded-size`, `--header-size`, `--grey-level`, `--dpi`.
 
 ```sh
 ./build-cmake/benchmark --output-dir=./mon_output --atomic-boxes-file=./boxes.json --input-dir=./mes_copies --nb-copies=5 --marker-config=3

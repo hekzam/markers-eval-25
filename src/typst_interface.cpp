@@ -33,13 +33,19 @@ bool isValidMarkerConfig(int config) {
  * @return MarkerType Type de marqueur correspondant, ou NONE si non reconnu
  */
 MarkerType markerTypeFromString(const std::string& typeStr) {
-    static const std::unordered_map<std::string, MarkerType> markerTypeMap = {
-        { "qrcode", MarkerType::QR_CODE },      { "datamatrix", MarkerType::DATAMATRIX },
-        { "aztec", MarkerType::AZTEC },         { "pdf417-comp", MarkerType::PDF417 },
-        { "rmqr", MarkerType::RMQR },           { "barcode", MarkerType::BARCODE },
-        { "circle", MarkerType::CIRCLE },       { "square", MarkerType::SQUARE },
-        { "aruco-svg", MarkerType::ARUCO_SVG }, { "custom-svg", MarkerType::CUSTOM_SVG }
-    };
+    static const std::unordered_map<std::string, MarkerType> markerTypeMap = { { "qrcode", MarkerType::QR_CODE },
+                                                                               { "datamatrix", MarkerType::DATAMATRIX },
+                                                                               { "aztec", MarkerType::AZTEC },
+                                                                               { "pdf417", MarkerType::PDF417 },
+                                                                               { "rmqr", MarkerType::RMQR },
+                                                                               { "code128", MarkerType::BARCODE },
+                                                                               { "circle", MarkerType::CIRCLE },
+                                                                               { "square", MarkerType::SQUARE },
+                                                                               { "aruco-svg", MarkerType::ARUCO },
+                                                                               { "custom-svg", MarkerType::CUSTOM },
+                                                                               { "micro-qr",
+                                                                                 MarkerType::MICRO_QR_CODE },
+                                                                               { "none", MarkerType::NONE } };
 
     auto it = markerTypeMap.find(typeStr);
     if (it != markerTypeMap.end()) {
@@ -93,7 +99,7 @@ Marker parseMarker(const std::string& spec) {
  *
  * Cette fonction analyse les arguments de la ligne de commande pour configurer
  * et générer une copie avec les marqueurs spécifiés. Les arguments supportés sont :
- * --encoded-size, --fiducial-size, --stroke-width, --margin, --config,
+ * --encoded-size, --unencoded-size, --stroke-width, --margin, --config,
  * --tl, --tr, --bl, --br, --header, --grey-level, --header-size, --filename, --dpi
  *
  * @param argc Nombre d'arguments passés au programme
@@ -118,8 +124,8 @@ int main(int argc, char* argv[]) {
 
         if (arg == "--encoded-size") {
             style_params.encoded_marker_size = std::atoi(argv[i + 1]);
-        } else if (arg == "--fiducial-size") {
-            style_params.fiducial_marker_size = std::atoi(argv[i + 1]);
+        } else if (arg == "--unencoded-size") {
+            style_params.unencoded_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--stroke-width") {
             style_params.stroke_width = std::atoi(argv[i + 1]);
         } else if (arg == "--margin") {

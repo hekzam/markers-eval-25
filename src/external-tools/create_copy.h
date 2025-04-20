@@ -14,13 +14,13 @@
 #include <string>
 #include <vector>
 
-#define QR_ALL_CORNERS 1        // QR codes avec données encodées dans tous les coins
-#define QR_BOTTOM_RIGHT_ONLY 2  // QR codes avec données encodées uniquement dans le coin bas-droit
-#define CIRCLES_WITH_QR_BR 3    // Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-#define TOP_CIRCLES_QR_BR 4     // Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-#define CUSTOM_SVG_WITH_QR_BR 5 // Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-#define ARUCO_WITH_QR_BR 6      // Différents marqueurs ArUco, QR code avec données en bas-droit
-#define TWO_ARUCO_WITH_QR_BR 7  // Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
+#define QR_ALL_CORNERS 1       // QR codes avec données encodées dans tous les coins
+#define QR_BOTTOM_RIGHT_ONLY 2 // QR codes avec données encodées uniquement dans le coin bas-droit
+#define CIRCLES_WITH_QR_BR 3   // Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
+#define TOP_CIRCLES_QR_BR 4    // Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
+#define CUSTOM_WITH_QR_BR 5    // Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
+#define ARUCO_WITH_QR_BR 6     // Différents marqueurs ArUco, QR code avec données en bas-droit
+#define TWO_ARUCO_WITH_QR_BR 7 // Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
 #define CIRCLE_OUTLINES_WITH_QR_BR \
     8 // Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 #define SQUARES_WITH_QR_BR \
@@ -31,6 +31,7 @@
 // Remplacer les macros de types de marqueurs par un enum class
 enum class MarkerType {
     QR_CODE,
+    MICRO_QR_CODE,
     DATAMATRIX,
     AZTEC,
     PDF417,
@@ -38,8 +39,8 @@ enum class MarkerType {
     BARCODE,
     CIRCLE,
     SQUARE,
-    ARUCO_SVG,
-    CUSTOM_SVG,
+    ARUCO,
+    CUSTOM,
     NONE // Pour représenter l'absence de marqueur
 };
 
@@ -48,23 +49,25 @@ inline std::string toString(MarkerType type) {
     switch (type) {
         case MarkerType::QR_CODE:
             return "qrcode";
+        case MarkerType::MICRO_QR_CODE:
+            return "micro-qr";
         case MarkerType::DATAMATRIX:
             return "datamatrix";
         case MarkerType::AZTEC:
             return "aztec";
         case MarkerType::PDF417:
-            return "pdf417-comp";
+            return "pdf417";
         case MarkerType::RMQR:
             return "rmqr";
         case MarkerType::BARCODE:
-            return "barcode";
+            return "code128";
         case MarkerType::CIRCLE:
             return "circle";
         case MarkerType::SQUARE:
             return "square";
-        case MarkerType::ARUCO_SVG:
+        case MarkerType::ARUCO:
             return "aruco-svg";
-        case MarkerType::CUSTOM_SVG:
+        case MarkerType::CUSTOM:
             return "custom-svg";
         case MarkerType::NONE:
             return "";
@@ -165,25 +168,25 @@ struct CopyMarkerConfig {
                                         Marker(MarkerType::QR_CODE, true)  // header
                 );
 
-            case CUSTOM_SVG_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::CUSTOM_SVG),    // top_left
-                                        Marker(MarkerType::CUSTOM_SVG),    // top_right
-                                        Marker(MarkerType::CUSTOM_SVG),    // bottom_left
+            case CUSTOM_WITH_QR_BR:
+                return CopyMarkerConfig(Marker(MarkerType::CUSTOM),        // top_left
+                                        Marker(MarkerType::CUSTOM),        // top_right
+                                        Marker(MarkerType::CUSTOM),        // bottom_left
                                         Marker(MarkerType::QR_CODE, true), // bottom_right
                                         Marker(MarkerType::QR_CODE, true)  // header
                 );
 
             case ARUCO_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::ARUCO_SVG),     // top_left
-                                        Marker(MarkerType::ARUCO_SVG),     // top_right
-                                        Marker(MarkerType::ARUCO_SVG),     // bottom_left
+                return CopyMarkerConfig(Marker(MarkerType::ARUCO),         // top_left
+                                        Marker(MarkerType::ARUCO),         // top_right
+                                        Marker(MarkerType::ARUCO),         // bottom_left
                                         Marker(MarkerType::QR_CODE, true), // bottom_right
                                         Marker(MarkerType::QR_CODE, true)  // header
                 );
 
             case TWO_ARUCO_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::ARUCO_SVG),     // top_left
-                                        Marker(MarkerType::ARUCO_SVG),     // top_right
+                return CopyMarkerConfig(Marker(MarkerType::ARUCO),         // top_left
+                                        Marker(MarkerType::ARUCO),         // top_right
                                         Marker(),                          // bottom_left
                                         Marker(MarkerType::QR_CODE, true), // bottom_right
                                         Marker(MarkerType::QR_CODE, true)  // header
@@ -241,7 +244,7 @@ const std::vector<MarkerConfigInfo> marker_configs = {
     { QR_BOTTOM_RIGHT_ONLY, "QR code only in bottom-right corner" },
     { CIRCLES_WITH_QR_BR, "Circles in first three corners, QR code in bottom-right" },
     { TOP_CIRCLES_QR_BR, "Circles on top, nothing in bottom-left, QR code in bottom-right" },
-    { CUSTOM_SVG_WITH_QR_BR, "Custom SVG markers in three corners, QR code in bottom-right" },
+    { CUSTOM_WITH_QR_BR, "Custom SVG markers in three corners, QR code in bottom-right" },
     { ARUCO_WITH_QR_BR, "ArUco markers, QR code in bottom-right" },
     { TWO_ARUCO_WITH_QR_BR, "Two ArUco markers, nothing in bottom-left, QR code in bottom-right" },
     { CIRCLE_OUTLINES_WITH_QR_BR, "Circle outlines in first three corners, QR code in bottom-right" },
@@ -253,17 +256,17 @@ const std::vector<MarkerConfigInfo> marker_configs = {
  * @brief Structure contenant les paramètres de style pour la génération de copies
  */
 struct CopyStyleParams {
-    int encoded_marker_size;  // Taille du marqueur encodé
-    int fiducial_marker_size; // Taille du marqueur de fiduciel
-    int header_marker_size;   // Taille du marqueur d'en-tête
-    int stroke_width;         // Largeur du trait
-    int marker_margin;        // Marge du marqueur
-    int grey_level;           // Niveau de gris
-    int dpi;                  // DPI (points par pouce) pour l'image générée
+    int encoded_marker_size;
+    int unencoded_marker_size;
+    int header_marker_size;
+    int stroke_width;
+    int marker_margin;
+    int grey_level;
+    int dpi;
 
     // Constructeur avec valeurs par défaut
-    CopyStyleParams(int ems = 15, int fms = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int dpi = 300)
-        : encoded_marker_size(ems), fiducial_marker_size(fms), header_marker_size(hms), stroke_width(sw),
+    CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int dpi = 300)
+        : encoded_marker_size(ems), unencoded_marker_size(ums), header_marker_size(hms), stroke_width(sw),
           marker_margin(mm), grey_level(gl), dpi(dpi) {
     }
 };
