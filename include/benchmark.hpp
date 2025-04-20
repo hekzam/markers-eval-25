@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <functional>
-#include <iomanip> // Pour std::fixed et std::setprecision
+#include <iomanip>
 #include <fstream>
 
 /**
@@ -25,18 +25,14 @@ class Benchmark {
      */
     template <typename Func, typename... Args>
     static void measure(const std::string& name, Func&& func, Args&&... args) {
-        // Enregistre l'heure de début
         auto start = std::chrono::high_resolution_clock::now();
 
-        // Exécute la fonction avec les arguments fournis
         std::forward<Func>(func)(std::forward<Args>(args)...);
 
-        // Enregistre l'heure de fin et calcule la durée
         auto end = std::chrono::high_resolution_clock::now();
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         double milliseconds = microseconds / 1000.0;
 
-        // Affiche le temps d'exécution
         std::cout << name << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds" << std::endl;
         return;
     }
@@ -44,15 +40,11 @@ class Benchmark {
 
 /**
  * @brief Macro pour faciliter le benchmark de fonctions nommées
- *
- * Utilise automatiquement le nom de la fonction comme nom du benchmark
  */
 #define BENCHMARK_FUNCTION(func, ...) Benchmark::measure(#func, func, __VA_ARGS__)
 
 /**
- * @brief Classe RAII pour le benchmark de blocs de code
- *
- * Mesure automatiquement le temps d'exécution depuis la construction jusqu'à la destruction
+ * @brief Classe RAII simplifiée pour le benchmark avec sortie CSV sans état de succès
  */
 class BenchmarkGuard {
   public:
@@ -60,40 +52,47 @@ class BenchmarkGuard {
      * @brief Constructeur qui démarre le chronomètre du benchmark
      *
      * @param name Nom du benchmark à afficher dans les résultats
+     * @param csv Pointeur vers un flux de fichier de sortie pour les données CSV
      */
-    BenchmarkGuard(const std::string& name) : name_(name), start_(std::chrono::high_resolution_clock::now()) {
+    BenchmarkGuard(const std::string& name, std::ofstream* csv)
+        : name_(name), csv_(csv), start_(std::chrono::high_resolution_clock::now()) {
     }
 
     /**
      * @brief Destructeur qui calcule et affiche le temps d'exécution
+     *
+     * Écrit les résultats à la fois sur la console et dans le fichier CSV si fourni
      */
-    ~BenchmarkGuard() {
+    virtual ~BenchmarkGuard() {
         auto end = std::chrono::high_resolution_clock::now();
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
         double milliseconds = microseconds / 1000.0;
 
-        std::cout << name_ << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds"
-                  << std::endl;
+        if (!finished_) {
+            std::cout << name_ << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds"
+                      << std::endl;
+            if (csv_) {
+                *csv_ << name_ << "," << std::fixed << std::setprecision(3) << milliseconds << std::endl;
+            }
+        }
     }
 
-  private:
-    std::string name_;                                                  // Nom du benchmark
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_; // Temps de démarrage
+  protected:
+    std::string name_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+    std::ofstream* csv_;
+    bool finished_ = false;
 };
 
 /**
- * @brief Macro pour faciliter le benchmark de blocs de code
- *
- * Crée un objet BenchmarkGuard avec un nom unique basé sur le numéro de ligne
+ * @brief Crée un objet BenchmarkGuard avec un nom unique basé sur le numéro de ligne
  */
-#define BENCHMARK_BLOCK(name) BenchmarkGuard benchmark_guard##__LINE__(name)
+#define BENCHMARK_BLOCK_SIMPLE_CSV(name, csv_ptr) BenchmarkGuard benchmark_guard##__LINE__(name, csv_ptr)
 
 /**
- * @brief Classe RAII étendue pour le benchmark avec sortie CSV
- *
- * Semblable à BenchmarkGuard mais écrit également les résultats dans un fichier CSV
+ * @brief Classe RAII étendue pour le benchmark avec sortie CSV et état de succès
  */
-class BenchmarkGuardCSV {
+class BenchmarkGuardSuccess : public BenchmarkGuard {
   public:
     /**
      * @brief Constructeur qui démarre le chronomètre du benchmark
@@ -101,27 +100,17 @@ class BenchmarkGuardCSV {
      * @param name Nom du benchmark à afficher dans les résultats
      * @param csv Pointeur vers un flux de fichier de sortie pour les données CSV
      */
-    BenchmarkGuardCSV(const std::string& name, std::ofstream* csv)
-        : name_(name), csv_(csv), success_(false), start_(std::chrono::high_resolution_clock::now()) {
+    BenchmarkGuardSuccess(const std::string& name, std::ofstream* csv) : BenchmarkGuard(name, csv), success_(false) {
     }
 
     /**
      * @brief Définit si l'opération mesurée a réussi
-     *
-     * @param success True si l'opération a réussi, false sinon
      */
     void setSuccess(bool success) {
         success_ = success;
     }
 
-    /// TODO: Utiliser un ptr
-
-    /**
-     * @brief Destructeur qui calcule et affiche le temps d'exécution
-     *
-     * Écrit les résultats à la fois sur la console et dans le fichier CSV si fourni
-     */
-    ~BenchmarkGuardCSV() {
+    ~BenchmarkGuardSuccess() override {
         auto end = std::chrono::high_resolution_clock::now();
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
         double milliseconds = microseconds / 1000.0;
@@ -132,65 +121,14 @@ class BenchmarkGuardCSV {
             *csv_ << name_ << "," << std::fixed << std::setprecision(3) << milliseconds << "," << (success_ ? "1" : "0")
                   << std::endl;
         }
+        finished_ = true;
     }
 
   private:
-    std::string name_;                                                  // Nom du benchmark
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_; // Temps de démarrage
-    std::ofstream* csv_; // Flux de fichier de sortie pour les données CSV
-    bool success_;       // Si l'opération mesurée a réussi
+    bool success_;
 };
 
 /**
- * @brief Macro pour faciliter le benchmark de blocs de code avec sortie CSV
- *
- * Crée un objet BenchmarkGuardCSV avec un nom unique basé sur le numéro de ligne
+ * @brief Crée un objet BenchmarkGuardSuccess avec un nom unique basé sur le numéro de ligne
  */
-#define BENCHMARK_BLOCK_CSV(name, csv_ptr) BenchmarkGuardCSV benchmark_guard_csv##__LINE__(name, csv_ptr)
-
-/**
- * @brief Classe RAII simplifiée pour le benchmark avec sortie CSV sans état de succès
- *
- * Version allégée de BenchmarkGuardCSV qui n'écrit que le nom et le temps dans le CSV
- */
-class BenchmarkGuardSimple {
-  public:
-    /**
-     * @brief Constructeur qui démarre le chronomètre du benchmark
-     *
-     * @param name Nom du benchmark à afficher dans les résultats
-     * @param csv Pointeur vers un flux de fichier de sortie pour les données CSV
-     */
-    BenchmarkGuardSimple(const std::string& name, std::ofstream* csv)
-        : name_(name), csv_(csv), start_(std::chrono::high_resolution_clock::now()) {
-    }
-
-    /**
-     * @brief Destructeur qui calcule et affiche le temps d'exécution
-     *
-     * Écrit les résultats à la fois sur la console et dans le fichier CSV si fourni
-     */
-    ~BenchmarkGuardSimple() {
-        auto end = std::chrono::high_resolution_clock::now();
-        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
-        double milliseconds = microseconds / 1000.0;
-
-        std::cout << name_ << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds"
-                  << std::endl;
-        if (csv_) {
-            *csv_ << name_ << "," << std::fixed << std::setprecision(3) << milliseconds << std::endl;
-        }
-    }
-
-  private:
-    std::string name_;                                                  // Nom du benchmark
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_; // Temps de démarrage
-    std::ofstream* csv_; // Flux de fichier de sortie pour les données CSV
-};
-
-/**
- * @brief Macro pour faciliter le benchmark simple avec sortie CSV
- *
- * Crée un objet BenchmarkGuardSimple avec un nom unique basé sur le numéro de ligne
- */
-#define BENCHMARK_BLOCK_SIMPLE_CSV(name, csv_ptr) BenchmarkGuardSimple benchmark_guard_simple##__LINE__(name, csv_ptr)
+#define BENCHMARK_BLOCK_CSV(name, csv_ptr) BenchmarkGuardSuccess benchmark_guard_success##__LINE__(name, csv_ptr)

@@ -173,18 +173,15 @@ void parsing_benchmark(std::map<std::string, Config> config) {
             std::cout << "Warmup iteration " << (current_iteration + 1) << "/" << warmup_iterations
                       << " with file: " << entry.path().filename().string() << std::endl;
 
-            // Pour les itérations de warmup, on exécute l'analyse sans enregistrer dans le CSV
             affine_transform = run_parser(selected_parser, img,
 #ifdef DEBUG
                                           debug_img,
 #endif
                                           meta, dst_corner_points);
 
-            // On peut toujours écrire la sortie dans le terminal pour informer l'utilisateur
             std::cout << "  Result: " << (affine_transform.has_value() ? "Success" : "Failed") << std::endl;
         } else {
-            // Pour les itérations normales, on utilise le BenchmarkGuardCSV pour enregistrer dans le CSV
-            BenchmarkGuardCSV benchmark_guard(entry.path().filename().string(), &benchmark_csv);
+            BenchmarkGuardSuccess benchmark_guard(entry.path().filename().string(), &benchmark_csv);
             affine_transform = run_parser(selected_parser, img,
 #ifdef DEBUG
                                           debug_img,
@@ -202,17 +199,15 @@ void parsing_benchmark(std::map<std::string, Config> config) {
             continue;
         }
 
-        // Only save results for non-warmup iterations
         if (!is_warmup) {
             auto calibrated_img_col = redress_image(img, affine_transform.value());
             cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
-            // Annotation des boîtes utilisateur
+            
             for (auto box : user_boxes_per_page[meta.page - 1]) {
                 draw_box_outline(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 255));
             }
 
-            // Annotation des marqueurs de coin
             for (auto box : corner_markers) {
                 draw_box_outline(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 0));
                 draw_box_center(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(0, 255, 0));

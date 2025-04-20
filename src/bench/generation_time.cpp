@@ -97,7 +97,7 @@ void generation_benchmark(std::map<std::string, Config> config) {
             std::cout << "Benchmark iteration " << (i - warmup_iterations) << "/" << nb_copies 
                       << " generating: " << copy_name.str() << std::endl;
                       
-            BenchmarkGuardSimple benchmark_guard(copy_name.str(), &benchmark_csv);
+            BenchmarkGuard benchmark_guard(copy_name.str(), &benchmark_csv);
             bool success = create_copy(style_params, marker_config, copy_name.str());
 
             if (!success) {
