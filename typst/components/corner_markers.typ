@@ -10,7 +10,7 @@
 #let AR_1 = image("../assets/4x4_1000-190.svg")
 #let AR_2 = image("../assets/4x4_1000-997.svg")
 #let AR_3 = image("../assets/4x4_1000-999.svg")
-#let CUSTOM_MARKER = image("../assets/marker-custom.svg")
+#let CUSTOM = image("../assets/marker-custom.svg")
 #let QR_EYE = image("../assets/qr_eye.svg")
 #let CROSS = image("../assets/cross.svg")
 
@@ -19,6 +19,18 @@
 #let PREFIX_BOTTOM_LEFT = "hzbl"
 #let PREFIX_BOTTOM_RIGHT = "hzbr"
 #let PREFIX_TOP_CENTER = "hztc"
+
+#let ARUCO = "aruco"
+#let QR_EYE_TYPE = "qr-eye"
+#let CROSS_TYPE = "cross"
+#let CUSTOM_TYPE = "custom"
+
+#let SVG_TYPES = (
+  ARUCO,
+  QR_EYE_TYPE,
+  CROSS_TYPE,
+  CUSTOM_TYPE
+)
 
 /**
  * Configuration des coins
@@ -64,17 +76,17 @@
 
 #let create-svg-marker(prefix-position, type, marker-size) = {
   
-  let svg-image = if type.contains("custom") {
-    CUSTOM_MARKER
-  } else if type.contains("aruco") and prefix-position == PREFIX_TOP_LEFT {
+  let svg-image = if type.contains(CUSTOM_TYPE) {
+    CUSTOM
+  } else if type.contains(ARUCO) and prefix-position == PREFIX_TOP_LEFT {
     AR_1
-  } else if type.contains("aruco") and prefix-position == PREFIX_TOP_RIGHT {
+  } else if type.contains(ARUCO) and prefix-position == PREFIX_TOP_RIGHT {
     AR_2
-  } else if type.contains("aruco") and prefix-position == PREFIX_BOTTOM_LEFT {
+  } else if type.contains(ARUCO) and prefix-position == PREFIX_BOTTOM_LEFT {
     AR_3
-  } else if type.contains("qr-eye") {
+  } else if type.contains(QR_EYE_TYPE) {
     QR_EYE
-  } else if type.contains("cross") {
+  } else if type.contains(CROSS_TYPE) {
     CROSS
   } else {
     none
@@ -124,7 +136,7 @@
       fill-color: fill-color,
       stroke-width: stroke-width,
       stroke-color: color)
-  } else if type.contains("custom") or type.contains("aruco") or type.contains("qr-eye") or type.contains("cross") {
+  } else if SVG_TYPES.contains(type){
     create-svg-marker(
       prefix-position,
       type,
