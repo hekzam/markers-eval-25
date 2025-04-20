@@ -18,7 +18,7 @@
 
 #let style-params = (
   encoded_marker_size: float(sys.inputs.at("encoded-marker-size", default: "15")) * 1mm,
-  fiducial_marker_size: float(sys.inputs.at("fiducial-marker-size", default: "3")) * 1mm,
+  unencoded_marker_size: float(sys.inputs.at("unencoded-marker-size", default: "3")) * 1mm,
   header_marker_size: float(sys.inputs.at("header-marker-size", default: "7")) * 1mm,
   stroke_width: float(sys.inputs.at("stroke-width", default: "2")) * 1mm,
   marker_margin: float(sys.inputs.at("marker-margin", default: "3")) * 1mm,

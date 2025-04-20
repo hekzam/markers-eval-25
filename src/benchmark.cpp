@@ -31,7 +31,7 @@ std::unordered_map<std::string, Config> default_config_time_copy = {
     { "nb-copies", { "Number of copies", "The number of copies to generate", 1 } },
     { "warmup-iterations", { "Warm-up iterations", "Number of warm-up iterations to run before benchmarking", 0 } },
     { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
-    { "fiducial-marker_size", { "Fiducial marker size", "The size of the fiducial markers", 10 } },
+    { "unencoded-marker_size", { "Fiducial marker size", "The size of the unencoded markers", 10 } },
     { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
     { "dpi", { "DPI", "The resolution in dots per inch", 300 } },

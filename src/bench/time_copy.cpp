@@ -83,7 +83,7 @@ void run_benchmark(std::unordered_map<std::string, Config> config) {
     auto input_dir = std::get<std::string>(config["input-dir"].value);
     auto copies_str = std::to_string(std::get<int>(config["nb-copies"].value));
     auto encoded_marker_size = std::get<int>(config["encoded-marker_size"].value);
-    auto fiducial_marker_size = std::get<int>(config["fiducial-marker_size"].value);
+    auto unencoded_marker_size = std::get<int>(config["unencoded-marker_size"].value);
     auto grey_level = std::get<int>(config["grey-level"].value);
     auto dpi = std::get<int>(config["dpi"].value);
     auto marker_config = std::get<int>(config["marker-config"].value);
@@ -91,7 +91,7 @@ void run_benchmark(std::unordered_map<std::string, Config> config) {
 
     // Créer une instance de CopyStyleParams avec les paramètres appropriés
     CopyStyleParams style_params;
-    style_params = CopyStyleParams(encoded_marker_size, fiducial_marker_size, 7, 2, 5, grey_level, dpi);
+    style_params = CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi);
 
     // Generate both warm-up and benchmark copies in a single call
     int total_copies = warmup_iterations + nb_copies;

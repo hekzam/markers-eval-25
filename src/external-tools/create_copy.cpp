@@ -25,7 +25,7 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
     std::string redirect = getOutputRedirection();
 
     std::string params = "--input encoded-marker-size=" + std::to_string(style_params.encoded_marker_size) + " " +
-                         "--input fiducial-marker-size=" + std::to_string(style_params.fiducial_marker_size) + " " +
+                         "--input unencoded-marker-size=" + std::to_string(style_params.unencoded_marker_size) + " " +
                          "--input header-marker-size=" + std::to_string(style_params.header_marker_size) + " " +
                          "--input stroke-width=" + std::to_string(style_params.stroke_width) + " " +
                          "--input marker-margin=" + std::to_string(style_params.marker_margin) + " " +
