@@ -8,22 +8,25 @@
  * de commande configurable pour différents types de benchmarks.
  */
 
-#include <unordered_map>
+#include <vector>
+#include <map>
 #include <string>
 
 #include <common.h>
 
 #include "utils/cli_helper.h"
-#include "bench/time_copy.h"
+#include "bench/parsing_time.h"
+#include "bench/generation_time.h"
 #include "external-tools/create_copy.h"
 
 /**
- * @brief Configuration par défaut pour le benchmark "time-copy"
+ * @brief Configuration par défaut
  *
- * Cette map associe chaque paramètre du benchmark à sa configuration complète
- * (nom, description, valeur par défaut).
+ * Ce vecteur ordonné associe chaque paramètre du benchmark à sa configuration complète
+ * (nom, description, valeur par défaut) tout en préservant l'ordre d'insertion.
  */
-std::unordered_map<std::string, Config> default_config_time_copy = {
+std::vector<std::pair<std::string, Config>> default_config = {
+    { "benchmark", { "Benchmark type", "The type of benchmark to run", "generation-time" } },
     { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
     { "atomic-boxes-file",
       { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } },
@@ -46,8 +49,8 @@ std::unordered_map<std::string, Config> default_config_time_copy = {
  */
 struct BenchmarkConfig {
     std::string name;
-    void (*run)(std::unordered_map<std::string, Config>);
-    std::unordered_map<std::string, Config> default_config;
+    void (*run)(std::map<std::string, Config>);
+    std::vector<std::pair<std::string, Config>> default_config;
 };
 
 /**
@@ -56,8 +59,9 @@ struct BenchmarkConfig {
  * Cette map associe chaque nom de benchmark à sa configuration complète
  * (nom complet, fonction d'exécution, configuration par défaut).
  */
-std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
-    { "time-copy", { "Time copy benchmark", run_benchmark, default_config_time_copy } },
+std::map<std::string, BenchmarkConfig> benchmark_map = {
+    { "parsing-time", { "Parsing time benchmark", parsing_benchmark, default_config } },
+    { "generation-time", { "Generation time benchmark", generation_benchmark, default_config } }
 };
 
 /**
@@ -67,9 +71,8 @@ std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
  * par défaut pour le benchmark demandé, traite les arguments de ligne de commande
  * pour personnaliser cette configuration, puis exécute le benchmark sélectionné.
  *
- * Si aucun argument n'est fourni, le benchmark "time-copy" est exécuté avec
- * sa configuration par défaut. Si des arguments invalides sont fournis, l'aide
- * d'utilisation est affichée.
+ * Si aucun argument n'est fourni, l'utilisateur est invité à choisir un benchmark.
+ * Si des arguments invalides sont fournis, l'aide d'utilisation est affichée.
  *
  * @param argc Nombre d'arguments passés au programme
  * @param argv Tableau des arguments passés au programme
@@ -78,16 +81,15 @@ std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
 int main(int argc, char* argv[]) {
     display_banner();
 
-    std::string benchmark_name = "time-copy";
-
-    auto default_config = benchmark_map[benchmark_name].default_config;
-
+    // Récupérer la configuration avec les arguments de ligne de commande
     auto opt_config = get_config(argc, argv, default_config);
     if (!opt_config.has_value()) {
         print_help_config(default_config);
         return 1;
     }
     auto config = opt_config.value();
+
+    // Compléter la configuration avec les valeurs par défaut
     if (argc == 1) {
         add_missing_config(config, default_config);
     } else {
@@ -97,7 +99,12 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-
+    
+    // Déterminer le benchmark à exécuter
+    std::string benchmark_name;
+    benchmark_name = std::get<std::string>(config["benchmark"].value);
+    
+    std::cout << "Running " << benchmark_map[benchmark_name].name << " (" << benchmark_name << ")" << std::endl;
     benchmark_map[benchmark_name].run(config);
     std::cout << "Benchmark completed." << std::endl;
     return 0;

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <iostream>
 #include <iomanip>
 #include <variant>
@@ -32,31 +33,41 @@ struct Config {
 };
 
 /**
+ * @brief Recherche une configuration par sa clé dans un vecteur de configurations
+ * 
+ * @param vec Vecteur de paires (clé, Config) à fouiller
+ * @param key Clé à rechercher
+ * @return std::vector<std::pair<std::string, Config>>::const_iterator Itérateur vers l'élément trouvé ou vec.end() si non trouvé
+ */
+std::vector<std::pair<std::string, Config>>::const_iterator findConfigByKey(
+    const std::vector<std::pair<std::string, Config>>& vec, const std::string& key);
+
+/**
  * @brief Affiche l'aide pour les paramètres de configuration disponibles
  *
- * @param default_config Dictionnaire des paramètres de configuration par défaut
+ * @param default_config Vecteur des paramètres de configuration par défaut
  */
-void print_help_config(std::unordered_map<std::string, Config> default_config);
+void print_help_config(const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
  * @brief Extrait les paramètres de configuration depuis les arguments de la ligne de commande
  *
  * @param argc Nombre d'arguments
  * @param argv Tableau des arguments
- * @param default_config Dictionnaire des paramètres de configuration par défaut
- * @return std::optional<std::unordered_map<std::string, Config>> Configuration extraite ou nullopt en cas d'erreur
+ * @param default_config Vecteur des paramètres de configuration par défaut
+ * @return std::optional<std::map<std::string, Config>> Configuration extraite ou nullopt en cas d'erreur
  */
-std::optional<std::unordered_map<std::string, Config>>
-get_config(int argc, char* argv[], std::unordered_map<std::string, Config> default_config);
+std::optional<std::map<std::string, Config>>
+get_config(int argc, char* argv[], const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
  * @brief Ajoute les paramètres de configuration manquants en demandant à l'utilisateur
  *
  * @param config Dictionnaire de configuration à compléter
- * @param default_config Dictionnaire des paramètres de configuration par défaut
+ * @param default_config Vecteur des paramètres de configuration par défaut
  */
-void add_missing_config(std::unordered_map<std::string, Config>& config,
-                        const std::unordered_map<std::string, Config>& default_config);
+void add_missing_config(std::map<std::string, Config>& config,
+                        const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
  * @brief Formats de texte disponibles pour l'affichage dans le terminal

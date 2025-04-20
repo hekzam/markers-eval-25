@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
+#include <map>
 #include <variant>
 
 #include <common.h>
@@ -14,7 +14,7 @@
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
 
-bool constraint(std::unordered_map<std::string, Config> config) {
+bool parsing_constraint(std::map<std::string, Config> config) {
     if (std::get<std::string>(config["output-dir"].value).empty() ||
         std::get<std::string>(config["atomic-boxes-file"].value).empty() ||
         std::get<std::string>(config["input-dir"].value).empty()) {
@@ -71,9 +71,9 @@ void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, cons
     cv::circle(image, center, radius, color, thickness);
 }
 
-void run_benchmark(std::unordered_map<std::string, Config> config) {
-    if (!constraint(config)) {
-        // print_help_config(default_config_time_copy);
+void parsing_benchmark(std::map<std::string, Config> config) {
+    if (!parsing_constraint(config)) {
+        // print_help_config(default_config);
         return;
     }
 
