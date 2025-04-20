@@ -79,31 +79,26 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   - type:outlined     : Marqueur non rempli (Ne fonctionne que pour les formes géométriques simples)
   - type:encoded      : Marqueur avec données encodées
   - type:unencoded    : Marqueur sans données encodées
-
-  Types de marqueurs disponibles:
-  - qrcode
-  - micro-qr
-  - datamatrix
-  - aztec
-  - pdf417
-  - rmqr
-  - code128
-  - circle
-  - square
-  - triangle
-  - aruco
-  - qr-eye
-  - cross
-  - custom
 ```
-
-
 ```
 
 Exemple avec une configuration complète personnalisée:
 ```sh
 ./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
 ```
+
+### Marqueurs disponibles
+
+| Encodable       | Non encodable     | Rectangulaire    |
+|-----------------|-------------------|------------------|
+| qrcode          | circle            | pdf417           |
+| micro-qr        | square            | rmqr             |
+| datamatrix      | triangle          | code128          |
+| aztec           | cross             |                  |
+| pdf417          | aruco             |                  |
+| rmqr            | qr-eye            |                  |
+| code128         | custom            |                  |
+
 
 ### Configurations de marqueurs disponibles
 
