@@ -27,10 +27,6 @@
  */
 std::vector<std::pair<std::string, Config>> default_config = {
     { "benchmark", { "Benchmark type", "The type of benchmark to run", "generation-time" } },
-    { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
-    { "atomic-boxes-file",
-      { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } },
-    { "input-dir", { "Input directory", "The directory containing the input images", "./copies" } },
     { "nb-copies", { "Number of copies", "The number of copies to generate", 1 } },
     { "warmup-iterations", { "Warm-up iterations", "Number of warm-up iterations to run before benchmarking", 0 } },
     { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
@@ -38,7 +34,11 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
     { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } }
+    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } },
+    { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
+    { "input-dir", { "Input directory", "The directory containing the input images", "./copies" } },
+    { "atomic-boxes-file",
+      { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } }
 };
 
 /**

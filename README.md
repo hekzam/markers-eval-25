@@ -125,23 +125,26 @@ Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des di
 
 L'outil vous demandera plusieurs informations interactivement :
 
-1. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
-2. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
-3. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
-4. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
-5. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
-6. **Warmup iterations** : Nombre d'itérations d'échauffement (par défaut: `0`)
-7. **Encoded marker size** : Taille des marqueurs encodés en mm (par défaut: `15`)
-8. **Fiducial marker size** : Taille des marqueurs fiduciaires en mm (par défaut: `10`)
-9. **Header marker size** : Taille du marqueur d'en-tête en mm (par défaut: `7`)
-10. **Grey level** : Niveau de gris pour les marqueurs (0: noir, 255: blanc) (par défaut: `0`)
-11. **DPI** : Résolution en points par pouce (par défaut: `300`)
+1. **Benchmark type** : Type de benchmark à exécuter (par défaut: `generation-time`)
+   - `parsing-time` : Évalue les performances de l'analyse des marqueurs
+   - `generation-time` : Évalue les performances de génération des copies
+2. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
+3. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
+4. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
+5. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
+6. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
+7. **Warmup iterations** : Nombre d'itérations d'échauffement (par défaut: `0`)
+8. **Encoded marker size** : Taille des marqueurs encodés en mm (par défaut: `15`)
+9. **Fiducial marker size** : Taille des marqueurs fiduciaires en mm (par défaut: `10`)
+10. **Header marker size** : Taille du marqueur d'en-tête en mm (par défaut: `7`)
+11. **Grey level** : Niveau de gris pour les marqueurs (0: noir, 255: blanc) (par défaut: `0`)
+12. **DPI** : Résolution en points par pouce (par défaut: `300`)
 
 Vous pouvez également passer ces paramètres directement en ligne de commande:
-`--output-dir`, `--atomic-boxes-file`, `--input-dir`, `--nb-copies`, `--marker-config`, `--warmup-iterations`, `--encoded-size`, `--unencoded-size`, `--header-size`, `--grey-level`, `--dpi`.
+`--benchmark`, `--output-dir`, `--atomic-boxes-file`, `--input-dir`, `--nb-copies`, `--marker-config`, `--warmup-iterations`, `--encoded-size`, `--unencoded-size`, `--header-size`, `--grey-level`, `--dpi`.
 
 ```sh
-./build-cmake/benchmark --output-dir=./mon_output --atomic-boxes-file=./boxes.json --input-dir=./mes_copies --nb-copies=5 --marker-config=3
+./build-cmake/benchmark --benchmark=parsing-time --output-dir=./mon_output --atomic-boxes-file=./boxes.json --input-dir=./mes_copies --nb-copies=5 --marker-config=3
 ```
 
 L'option `--warmup-iterations` est particulièrement utile pour obtenir des mesures plus précises. Les itérations d'échauffement exécutent le même code que les itérations de mesure, mais leurs résultats ne sont pas comptabilisés dans les statistiques finales. Cela permet d'éviter que les coûts de démarrage (chargement initial des bibliothèques, initialisation des caches, etc.) n'affectent les mesures de performance.
