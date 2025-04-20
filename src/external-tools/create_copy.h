@@ -39,6 +39,7 @@ enum class MarkerType {
     BARCODE,
     CIRCLE,
     SQUARE,
+    TRIANGLE,
     ARUCO,
     CUSTOM,
     NONE // Pour représenter l'absence de marqueur
@@ -65,6 +66,8 @@ inline std::string toString(MarkerType type) {
             return "circle";
         case MarkerType::SQUARE:
             return "square";
+        case MarkerType::TRIANGLE:
+            return "triangle";
         case MarkerType::ARUCO:
             return "aruco-svg";
         case MarkerType::CUSTOM:

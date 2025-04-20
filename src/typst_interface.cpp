@@ -41,6 +41,7 @@ MarkerType markerTypeFromString(const std::string& typeStr) {
                                                                                { "code128", MarkerType::BARCODE },
                                                                                { "circle", MarkerType::CIRCLE },
                                                                                { "square", MarkerType::SQUARE },
+                                                                               { "triangle", MarkerType::TRIANGLE },
                                                                                { "aruco-svg", MarkerType::ARUCO },
                                                                                { "custom-svg", MarkerType::CUSTOM },
                                                                                { "micro-qr",

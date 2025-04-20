@@ -90,6 +90,7 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   - code128
   - circle
   - square
+  - triangle
   - aruco-svg
   - custom-svg
 ```

@@ -4,6 +4,7 @@
 #import "./markers/circle.typ": circle-box
 #import "./markers/svg_marker.typ": gen-svg-box
 #import "./container.typ": gen-box
+#import "./markers/triangle.typ": triangle-box
 
 // Images pour les marqueurs SVG
 #let AR_1 = image("../assets/4x4_1000-190.svg")
@@ -104,6 +105,13 @@
     gen-box(
       prefix-position,
       unencoded-marker-size,
+      unencoded-marker-size,
+      fill-color: fill-color,
+      stroke-width: stroke-width,
+      stroke-color: color)
+  } else if type.contains("triangle") {
+    triangle-box(
+      prefix-position,
       unencoded-marker-size,
       fill-color: fill-color,
       stroke-width: stroke-width,
