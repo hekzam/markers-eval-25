@@ -77,8 +77,7 @@ struct BenchmarkSetup {
  * @param create_subimg_dir Indique s'il faut créer un sous-répertoire "subimg"
  * @return Structure BenchmarkSetup contenant les chemins et le flux CSV ouvert
  */
-BenchmarkSetup prepare_benchmark_directories(const std::map<std::string, Config>& config, 
-                                            bool include_success_column = false, 
-                                            bool create_subimg_dir = false);
+BenchmarkSetup prepare_benchmark_directories(const std::map<std::string, Config>& config,
+                                             bool include_success_column = false, bool create_subimg_dir = false);
 
 #endif

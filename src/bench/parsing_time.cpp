@@ -92,12 +92,8 @@ void parsing_benchmark(const std::map<std::string, Config>& config) {
     // Préparation des répertoires et du fichier CSV
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories(config, true, true);
     std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
-    
-    bool success = generate_copies(config, style_params);
 
-    if (!success) {
-        std::cerr << "Error: Failed to generate some or all copies." << std::endl;
-    }
+    generate_copies(config, style_params);
 
     // Lecture et parsing du JSON
     json atomic_boxes_json = parse_json_file(atomic_boxes_file);

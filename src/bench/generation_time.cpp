@@ -45,12 +45,8 @@ void generation_benchmark(const std::map<std::string, Config>& config) {
     // Préparation des répertoires et du fichier CSV
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories(config, false);
     std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
-    
-    bool success = generate_copies(config, style_params, true, benchmark_csv);
 
-    if (!success) {
-        std::cerr << "Error: Failed to generate some or all copies." << std::endl;
-    }
+    generate_copies(config, style_params, true, benchmark_csv);
 
     if (benchmark_csv.is_open()) {
         benchmark_csv.close();
