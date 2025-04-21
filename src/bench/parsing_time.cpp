@@ -113,15 +113,6 @@ void parsing_benchmark(const std::map<std::string, Config>& config) {
         all_entries.push_back(entry);
     }
 
-    // Vérifier si le nombre d'itérations de warmup est valide
-    if (warmup_iterations >= all_entries.size()) {
-        std::cout << "Warning: Warmup iterations (" << warmup_iterations
-                  << ") is greater than or equal to the number of files (" << all_entries.size() << ")." << std::endl;
-        std::cout << "Reducing warmup iterations to " << (all_entries.size() - 1)
-                  << " to ensure at least one result is recorded." << std::endl;
-        warmup_iterations = (all_entries.size() > 1) ? all_entries.size() - 1 : 0;
-    }
-
     // Afficher les informations sur le warmup
     if (warmup_iterations > 0) {
         std::cout << "Processing " << all_entries.size() << " files - first " << warmup_iterations
