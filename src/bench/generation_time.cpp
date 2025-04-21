@@ -42,22 +42,10 @@ void generation_benchmark(const std::map<std::string, Config>& config) {
     CopyStyleParams style_params =
         CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi);
 
-    // Création et nettoyage des répertoires de sortie
-    std::filesystem::path output_dir{ std::get<std::string>(config.at("output-dir").value) };
-    if (std::filesystem::exists(output_dir)) {
-        std::cout << "Cleaning existing output directory..." << std::endl;
-        std::filesystem::remove_all(output_dir);
-    }
-    std::filesystem::create_directories(output_dir);
-    std::filesystem::path csv_output_dir = create_subdir(output_dir, "csv");
-
-    std::filesystem::path benchmark_csv_path = csv_output_dir / "benchmark_results.csv";
-    std::ofstream benchmark_csv(benchmark_csv_path);
-    if (benchmark_csv.is_open()) {
-        benchmark_csv << "File,Time(ms)" << std::endl;
-    }
-
-    // Lancement du benchmark
+    // Préparation des répertoires et du fichier CSV
+    BenchmarkSetup benchmark_setup = prepare_benchmark_directories(config, false);
+    std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
+    
     bool success = generate_copies(config, style_params, true, benchmark_csv);
 
     if (!success) {

@@ -60,4 +60,25 @@ bool generate_copies(const std::map<std::string, Config>& config, const CopyStyl
  */
 bool generate_copies(const std::map<std::string, Config>& config, const CopyStyleParams& style_params);
 
+/**
+ * @brief Structure contenant les informations sur les répertoires et le fichier CSV de benchmark
+ */
+struct BenchmarkSetup {
+    std::filesystem::path output_dir;
+    std::filesystem::path subimg_output_dir;
+    std::filesystem::path csv_output_dir;
+    std::ofstream benchmark_csv;
+};
+
+/**
+ * @brief Prépare les répertoires et le fichier CSV pour un benchmark
+ * @param config La configuration contenant le chemin du répertoire de sortie
+ * @param include_success_column Indique si la colonne "Success" doit être incluse dans l'en-tête CSV
+ * @param create_subimg_dir Indique s'il faut créer un sous-répertoire "subimg"
+ * @return Structure BenchmarkSetup contenant les chemins et le flux CSV ouvert
+ */
+BenchmarkSetup prepare_benchmark_directories(const std::map<std::string, Config>& config, 
+                                            bool include_success_column = false, 
+                                            bool create_subimg_dir = false);
+
 #endif

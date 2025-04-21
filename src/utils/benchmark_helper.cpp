@@ -124,3 +124,36 @@ bool generate_copies(const std::map<std::string, Config>& config, const CopyStyl
 
     return all_success;
 }
+
+BenchmarkSetup prepare_benchmark_directories(const std::map<std::string, Config>& config, 
+                                           bool include_success_column, 
+                                           bool create_subimg_dir) {
+    BenchmarkSetup setup;
+    
+    // Création et nettoyage des répertoires de sortie
+    setup.output_dir = std::filesystem::path{ std::get<std::string>(config.at("output-dir").value) };
+    if (std::filesystem::exists(setup.output_dir)) {
+        std::cout << "Cleaning existing output directory..." << std::endl;
+        std::filesystem::remove_all(setup.output_dir);
+    }
+    std::filesystem::create_directories(setup.output_dir);
+    
+    // Création des sous-répertoires
+    if (create_subimg_dir) {
+        setup.subimg_output_dir = create_subdir(setup.output_dir, "subimg");
+    }
+    setup.csv_output_dir = create_subdir(setup.output_dir, "csv");
+    
+    // Préparation du fichier CSV pour les résultats
+    std::filesystem::path benchmark_csv_path = setup.csv_output_dir / "benchmark_results.csv";
+    setup.benchmark_csv.open(benchmark_csv_path);
+    if (setup.benchmark_csv.is_open()) {
+        if (include_success_column) {
+            setup.benchmark_csv << "File,Time(ms),Success" << std::endl;
+        } else {
+            setup.benchmark_csv << "File,Time(ms)" << std::endl;
+        }
+    }
+    
+    return setup;
+}
