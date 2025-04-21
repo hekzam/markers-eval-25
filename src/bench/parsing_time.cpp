@@ -14,20 +14,20 @@
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
 
-bool parsing_constraint(std::map<std::string, Config> config) {
-    if (std::get<std::string>(config["output-dir"].value).empty() ||
-        std::get<std::string>(config["atomic-boxes-file"].value).empty() ||
-        std::get<std::string>(config["input-dir"].value).empty()) {
+bool parsing_constraint(const std::map<std::string, Config>& config) {
+    if (std::get<std::string>(config.at("output-dir").value).empty() ||
+        std::get<std::string>(config.at("atomic-boxes-file").value).empty() ||
+        std::get<std::string>(config.at("input-dir").value).empty()) {
         std::cerr << "Output directory, atomic boxes file and input directory must not be empty" << std::endl;
         return false;
     }
 
-    if (!std::filesystem::exists(std::get<std::string>(config["atomic-boxes-file"].value))) {
-        std::cerr << "Atomic boxes file '" << std::get<std::string>(config["atomic-boxes-file"].value)
+    if (!std::filesystem::exists(std::get<std::string>(config.at("atomic-boxes-file").value))) {
+        std::cerr << "Atomic boxes file '" << std::get<std::string>(config.at("atomic-boxes-file").value)
                   << "' does not exist" << std::endl;
         return false;
     }
-    if (std::get<int>(config["nb-copies"].value) <= 0 || std::get<int>(config["nb-copies"].value) > 50) {
+    if (std::get<int>(config.at("nb-copies").value) <= 0 || std::get<int>(config.at("nb-copies").value) > 50) {
         std::cerr << "Number of copies must be between 1 and 50" << std::endl;
         return false;
     }
@@ -71,38 +71,32 @@ void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, cons
     cv::circle(image, center, radius, color, thickness);
 }
 
-void parsing_benchmark(std::map<std::string, Config> config) {
+void parsing_benchmark(const std::map<std::string, Config>& config) {
     if (!parsing_constraint(config)) {
-        // print_help_config(default_config);
         return;
     }
 
-    int nb_copies = std::get<int>(config["nb-copies"].value);
-    int warmup_iterations = std::get<int>(config["warmup-iterations"].value);
-    auto atomic_boxes_file = std::get<std::string>(config["atomic-boxes-file"].value);
-    auto input_dir = std::get<std::string>(config["input-dir"].value);
-    auto copies_str = std::to_string(std::get<int>(config["nb-copies"].value));
-    auto encoded_marker_size = std::get<int>(config["encoded-marker_size"].value);
-    auto unencoded_marker_size = std::get<int>(config["unencoded-marker_size"].value);
-    auto grey_level = std::get<int>(config["grey-level"].value);
-    auto dpi = std::get<int>(config["dpi"].value);
-    auto marker_config = std::get<int>(config["marker-config"].value);
+    int warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
+    auto atomic_boxes_file = std::get<std::string>(config.at("atomic-boxes-file").value);
+    auto input_dir = std::get<std::string>(config.at("input-dir").value);
+    auto encoded_marker_size = std::get<int>(config.at("encoded-marker_size").value);
+    auto unencoded_marker_size = std::get<int>(config.at("unencoded-marker_size").value);
+    auto grey_level = std::get<int>(config.at("grey-level").value);
+    auto dpi = std::get<int>(config.at("dpi").value);
+    auto marker_config = std::get<int>(config.at("marker-config").value);
     ParserType selected_parser = select_parser_for_marker_config(marker_config);
 
-    // Créer une instance de CopyStyleParams avec les paramètres appropriés
     CopyStyleParams style_params;
     style_params = CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi);
 
-    // Generate both warm-up and benchmark copies in a single call
-    int total_copies = warmup_iterations + nb_copies;
-    if (warmup_iterations > 0) {
-        std::cout << "Generating " << total_copies << " copies (" << warmup_iterations << " warm-up + " << nb_copies
-                  << " benchmark)..." << std::endl;
+    bool success = generate_copies(config, style_params);
+
+    if (!success) {
+        std::cerr << "Error: Failed to generate some or all copies." << std::endl;
     }
-    generate_copies(total_copies, marker_config, style_params);
 
     // Création et nettoyage des répertoires de sortie
-    std::filesystem::path output_dir{ std::get<std::string>(config["output-dir"].value) };
+    std::filesystem::path output_dir{ std::get<std::string>(config.at("output-dir").value) };
     if (std::filesystem::exists(output_dir)) {
         std::cout << "Cleaning existing output directory..." << std::endl;
         std::filesystem::remove_all(output_dir);
@@ -203,7 +197,6 @@ void parsing_benchmark(std::map<std::string, Config> config) {
             auto calibrated_img_col = redress_image(img, affine_transform.value());
             cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
-            
             for (auto box : user_boxes_per_page[meta.page - 1]) {
                 draw_box_outline(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 255));
             }

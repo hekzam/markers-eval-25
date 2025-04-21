@@ -15,13 +15,24 @@
  */
 
 /**
+ * @brief Vérifie si la configuration répond aux contraintes pour la génération de copies.
+ *
+ * Cette fonction valide que la configuration fournie contient des paramètres valides
+ * pour la génération des copies.
+ *
+ * @param config La configuration à vérifier.
+ * @return true si la configuration est valide, false sinon.
+ */
+bool generation_constraint(const std::map<std::string, Config>& config);
+
+/**
  * @brief Exécute le benchmark de performance sur la génération de copies.
  *
  * Cette fonction génère un ensemble de copies numérisées avec différentes configurations,
  * mesure le temps d'exécution et enregistre les résultats.
  *
- * @param config Un dictionnaire contenant les paramètres de configuration du benchmark.
+ * @param config La configuration du benchmark, incluant les paramètres de génération de copies.
  */
-void generation_benchmark(std::map<std::string, Config> config);
+void generation_benchmark(const std::map<std::string, Config>& config);
 
 #endif // TIME_GENERATION_H

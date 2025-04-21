@@ -14,6 +14,7 @@
 #include <string>
 #include <common.h>
 #include "../external-tools/create_copy.h"
+#include "../utils/cli_helper.h"
 
 /**
  * @brief Sauvegarde une image dans le répertoire de sortie
@@ -42,11 +43,21 @@ json parse_json_file(const std::string& filepath);
 
 /**
  * @brief Génère des copies de marqueurs avec une configuration spécifique
- * @param nb_copies Nombre de copies à générer
- * @param marker_config_id ID de la configuration des marqueurs à utiliser
+ * @param config Configuration des copies à générer
+ * @param style_params Paramètres de style pour la génération
+ * @param is_benchmark Indique si on exécute un benchmark
+ * @param benchmark_csv Fichier CSV pour enregistrer les résultats du benchmark
+ * @return true si toutes les copies ont été générées avec succès, false sinon
+ */
+bool generate_copies(const std::map<std::string, Config>& config, const CopyStyleParams& style_params,
+                     bool is_benchmark, std::ofstream& benchmark_csv);
+
+/**
+ * @brief Génère des copies de marqueurs sans enregistrer de benchmarks
+ * @param config Configuration des copies à générer
  * @param style_params Paramètres de style pour la génération
  * @return true si toutes les copies ont été générées avec succès, false sinon
  */
-bool generate_copies(int nb_copies, int marker_config_id, const CopyStyleParams& style_params);
+bool generate_copies(const std::map<std::string, Config>& config, const CopyStyleParams& style_params);
 
 #endif

@@ -49,7 +49,7 @@ std::vector<std::pair<std::string, Config>> default_config = {
  */
 struct BenchmarkConfig {
     std::string name;
-    void (*run)(std::map<std::string, Config>);
+    void (*run)(const std::map<std::string, Config>&);
     std::vector<std::pair<std::string, Config>> default_config;
 };
 
@@ -106,7 +106,6 @@ int main(int argc, char* argv[]) {
     
     std::cout << "Running " << benchmark_map[benchmark_name].name << " (" << benchmark_name << ")" << std::endl;
     benchmark_map[benchmark_name].run(config);
-    std::cout << "Benchmark completed." << std::endl;
     return 0;
 }
 /// TODO: load page.json
