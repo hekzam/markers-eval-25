@@ -1,10 +1,16 @@
 #include <iostream>
 #include <common.h>
 #include <cstdlib>
+#include <string.h>
 #include "utils/math_utils.h"
 
 int img_depth;
 int seed=0;
+
+
+struct PERSON {   // Declare PERSON struct type
+    
+} family_member;
 
 /**
  * @brief Ajout de bruit poivre et sel
@@ -88,6 +94,41 @@ void ajouterTaches(cv::Mat& image, int nombreTaches = 10, int rayonMin = 5, int 
     }
 }
 
+void gestion_arg(int argc, char const* argv[])
+{
+    std::string poss_opt[]={"-seed", "-s", "-g", "-cb", "-sp", "-r", "-t", "-nb"};
+    if (argc < 2)
+    {
+        std::cerr << "call -> usage()" << std::endl;
+        exit (1);
+    }
+    for(int i=2; i<argc; i++)
+    {
+
+    // Rechercher la position du caractère '=' dans la chaîne
+    std::string arg(argv[i]);  // Conversion de char* en std::string
+
+    size_t pos = arg.find('=');
+
+    if (pos != std::string::npos) {
+        // Si le '=' est trouvé, extraire la partie avant le '='
+        std::string option = arg.substr(0, pos);
+        std::cout << "Option extraite: " << option << std::endl;
+        int in=0;
+        for(int i=0; i<1; i++)
+        {
+            if(!poss_opt[i].compare(option))    in=1;
+        }
+        if(in==0) std::cout<<"usage(arg invalide...)"<<std::endl;
+        
+    } else {
+        // Sinon, on récupère toute la chaîne (aucun '=' présent)
+        std::cout << "Aucun '=' trouvé, l'option est: " << arg << std::endl;
+    }
+    }
+
+}
+
 //si aleatoire pur  : Initialisation avec l'horloge système = srand(time(0));
 
 int main(int argc, char const* argv[])
@@ -102,19 +143,20 @@ int main(int argc, char const* argv[])
     img_depth = img.depth();
     cv::Mat calibrated_img = img.clone();
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
-    // identity *= rotate_center(5, img.cols / 2, img.rows / 2);
+     identity *= rotate_center(5, img.cols / 2, img.rows / 2);
     //print_mat(identity);
-    // identity *= translate(3, 0);
+     identity *= translate(3, 0);
     //print_mat(identity);
     identity = identity(cv::Rect(0, 0, 3, 2));
     //print_mat(identity);
     cv::Mat noisy_img = img.clone();
-    // ajouterTaches(noisy_img);  // Ajoute le bruit
-    //contrast_brightness_modifier(noisy_img,atoi(argv[2]),atoi(argv[3]));
-    //add_gaussian_noise(noisy_img, 20, 20);
-    //  add_salt_pepper_noise(noisy_img, 1, 10);
+    ajouterTaches(noisy_img);  // Ajoute le bruit
+    contrast_brightness_modifier(noisy_img,60, 40);                          //SEG_FAULT
+    add_gaussian_noise(noisy_img, 20, 20);
+    add_salt_pepper_noise(noisy_img, 1, 10);
     cv::warpAffine(noisy_img, calibrated_img, identity, noisy_img.size(), cv::INTER_LINEAR);
     cv::imwrite("calibrated_img.png",calibrated_img);
+    gestion_arg( argc,  argv);
 
     return 0;
 }
