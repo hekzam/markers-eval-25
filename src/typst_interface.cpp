@@ -139,6 +139,8 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Invalid marker configuration: " << argv[i + 1] << " (valid range: 1-10)" << std::endl;
                 return 1;
             }
+        } else if (arg == "--generating-content") {
+            style_params.generating_content = (std::string(argv[i + 1]) == "1" || std::string(argv[i + 1]) == "true");
         } else if (arg == "--tl") {
             top_left = parseMarker(argv[i + 1]);
             custom_markers = true;

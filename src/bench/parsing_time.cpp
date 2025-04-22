@@ -87,7 +87,7 @@ void parsing_benchmark(const std::map<std::string, Config>& config) {
     ParserType selected_parser = select_parser_for_marker_config(marker_config);
 
     CopyStyleParams style_params;
-    style_params = CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi);
+    style_params = CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi, true);
 
     // Préparation des répertoires et du fichier CSV
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories(config, true, true);

@@ -65,6 +65,7 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --margin N            : Marge autour des marqueurs (par défaut: 3)
   --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
   --dpi N               : Résolution en points par pouce (par défaut: 300)
+  --generating-content BOOL : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
   --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
   --filename NAME       : Nom du fichier de sortie (par défaut: copy)
   
@@ -79,7 +80,6 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   - type:outlined     : Marqueur non rempli (Ne fonctionne que pour les formes géométriques simples)
   - type:encoded      : Marqueur avec données encodées
   - type:unencoded    : Marqueur sans données encodées
-```
 ```
 
 Exemple avec une configuration complète personnalisée:

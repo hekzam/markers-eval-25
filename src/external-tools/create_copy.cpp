@@ -30,6 +30,7 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
                          "--input stroke-width=" + std::to_string(style_params.stroke_width) + " " +
                          "--input marker-margin=" + std::to_string(style_params.marker_margin) + " " +
                          "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
+                         "--input generating-content=" + (style_params.generating_content ? "1" : "0") + " " +
                          "--input marker-types=" + "\"" + marker_config.toString() + "\"";
 
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +

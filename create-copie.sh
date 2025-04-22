@@ -10,6 +10,7 @@ show_usage() {
   echo "  --margin N            : Margin around markers (default: 3)"
   echo "  --grey-level N        : Grey level (0: black, 255: white) (default: 0)"
   echo "  --dpi N               : DPI (default: 300)"
+  echo "  --generating-content BOOL : Generate content in document (1/true or 0/false) (default: 1)"
   echo "  --config N            : Marker configuration (default: 1)"
   echo "                          1: QR codes in all corners"
   echo "                          2: QR code only in bottom-right corner"

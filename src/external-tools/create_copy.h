@@ -272,11 +272,12 @@ struct CopyStyleParams {
     int marker_margin;
     int grey_level;
     int dpi;
+    bool generating_content;
 
     // Constructeur avec valeurs par défaut
-    CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int dpi = 300)
+    CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int dpi = 300, bool gc = true)
         : encoded_marker_size(ems), unencoded_marker_size(ums), header_marker_size(hms), stroke_width(sw),
-          marker_margin(mm), grey_level(gl), dpi(dpi) {
+          marker_margin(mm), grey_level(gl), dpi(dpi), generating_content(gc) {
     }
 };
 
