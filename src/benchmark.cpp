@@ -17,6 +17,7 @@
 #include "utils/cli_helper.h"
 #include "bench/parsing_time.h"
 #include "bench/generation_time.h"
+#include "bench/ink_estimation.h"
 #include "external-tools/create_copy.h"
 
 /**
@@ -26,7 +27,6 @@
  * (nom, description, valeur par défaut) tout en préservant l'ordre d'insertion.
  */
 std::vector<std::pair<std::string, Config>> default_config = {
-    { "benchmark", { "Benchmark type", "The type of benchmark to run", "generation-time" } },
     { "nb-copies", { "Number of copies", "The number of copies to generate", 1 } },
     { "warmup-iterations", { "Warm-up iterations", "Number of warm-up iterations to run before benchmarking", 0 } },
     { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
@@ -37,8 +37,22 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } },
     { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
     { "input-dir", { "Input directory", "The directory containing the input images", "./copies" } },
-    { "atomic-boxes-file",
+        { "atomic-boxes-file",
       { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } }
+};
+
+/**
+ * @brief Configuration par défaut pour le benchmark d'estimation d'encre
+ */
+std::vector<std::pair<std::string, Config>> ink_estimation_config = {
+    { "input-dir", { "Input directory", "The directory containing the input image", "./copies" } },
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
+    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
+    { "unencoded-marker_size", { "Fiducial marker size", "The size of the unencoded markers", 10 } },
+    { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
+    { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
+    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } },
 };
 
 /**
@@ -61,7 +75,8 @@ struct BenchmarkConfig {
  */
 std::map<std::string, BenchmarkConfig> benchmark_map = {
     { "parsing-time", { "Parsing time benchmark", parsing_benchmark, default_config } },
-    { "generation-time", { "Generation time benchmark", generation_benchmark, default_config } }
+    { "generation-time", { "Generation time benchmark", generation_benchmark, default_config } },
+    { "ink-estimation", { "Ink consumption estimation benchmark", ink_estimation_benchmark, ink_estimation_config } }
 };
 
 /**
@@ -79,30 +94,70 @@ std::map<std::string, BenchmarkConfig> benchmark_map = {
  * @return int Code de retour (0 en cas de succès, 1 en cas d'erreur)
  */
 int main(int argc, char* argv[]) {
-    display_banner();
+    
+    // Afficher tous les arguments passés en ligne de commande
+    std::cout << "\n=== Command Line Arguments ===\n";
+    std::cout << "Total arguments: " << argc << std::endl;
+    for (int i = 0; i < argc; i++) {
+        std::cout << "Argument " << i << ": " << argv[i] << std::endl;
+    }
+    std::cout << "===========================\n\n";
+    
+    // Déterminer le benchmark à exécuter
+    std::string benchmark_name = "ink-estimation"; // Valeur par défaut
+    int benchmark_arg_index = -1;
+    
+    if (argc > 1) {
+        for (int i = 1; i < argc; i++) {
+            std::string arg = argv[i];
+            if (arg == "--benchmark" && i + 1 < argc) {
+                benchmark_name = argv[i + 1];
+                benchmark_arg_index = i;
+                break;
+            }
+        }
+    }
 
-    // Récupérer la configuration avec les arguments de ligne de commande
-    auto opt_config = get_config(argc, argv, default_config);
+    // Afficher la bannière de bienvenue avec le nom du benchmark
+    display_banner("BENCHMARK TOOL - MARKERS EVALUATION", benchmark_map.count(benchmark_name) ? benchmark_map[benchmark_name].name : "Unknown benchmark");
+    
+    // Créer un nouveau tableau d'arguments sans --benchmark <NAME>
+    std::vector<char*> filtered_argv;
+    filtered_argv.push_back(argv[0]); // Conserver le nom du programme
+    
+    for (int i = 1; i < argc; i++) {
+        // Ignorer --benchmark et sa valeur
+        if (i == benchmark_arg_index || i == benchmark_arg_index + 1) {
+            continue;
+        }
+        filtered_argv.push_back(argv[i]);
+    }
+    
+    int filtered_argc = filtered_argv.size();
+    
+    // Sélectionner la configuration appropriée en fonction du benchmark
+    auto& selected_default_config = benchmark_map.count(benchmark_name) ? 
+                                     benchmark_map[benchmark_name].default_config : 
+                                     default_config;
+
+    // Récupérer la configuration avec les arguments filtrés
+    auto opt_config = get_config(filtered_argc, filtered_argv.data(), selected_default_config);
     if (!opt_config.has_value()) {
-        print_help_config(default_config);
+        print_help_config(selected_default_config);
         return 1;
     }
     auto config = opt_config.value();
 
     // Compléter la configuration avec les valeurs par défaut
-    if (argc == 1) {
-        add_missing_config(config, default_config);
+    if (filtered_argc == 1) {
+        add_missing_config(config, selected_default_config);
     } else {
-        for (const auto& [key, value] : default_config) {
+        for (const auto& [key, value] : selected_default_config) {
             if (config.find(key) == config.end()) {
                 config[key] = value;
             }
         }
     }
-    
-    // Déterminer le benchmark à exécuter
-    std::string benchmark_name;
-    benchmark_name = std::get<std::string>(config["benchmark"].value);
     
     std::cout << "Running " << benchmark_map[benchmark_name].name << " (" << benchmark_name << ")" << std::endl;
     benchmark_map[benchmark_name].run(config);

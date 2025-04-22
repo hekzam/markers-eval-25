@@ -120,32 +120,61 @@ Le paramètre `--config` permet de sélectionner parmi les configurations suivan
 Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
 
 ```sh
-./run_benchmark.sh
+./run_benchmark.sh [options]
 ```
 
-L'outil vous demandera plusieurs informations interactivement :
+### Benchmarks disponibles
 
-1. **Benchmark type** : Type de benchmark à exécuter (par défaut: `generation-time`)
-   - `parsing-time` : Évalue les performances de l'analyse des marqueurs
-   - `generation-time` : Évalue les performances de génération des copies
-2. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
-3. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
-4. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
-5. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
-6. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
-7. **Warmup iterations** : Nombre d'itérations d'échauffement (par défaut: `0`)
-8. **Encoded marker size** : Taille des marqueurs encodés en mm (par défaut: `15`)
-9. **Fiducial marker size** : Taille des marqueurs fiduciaires en mm (par défaut: `10`)
-10. **Header marker size** : Taille du marqueur d'en-tête en mm (par défaut: `7`)
-11. **Grey level** : Niveau de gris pour les marqueurs (0: noir, 255: blanc) (par défaut: `0`)
-12. **DPI** : Résolution en points par pouce (par défaut: `300`)
+Le système propose plusieurs types de benchmarks, sélectionnables avec l'option `--benchmark` :
 
-Vous pouvez également passer ces paramètres directement en ligne de commande:
-`--benchmark`, `--output-dir`, `--atomic-boxes-file`, `--input-dir`, `--nb-copies`, `--marker-config`, `--warmup-iterations`, `--encoded-size`, `--unencoded-size`, `--header-size`, `--grey-level`, `--dpi`.
+- `parsing-time` : Évalue les performances d'analyse et de détection des marqueurs
+- `generation-time` : Évalue les performances de génération des copies (par défaut)
+- `ink-estimation` : Estime la consommation d'encre pour différentes configurations de marqueurs
+
+### Options en ligne de commande
+
+Vous pouvez passer les paramètres directement en ligne de commande :
 
 ```sh
-./build-cmake/benchmark --benchmark=parsing-time --output-dir=./mon_output --atomic-boxes-file=./boxes.json --input-dir=./mes_copies --nb-copies=5 --marker-config=3
+./run_benchmark.sh --benchmark ink-estimation --input-dir=./copies --dpi=600
 ```
+
+Options communes :
+- `--benchmark=<type>` : Type de benchmark à exécuter (parsing-time, generation-time, ink-estimation)
+- `--output-dir=<path>` : Répertoire de sortie pour les résultats
+- `--input-dir=<path>` : Répertoire contenant les images d'entrée
+- `--encoded-marker_size=<N>` : Taille des marqueurs encodés en mm
+- `--unencoded-marker_size=<N>` : Taille des marqueurs non encodés en mm
+- `--header-marker_size=<N>` : Taille du marqueur d'en-tête en mm
+- `--grey-level=<0-255>` : Niveau de gris pour les marqueurs
+- `--dpi=<N>` : Résolution en points par pouce
+- `--marker-config=<1-10>` : Configuration des marqueurs à utiliser
+
+Options spécifiques pour les benchmarks de performance :
+- `--nb-copies=<N>` : Nombre de copies à générer pour le test
+- `--warmup-iterations=<N>` : Nombre d'itérations d'échauffement avant la mesure
+- `--atomic-boxes-file=<path>` : Fichier JSON contenant les définitions des zones
+
+### Résultats des benchmarks
+
+#### Benchmark de temps de traitement
+
+Le benchmark `parsing-time` produit des résultats sur le temps de traitement et le taux de succès de la détection des marqueurs. Il génère les fichiers suivants dans le répertoire de sortie :
+- **Images calibrées** : Versions redressées des copies avec les zones détectées
+- **CSV de résultats** : Fichier `benchmark_results.csv` avec les temps d'exécution et taux de succès
+- **Images de débogage** (mode DEBUG uniquement) : Visualisation du processus de détection
+
+#### Benchmark d'estimation d'encre
+
+Le benchmark `ink-estimation` analyse la consommation d'encre et affiche :
+- Dimensions de l'image et résolution
+- Surface totale couverte en cm²
+- Couverture d'encre moyenne en pourcentage
+- Volume d'encre estimé en millilitres
+- Facteur de calibration utilisé
+
+#### Benchmark de temps de génération de copies
+Le benchmark `generation-time` évalue le temps de génération des copies. Il génère un fichier CSV avec les résultats de chaque itération.
 
 L'option `--warmup-iterations` est particulièrement utile pour obtenir des mesures plus précises. Les itérations d'échauffement exécutent le même code que les itérations de mesure, mais leurs résultats ne sont pas comptabilisés dans les statistiques finales. Cela permet d'éviter que les coûts de démarrage (chargement initial des bibliothèques, initialisation des caches, etc.) n'affectent les mesures de performance.
 
