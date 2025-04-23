@@ -96,37 +96,51 @@ void ajouterTaches(cv::Mat& image, int nombreTaches = 10, int rayonMin = 5, int 
 
 void gestion_arg(int argc, char const* argv[])
 {
-    std::string poss_opt[]={"-seed", "-s", "-g", "-cb", "-sp", "-r", "-t", "-nb"};
+    //std::string poss_opt[]={"-seed", "-s", "-g", "-cb", "-sp", "-r", "-t", "-nb"};
     if (argc < 2)
     {
-        std::cerr << "call -> usage()" << std::endl;
+        std::cerr << "call -> usage() -> exit()" << std::endl;        
         exit (1);
     }
+    bool seed_found=false;
     for(int i=2; i<argc; i++)
     {
-
-    // Rechercher la position du caractère '=' dans la chaîne
-    std::string arg(argv[i]);  // Conversion de char* en std::string
-
-    size_t pos = arg.find('=');
-
-    if (pos != std::string::npos) {
-        // Si le '=' est trouvé, extraire la partie avant le '='
-        std::string option = arg.substr(0, pos);
-        std::cout << "Option extraite: " << option << std::endl;
-        int in=0;
-        for(int i=0; i<1; i++)
+        std::string arg(argv[i]);  
+        size_t pos = arg.find('-seed=');
+        if (pos != std::string::npos)
         {
-            if(!poss_opt[i].compare(option))    in=1;
-        }
-        if(in==0) std::cout<<"usage(arg invalide...)"<<std::endl;
-        
-    } else {
-        // Sinon, on récupère toute la chaîne (aucun '=' présent)
-        std::cout << "Aucun '=' trouvé, l'option est: " << arg << std::endl;
-    }
-    }
+            seed_found=true;
+            std::string str_seed_val = arg.substr(pos+6);
+            if (str_seed_val.empty()) 
+            {
+                std::cerr << "Erreur : la valeur de -seed= est vide." << std::endl;
+            } 
+            else 
+            {
+                try {
+                    int value = std::stoi(str_seed_val);  
+                    std::cout << "Valeur de -seed : " << value << std::endl;
+                    seed=value;
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Erreur : valeur non numérique pour -seed : '" << str_seed_val << "'" << std::endl;
+                    //usage()
+                } catch (const std::out_of_range& e) {
+                    std::cerr << "Erreur : valeur trop grande pour -seed : '" << str_seed_val << "'" << std::endl;
+                    //usage()
+                }
+            }
+            seed_exec();        //fct calling all transf fcts
+            return;
 
+        }
+        
+    }
+    //si seed not in params
+}
+
+void seed_exec()
+{
+    
 }
 
 //si aleatoire pur  : Initialisation avec l'horloge système = srand(time(0));
