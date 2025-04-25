@@ -39,14 +39,12 @@ void generation_benchmark(const std::map<std::string, Config>& config) {
     auto unencoded_marker_size = std::get<int>(config.at("unencoded-marker_size").value);
     auto grey_level = std::get<int>(config.at("grey-level").value);
     auto dpi = std::get<int>(config.at("dpi").value);
-    CopyStyleParams style_params =
-        CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi, true);
+    CopyStyleParams style_params(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi, true);
 
-    // Préparation des répertoires et du fichier CSV
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories(config, false);
     std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
 
-    generate_copies(config, style_params, true, benchmark_csv);
+    generate_copies(config, style_params, benchmark_csv);
 
     if (benchmark_csv.is_open()) {
         benchmark_csv.close();

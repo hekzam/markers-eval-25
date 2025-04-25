@@ -33,16 +33,6 @@ struct Config {
 };
 
 /**
- * @brief Recherche une configuration par sa clé dans un vecteur de configurations
- * 
- * @param vec Vecteur de paires (clé, Config) à fouiller
- * @param key Clé à rechercher
- * @return std::vector<std::pair<std::string, Config>>::const_iterator Itérateur vers l'élément trouvé ou vec.end() si non trouvé
- */
-std::vector<std::pair<std::string, Config>>::const_iterator findConfigByKey(
-    const std::vector<std::pair<std::string, Config>>& vec, const std::string& key);
-
-/**
  * @brief Affiche l'aide pour les paramètres de configuration disponibles
  *
  * @param default_config Vecteur des paramètres de configuration par défaut

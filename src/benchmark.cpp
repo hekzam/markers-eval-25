@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <string>
 
 #include <common.h>
@@ -42,20 +43,6 @@ std::vector<std::pair<std::string, Config>> default_config = {
 };
 
 /**
- * @brief Configuration par défaut pour le benchmark d'estimation d'encre
- */
-std::vector<std::pair<std::string, Config>> ink_estimation_config = {
-    { "input-dir", { "Input directory", "The directory containing the input image", "./copies" } },
-    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
-    { "unencoded-marker_size", { "Fiducial marker size", "The size of the unencoded markers", 10 } },
-    { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
-    { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
-    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } },
-};
-
-/**
  * @brief Structure définissant un type de benchmark disponible
  *
  * Cette structure représente un type de benchmark pouvant être exécuté,
@@ -73,7 +60,7 @@ struct BenchmarkConfig {
  * Cette map associe chaque nom de benchmark à sa configuration complète
  * (nom complet, fonction d'exécution, configuration par défaut).
  */
-std::map<std::string, BenchmarkConfig> benchmark_map = {
+std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
     { "parsing-time", { "Parsing time benchmark", parsing_benchmark, default_config } },
     { "generation-time", { "Generation time benchmark", generation_benchmark, default_config } },
     { "ink-estimation", { "Ink consumption estimation benchmark", ink_estimation_benchmark, ink_estimation_config } }

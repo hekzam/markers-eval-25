@@ -17,17 +17,6 @@
  */
 
 /**
- * @brief Vérifie si la configuration répond aux contraintes pour l'analyse des copies.
- *
- * Cette fonction valide que la configuration fournie contient des paramètres valides
- * pour l'analyse des copies.
- *
- * @param config La configuration à vérifier.
- * @return true si la configuration est valide, false sinon.
- */
-bool parsing_constraint(const std::map<std::string, Config>& config);
-
-/**
  * @brief Exécute le benchmark de performance sur un ensemble de copies.
  *
  * Cette fonction analyse les images de copies numérisées, détecte les marqueurs et les zones

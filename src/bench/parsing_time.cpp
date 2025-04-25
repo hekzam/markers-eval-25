@@ -86,16 +86,13 @@ void parsing_benchmark(const std::map<std::string, Config>& config) {
     auto marker_config = std::get<int>(config.at("marker-config").value);
     ParserType selected_parser = select_parser_for_marker_config(marker_config);
 
-    CopyStyleParams style_params;
-    style_params = CopyStyleParams(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi, true);
+    CopyStyleParams style_params(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi, true);
 
-    // Préparation des répertoires et du fichier CSV
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories(config, true, true);
     std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
 
     generate_copies(config, style_params);
 
-    // Lecture et parsing du JSON
     json atomic_boxes_json = parse_json_file(atomic_boxes_file);
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
     std::vector<std::shared_ptr<AtomicBox>> corner_markers;
@@ -107,13 +104,11 @@ void parsing_benchmark(const std::map<std::string, Config>& config) {
         throw std::runtime_error("could not open directory '" + dir_path.string() + "'");
     }
 
-    // Collecter tous les fichiers dans un vecteur
     std::vector<std::filesystem::directory_entry> all_entries;
     for (const auto& entry : std::filesystem::directory_iterator(dir_path)) {
         all_entries.push_back(entry);
     }
 
-    // Afficher les informations sur le warmup
     if (warmup_iterations > 0) {
         std::cout << "Processing " << all_entries.size() << " files - first " << warmup_iterations
                   << " will be used as warm-up iterations" << std::endl;
@@ -135,7 +130,6 @@ void parsing_benchmark(const std::map<std::string, Config>& config) {
         std::filesystem::path output_img_path_fname = entry.path().filename().replace_extension(".png");
         std::optional<cv::Mat> affine_transform;
 
-        // Déterminer si cette itération est une itération de warmup
         bool is_warmup = current_iteration < warmup_iterations;
 
         if (is_warmup) {

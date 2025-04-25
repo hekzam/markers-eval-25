@@ -12,6 +12,8 @@
 
 #include <filesystem>
 #include <string>
+#include <optional>
+#include <functional>
 #include <common.h>
 #include "../external-tools/create_copy.h"
 #include "../utils/cli_helper.h"
@@ -27,14 +29,6 @@ void save_image(cv::Mat img, const std::filesystem::path& output_dir,
                 const std::filesystem::path& output_img_path_fname, const std::string& prefix = "cal-");
 
 /**
- * @brief Crée un sous-répertoire dans le répertoire de sortie
- * @param base_dir Le répertoire de base
- * @param subdir_name Nom du sous-répertoire à créer
- * @return Chemin du sous-répertoire créé
- */
-std::filesystem::path create_subdir(const std::filesystem::path& base_dir, const std::string& subdir_name);
-
-/**
  * @brief Charge et parse le fichier JSON des AtomicBoxes
  * @param filepath Chemin du fichier JSON
  * @return JSON parsé ou lance une exception
@@ -45,20 +39,11 @@ json parse_json_file(const std::string& filepath);
  * @brief Génère des copies de marqueurs avec une configuration spécifique
  * @param config Configuration des copies à générer
  * @param style_params Paramètres de style pour la génération
- * @param is_benchmark Indique si on exécute un benchmark
- * @param benchmark_csv Fichier CSV pour enregistrer les résultats du benchmark
+ * @param benchmark_csv Optionnel: Fichier CSV pour enregistrer les résultats du benchmark
  * @return true si toutes les copies ont été générées avec succès, false sinon
  */
 bool generate_copies(const std::map<std::string, Config>& config, const CopyStyleParams& style_params,
-                     bool is_benchmark, std::ofstream& benchmark_csv);
-
-/**
- * @brief Génère des copies de marqueurs sans enregistrer de benchmarks
- * @param config Configuration des copies à générer
- * @param style_params Paramètres de style pour la génération
- * @return true si toutes les copies ont été générées avec succès, false sinon
- */
-bool generate_copies(const std::map<std::string, Config>& config, const CopyStyleParams& style_params);
+                     std::optional<std::reference_wrapper<std::ofstream>> benchmark_csv = std::nullopt);
 
 /**
  * @brief Structure contenant les informations sur les répertoires et le fichier CSV de benchmark

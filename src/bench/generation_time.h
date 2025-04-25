@@ -15,17 +15,6 @@
  */
 
 /**
- * @brief Vérifie si la configuration répond aux contraintes pour la génération de copies.
- *
- * Cette fonction valide que la configuration fournie contient des paramètres valides
- * pour la génération des copies.
- *
- * @param config La configuration à vérifier.
- * @return true si la configuration est valide, false sinon.
- */
-bool generation_constraint(const std::map<std::string, Config>& config);
-
-/**
  * @brief Exécute le benchmark de performance sur la génération de copies.
  *
  * Cette fonction génère un ensemble de copies numérisées avec différentes configurations,

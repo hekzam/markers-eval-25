@@ -13,29 +13,25 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <common.h>
 
 /**
- * @brief Vérifie les contraintes pour le benchmark d'estimation d'encre
- * 
- * @param config Map contenant la configuration
- * @return true si les contraintes sont satisfaites
- * @return false sinon
+ * @brief Configuration par défaut pour le benchmark d'estimation d'encre
  */
-bool ink_estimation_constraint(const std::map<std::string, Config>& config);
-
-/**
- * @brief Calcule la consommation d'encre estimée pour une image en niveaux de gris
- * 
- * @param image Image en niveaux de gris à analyser
- * @param dpi Résolution en DPI
- * @param calibration_factor Facteur de calibration (ml/cm² à 100% couverture)
- * @return double Volume d'encre estimé en ml
- */
-double estimate_ink_consumption(const cv::Mat& image, int dpi, double calibration_factor);
+std::vector<std::pair<std::string, Config>> ink_estimation_config = {
+    { "input-dir", { "Input directory", "The directory containing the input image", "./copies" } },
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
+    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
+    { "unencoded-marker_size", { "Fiducial marker size", "The size of the unencoded markers", 10 } },
+    { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
+    { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
+    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } },
+};
 
 /**
  * @brief Exécute le benchmark d'estimation de consommation d'encre
- * 
+ *
  * @param config Map contenant la configuration du benchmark
  */
 void ink_estimation_benchmark(const std::map<std::string, Config>& config);
