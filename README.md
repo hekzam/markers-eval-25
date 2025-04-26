@@ -111,8 +111,9 @@ Ceci génère une copie avec des marqueurs QR code et les paramètres par défau
   Format: type[:encoded][:outlined]
   - type:outlined     : Marqueur non rempli (uniquement pour formes géométriques simples)
   - type:encoded      : Marqueur avec données encodées
-  - type:unencoded    : Marqueur sans données encodées
 ```
+
+> **Note sur l'encodage :** Par défaut, les marqueurs encodables contiennent uniquement l'information de leur position (coin supérieur gauche, supérieur droit, etc.). Avec l'option `:encoded`, le marqueur encodera également le numéro de la page, de la copie ainsi que le nom de l'examen.
 
 ### Exemples
 
