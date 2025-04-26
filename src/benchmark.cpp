@@ -32,9 +32,9 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "marker-config",
       { "Marker configuration", "The configuration of the markers to use",
         "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
-    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 13 } },
-    { "unencoded-marker_size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
-    { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
+    { "encoded-marker-size", { "Encoded marker size", "The size of the encoded markers", 13 } },
+    { "unencoded-marker-size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
+    { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
     { "dpi", { "DPI", "The resolution in dots per inch", 300 } }
 };
