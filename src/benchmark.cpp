@@ -9,7 +9,6 @@
  */
 
 #include <vector>
-#include <map>
 #include <unordered_map>
 #include <string>
 
@@ -25,20 +24,22 @@
  * @brief Configuration par défaut
  *
  * Ce vecteur ordonné associe chaque paramètre du benchmark à sa configuration complète
- * (nom, description, valeur par défaut) tout en préservant l'ordre d'insertion.
+ * (nom, description, valeur par défaut).
  */
 std::vector<std::pair<std::string, Config>> default_config = {
     { "nb-copies", { "Number of copies", "The number of copies to generate", 1 } },
     { "warmup-iterations", { "Warm-up iterations", "Number of warm-up iterations to run before benchmarking", 0 } },
-    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
-    { "unencoded-marker_size", { "Fiducial marker size", "The size of the unencoded markers", 10 } },
+    { "marker-config",
+      { "Marker configuration", "The configuration of the markers to use",
+        "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
+    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 13 } },
+    { "unencoded-marker_size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
     { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
     { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } },
     { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
     { "input-dir", { "Input directory", "The directory containing the input images", "./copies" } },
-        { "atomic-boxes-file",
+    { "atomic-boxes-file",
       { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } }
 };
 
@@ -50,14 +51,14 @@ std::vector<std::pair<std::string, Config>> default_config = {
  */
 struct BenchmarkConfig {
     std::string name;
-    void (*run)(const std::map<std::string, Config>&);
+    void (*run)(const std::unordered_map<std::string, Config>&);
     std::vector<std::pair<std::string, Config>> default_config;
 };
 
 /**
- * @brief Map des benchmarks disponibles dans le système
+ * @brief unordered_map des benchmarks disponibles dans le système
  *
- * Cette map associe chaque nom de benchmark à sa configuration complète
+ * Cette unordered_map associe chaque nom de benchmark à sa configuration complète
  * (nom complet, fonction d'exécution, configuration par défaut).
  */
 std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
@@ -81,19 +82,16 @@ std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
  * @return int Code de retour (0 en cas de succès, 1 en cas d'erreur)
  */
 int main(int argc, char* argv[]) {
-    
-    // Afficher tous les arguments passés en ligne de commande
     std::cout << "\n=== Command Line Arguments ===\n";
     std::cout << "Total arguments: " << argc << std::endl;
     for (int i = 0; i < argc; i++) {
         std::cout << "Argument " << i << ": " << argv[i] << std::endl;
     }
     std::cout << "===========================\n\n";
-    
-    // Déterminer le benchmark à exécuter
-    std::string benchmark_name = "ink-estimation"; // Valeur par défaut
+
+    std::string benchmark_name = "ink-estimation";
     int benchmark_arg_index = -1;
-    
+
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             std::string arg = argv[i];
@@ -105,29 +103,24 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Afficher la bannière de bienvenue avec le nom du benchmark
-    display_banner("BENCHMARK TOOL - MARKERS EVALUATION", benchmark_map.count(benchmark_name) ? benchmark_map[benchmark_name].name : "Unknown benchmark");
-    
-    // Créer un nouveau tableau d'arguments sans --benchmark <NAME>
+    display_banner("BENCHMARK TOOL - MARKERS EVALUATION",
+                   benchmark_map.count(benchmark_name) ? benchmark_map[benchmark_name].name : "Unknown benchmark");
+
     std::vector<char*> filtered_argv;
-    filtered_argv.push_back(argv[0]); // Conserver le nom du programme
-    
+    filtered_argv.push_back(argv[0]);
+
     for (int i = 1; i < argc; i++) {
-        // Ignorer --benchmark et sa valeur
         if (i == benchmark_arg_index || i == benchmark_arg_index + 1) {
             continue;
         }
         filtered_argv.push_back(argv[i]);
     }
-    
-    int filtered_argc = filtered_argv.size();
-    
-    // Sélectionner la configuration appropriée en fonction du benchmark
-    auto& selected_default_config = benchmark_map.count(benchmark_name) ? 
-                                     benchmark_map[benchmark_name].default_config : 
-                                     default_config;
 
-    // Récupérer la configuration avec les arguments filtrés
+    int filtered_argc = filtered_argv.size();
+
+    auto& selected_default_config =
+        benchmark_map.count(benchmark_name) ? benchmark_map[benchmark_name].default_config : default_config;
+
     auto opt_config = get_config(filtered_argc, filtered_argv.data(), selected_default_config);
     if (!opt_config.has_value()) {
         print_help_config(selected_default_config);
@@ -135,7 +128,6 @@ int main(int argc, char* argv[]) {
     }
     auto config = opt_config.value();
 
-    // Compléter la configuration avec les valeurs par défaut
     if (filtered_argc == 1) {
         add_missing_config(config, selected_default_config);
     } else {
@@ -145,7 +137,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    
+
     std::cout << "Running " << benchmark_map[benchmark_name].name << " (" << benchmark_name << ")" << std::endl;
     benchmark_map[benchmark_name].run(config);
     return 0;

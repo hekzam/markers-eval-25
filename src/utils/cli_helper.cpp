@@ -18,9 +18,9 @@ void print_help_config(const std::vector<std::pair<std::string, Config>>& defaul
     }
 }
 
-std::optional<std::map<std::string, Config>>
+std::optional<std::unordered_map<std::string, Config>>
 get_config(int argc, char* argv[], const std::vector<std::pair<std::string, Config>>& default_config) {
-    std::map<std::string, Config> config = {};
+    std::unordered_map<std::string, Config> config = {};
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg.substr(0, 2) != "--") {
@@ -59,7 +59,7 @@ get_config(int argc, char* argv[], const std::vector<std::pair<std::string, Conf
     return config;
 }
 
-void add_missing_config(std::map<std::string, Config>& config,
+void add_missing_config(std::unordered_map<std::string, Config>& config,
                         const std::vector<std::pair<std::string, Config>>& default_config) {
     for (const auto& [key, default_cfg] : default_config) {
         if (config.find(key) != config.end()) {
@@ -102,17 +102,6 @@ void display_banner(const std::string& title, const std::string& subtitle) {
               << to_string(TerminalFormat::RESET) << std::endl;
     std::cout << to_string(TerminalFormat::CYAN) << "  " << subtitle << to_string(TerminalFormat::RESET) << std::endl;
     std::cout << std::string(50, '-') << std::endl << std::endl;
-}
-
-int display_marker_configs(const std::vector<MarkerConfigInfo>& marker_configs, const int default_config,
-                           const std::string& title) {
-    std::cout << std::endl << to_string(TerminalFormat::BOLD) << title << to_string(TerminalFormat::RESET) << std::endl;
-
-    for (const auto& config : marker_configs) {
-        std::cout << std::setw(3) << config.id << ". " << config.description << std::endl;
-    }
-
-    return default_config;
 }
 
 void display_configuration_recap(const std::string& title,

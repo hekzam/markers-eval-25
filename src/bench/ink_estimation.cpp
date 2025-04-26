@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <map>
+#include <unordered_map>
 #include <variant>
 #include <numeric>
 
@@ -11,7 +11,7 @@
 
 #define INCH 2.54
 
-bool ink_estimation_constraint(const std::map<std::string, Config>& config) {
+bool ink_estimation_constraint(const std::unordered_map<std::string, Config>& config) {
     if (config.count("input-dir")) {
         auto input_dir = std::get<std::string>(config.at("input-dir").value);
         if (input_dir.empty()) {
@@ -34,7 +34,7 @@ bool ink_estimation_constraint(const std::map<std::string, Config>& config) {
 /**
  * @brief Benchmark d'estimation de consommation d'encre pour une seule image
  */
-void ink_estimation_benchmark(const std::map<std::string, Config>& config) {
+void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& config) {
     try {
         if (!ink_estimation_constraint(config)) {
             return;
@@ -59,7 +59,13 @@ void ink_estimation_benchmark(const std::map<std::string, Config>& config) {
         auto header_marker_size = std::get<int>(config.at("header-marker_size").value);
         auto grey_level = std::get<int>(config.at("grey-level").value);
         auto dpi = std::get<int>(config.at("dpi").value);
-        auto marker_config = std::get<int>(config.at("marker-config").value);
+        auto marker_config = std::get<std::string>(config.at("marker-config").value);
+
+        CopyMarkerConfig copy_marker_config;
+        if (CopyMarkerConfig::fromString(marker_config, copy_marker_config) != 0) {
+            std::cerr << "Invalid marker configuration: " << marker_config << std::endl;
+            return;
+        }
 
         if (dpi <= 0) {
             throw std::runtime_error("DPI must be positive");
@@ -70,14 +76,19 @@ void ink_estimation_benchmark(const std::map<std::string, Config>& config) {
 
         double calibration_factor = 0.001;
 
-        CopyStyleParams style_params(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi, false);
+        CopyStyleParams style_params;
+        style_params.encoded_marker_size = encoded_marker_size;
+        style_params.unencoded_marker_size = unencoded_marker_size;
+        style_params.grey_level = grey_level;
+        style_params.dpi = dpi;
+        style_params.generating_content = false;
 
         std::filesystem::path dir_path{ input_dir };
         if (!std::filesystem::is_directory(dir_path)) {
             throw std::runtime_error("Could not open directory '" + dir_path.string() + "'");
         }
         std::filesystem::remove_all(dir_path);
-        create_copy(style_params, CopyMarkerConfig::getConfigById(marker_config));
+        create_copy(style_params, copy_marker_config);
 
         std::filesystem::path image_path;
         bool found_image = false;

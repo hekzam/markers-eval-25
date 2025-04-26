@@ -42,7 +42,8 @@ json parse_json_file(const std::string& filepath);
  * @param benchmark_csv Optionnel: Fichier CSV pour enregistrer les résultats du benchmark
  * @return true si toutes les copies ont été générées avec succès, false sinon
  */
-bool generate_copies(const std::map<std::string, Config>& config, const CopyStyleParams& style_params,
+bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
+                     const CopyMarkerConfig& marker_config,
                      std::optional<std::reference_wrapper<std::ofstream>> benchmark_csv = std::nullopt);
 
 /**
@@ -57,12 +58,12 @@ struct BenchmarkSetup {
 
 /**
  * @brief Prépare les répertoires et le fichier CSV pour un benchmark
- * @param config La configuration contenant le chemin du répertoire de sortie
+ * @param output_dir Répertoire de sortie pour les résultats
  * @param include_success_column Indique si la colonne "Success" doit être incluse dans l'en-tête CSV
  * @param create_subimg_dir Indique s'il faut créer un sous-répertoire "subimg"
  * @return Structure BenchmarkSetup contenant les chemins et le flux CSV ouvert
  */
-BenchmarkSetup prepare_benchmark_directories(const std::map<std::string, Config>& config,
+BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir,
                                              bool include_success_column = false, bool create_subimg_dir = false);
 
 #endif

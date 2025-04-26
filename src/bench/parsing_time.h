@@ -1,7 +1,7 @@
 #ifndef PARSING_TIME_H
 #define PARSING_TIME_H
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include <utility>
@@ -24,6 +24,6 @@
  *
  * @param config Un dictionnaire contenant les paramètres de configuration du benchmark.
  */
-void parsing_benchmark(const std::map<std::string, Config>& config);
+void parsing_benchmark(const std::unordered_map<std::string, Config>& config);
 
 #endif // PARSING_TIME_H

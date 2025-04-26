@@ -31,18 +31,15 @@ int main(int argc, char const* argv[]) {
     cv::Mat img = cv::imread(image_path);
     cv::Mat calibrated_img = img.clone();
     
-    // Création et application de la matrice de transformation pour une rotation de 45 degrés
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
     identity *= rotate_center(45, img.cols / 2, img.rows / 2);
     print_mat(identity);
     identity *= translate(0, 0);
     print_mat(identity);
     
-    // Extraction de la sous-matrice 3x2 pour warpAffine
     identity = identity(cv::Rect(0, 0, 3, 2));
     print_mat(identity);
     
-    // Application de la transformation et sauvegarde du résultat
     cv::warpAffine(img, calibrated_img, identity, calibrated_img.size(), cv::INTER_LINEAR);
     cv::imwrite("calibrated_img.png", calibrated_img);
     return 0;

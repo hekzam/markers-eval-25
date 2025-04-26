@@ -12,7 +12,7 @@
 
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <iomanip>
 #include <variant>
@@ -45,9 +45,9 @@ void print_help_config(const std::vector<std::pair<std::string, Config>>& defaul
  * @param argc Nombre d'arguments
  * @param argv Tableau des arguments
  * @param default_config Vecteur des paramètres de configuration par défaut
- * @return std::optional<std::map<std::string, Config>> Configuration extraite ou nullopt en cas d'erreur
+ * @return std::optional<std::unordered_map<std::string, Config>> Configuration extraite ou nullopt en cas d'erreur
  */
-std::optional<std::map<std::string, Config>>
+std::optional<std::unordered_map<std::string, Config>>
 get_config(int argc, char* argv[], const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
@@ -56,7 +56,7 @@ get_config(int argc, char* argv[], const std::vector<std::pair<std::string, Conf
  * @param config Dictionnaire de configuration à compléter
  * @param default_config Vecteur des paramètres de configuration par défaut
  */
-void add_missing_config(std::map<std::string, Config>& config,
+void add_missing_config(std::unordered_map<std::string, Config>& config,
                         const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
@@ -80,17 +80,6 @@ std::string to_string(TerminalFormat format);
  */
 void display_banner(const std::string& title = "BENCHMARK TOOL - MARKERS EVALUATION",
                     const std::string& subtitle = "Document Processing & Analysis");
-
-/**
- * @brief Affiche une liste de configurations disponibles
- *
- * @param marker_configs Liste des configurations à afficher
- * @param default_config La configuration par défaut à utiliser
- * @param title Titre à afficher en gras avant la liste
- * @return int La configuration par défaut à utiliser
- */
-int display_marker_configs(const std::vector<MarkerConfigInfo>& marker_configs, const int default_config,
-                           const std::string& title = "Available configurations:");
 
 /**
  * @brief Affiche une configuration avec formatage coloré

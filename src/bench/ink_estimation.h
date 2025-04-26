@@ -9,7 +9,7 @@
  * d'encre d'images en niveaux de gris en se basant sur la couverture d'encre.
  */
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include <utility>
@@ -20,20 +20,21 @@
  */
 std::vector<std::pair<std::string, Config>> ink_estimation_config = {
     { "input-dir", { "Input directory", "The directory containing the input image", "./copies" } },
-    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 15 } },
-    { "unencoded-marker_size", { "Fiducial marker size", "The size of the unencoded markers", 10 } },
+    { "marker-config",
+      { "Marker configuration", "The configuration of the markers to use",
+        "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
+    { "encoded-marker_size", { "Encoded marker size", "The size of the encoded markers", 13 } },
+    { "unencoded-marker_size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
     { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
     { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "marker-config", { "Marker configuration", "The configuration of the markers", ARUCO_WITH_QR_BR } },
 };
 
 /**
  * @brief Exécute le benchmark d'estimation de consommation d'encre
  *
- * @param config Map contenant la configuration du benchmark
+ * @param config unordered_map contenant la configuration du benchmark
  */
-void ink_estimation_benchmark(const std::map<std::string, Config>& config);
+void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& config);
 
 #endif // INK_ESTIMATION_H

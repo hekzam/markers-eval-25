@@ -61,11 +61,9 @@ bool generate_single_copy(const CopyStyleParams& style_params, const CopyMarkerC
     return success;
 }
 
-bool generate_copies(const std::map<std::string, Config>& config, const CopyStyleParams& style_params,
+bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
+                     const CopyMarkerConfig& marker_config,
                      std::optional<std::reference_wrapper<std::ofstream>> benchmark_csv) {
-    auto marker_config_id = std::get<int>(config.at("marker-config").value);
-    auto nb_copies = std::get<int>(config.at("nb-copies").value);
-    auto warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
 
     std::filesystem::path copies_dir = "copies";
     if (std::filesystem::exists(copies_dir)) {
@@ -73,7 +71,6 @@ bool generate_copies(const std::map<std::string, Config>& config, const CopyStyl
         std::filesystem::remove_all(copies_dir);
     }
     std::filesystem::create_directories(copies_dir);
-    CopyMarkerConfig marker_config = CopyMarkerConfig::getConfigById(marker_config_id);
 
     bool all_success = true;
     int total_iterations = warmup_iterations + nb_copies;
@@ -127,11 +124,11 @@ bool generate_copies(const std::map<std::string, Config>& config, const CopyStyl
     return all_success;
 }
 
-BenchmarkSetup prepare_benchmark_directories(const std::map<std::string, Config>& config, bool include_success_column,
+BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column,
                                              bool create_subimg_dir) {
     BenchmarkSetup setup;
 
-    setup.output_dir = std::filesystem::path{ std::get<std::string>(config.at("output-dir").value) };
+    setup.output_dir = std::filesystem::path{ output_dir };
     if (std::filesystem::exists(setup.output_dir)) {
         std::cout << "Cleaning existing output directory..." << std::endl;
         std::filesystem::remove_all(setup.output_dir);

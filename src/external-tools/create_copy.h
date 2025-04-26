@@ -14,21 +14,6 @@
 #include <string>
 #include <vector>
 
-#define QR_ALL_CORNERS 1       // QR codes avec données encodées dans tous les coins
-#define QR_BOTTOM_RIGHT_ONLY 2 // QR codes avec données encodées uniquement dans le coin bas-droit
-#define CIRCLES_WITH_QR_BR 3   // Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-#define TOP_CIRCLES_QR_BR 4    // Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-#define CUSTOM_WITH_QR_BR 5    // Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-#define ARUCO_WITH_QR_BR 6     // Différents marqueurs ArUco, QR code avec données en bas-droit
-#define TWO_ARUCO_WITH_QR_BR 7 // Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-#define CIRCLE_OUTLINES_WITH_QR_BR \
-    8 // Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-#define SQUARES_WITH_QR_BR \
-    9 // Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-#define SQUARE_OUTLINES_WITH_QR_BR \
-    10 // Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-
-// Remplacer les macros de types de marqueurs par un enum class
 enum class MarkerType {
     QR_CODE,
     MICRO_QR_CODE,
@@ -44,46 +29,21 @@ enum class MarkerType {
     QR_EYE,
     CROSS,
     CUSTOM,
-    NONE // Pour représenter l'absence de marqueur
+    NONE
 };
 
-// Fonction auxiliaire pour convertir les types d'énumération en chaînes
-inline std::string toString(MarkerType type) {
-    switch (type) {
-        case MarkerType::QR_CODE:
-            return "qrcode";
-        case MarkerType::MICRO_QR_CODE:
-            return "micro-qr";
-        case MarkerType::DATAMATRIX:
-            return "datamatrix";
-        case MarkerType::AZTEC:
-            return "aztec";
-        case MarkerType::PDF417:
-            return "pdf417";
-        case MarkerType::RMQR:
-            return "rmqr";
-        case MarkerType::BARCODE:
-            return "code128";
-        case MarkerType::CIRCLE:
-            return "circle";
-        case MarkerType::SQUARE:
-            return "square";
-        case MarkerType::TRIANGLE:
-            return "triangle";
-        case MarkerType::ARUCO:
-            return "aruco";
-        case MarkerType::QR_EYE:
-            return "qr-eye";
-        case MarkerType::CROSS:
-            return "cross";
-        case MarkerType::CUSTOM:
-            return "custom";
-        case MarkerType::NONE:
-            return "";
-        default:
-            return "";
-    }
-}
+std::string toString(MarkerType type);
+
+/**
+ * @brief Convertit une chaîne de caractères en type MarkerType
+ *
+ * Cette fonction prend une représentation textuelle d'un type de marqueur
+ * et la convertit en son équivalent dans l'énumération MarkerType.
+ *
+ * @param typeStr Chaîne représentant le type de marqueur
+ * @return MarkerType Type de marqueur correspondant, ou NONE si non reconnu
+ */
+MarkerType markerTypeFromString(const std::string& typeStr);
 
 /**
  * @brief Structure représentant un marqueur avec son statut d'encodage
@@ -100,182 +60,76 @@ struct Marker {
     // Constructeur avec paramètres
     Marker(MarkerType t, bool enc = false, bool out = false) : type(t), encoded(enc), outlined(out) {
     }
+
+    /**
+     * @brief Convertit le marqueur en chaîne de caractères
+     *
+     * @return std::string La représentation du marqueur sous forme de chaîne
+     */
+    std::string toString() const;
+
+    /**
+     * @brief Analyse une spécification de marqueur et crée l'objet Marker correspondant
+     *
+     * Cette fonction prend une chaîne de caractères qui décrit un marqueur
+     * (par exemple "qrcode:encoded" ou "circle:outlined") et retourne
+     * un objet Marker configuré selon cette spécification.
+     *
+     * @param spec Chaîne de spécification du marqueur au format "type[:encoded][:outlined]"
+     * @return Marker Objet Marker configuré selon la spécification, ou marqueur vide si spec est vide ou "none"
+     */
+    static Marker parseMarker(const std::string& spec);
 };
 
 /**
  * @brief Structure pour configurer précisément les marqueurs sur une copie
  */
 struct CopyMarkerConfig {
-    Marker top_left;     // Marqueur coin supérieur gauche
-    Marker top_right;    // Marqueur coin supérieur droit
-    Marker bottom_left;  // Marqueur coin inférieur gauche
-    Marker bottom_right; // Marqueur coin inférieur droit
-    Marker header;       // Marqueur d'en-tête
+    Marker top_left;
+    Marker top_right;
+    Marker bottom_left;
+    Marker bottom_right;
+    Marker header;
 
-    // Constructeur par défaut: aucun marqueur
     CopyMarkerConfig() {
     }
 
-    // Constructeur avec marqueurs
     CopyMarkerConfig(Marker tl, Marker tr, Marker bl, Marker br, Marker h)
         : top_left(tl), top_right(tr), bottom_left(bl), bottom_right(br), header(h) {
     }
 
-    // Méthode pour convertir la configuration en chaîne de caractères
-    std::string toString() const {
-        auto formatMarker = [](const Marker& m) -> std::string {
-            if (m.type == MarkerType::NONE) {
-                return "none";
-            }
+    /**
+     * @brief Convertit la configuration en chaîne de caractères
+     *
+     * @return std::string La représentation de la configuration au format "(marker1,marker2,marker3,marker4,marker5)"
+     */
+    std::string toString() const;
 
-            std::string result = ::toString(m.type);
-            if (m.outlined) {
-                result += "-outlined";
-            }
-            if (m.encoded) {
-                result += "-encoded";
-            }
-            return result;
-        };
-
-        return "(" + formatMarker(top_left) + "," + formatMarker(top_right) + "," + formatMarker(bottom_left) + "," +
-               formatMarker(bottom_right) + "," + formatMarker(header) + ")";
-    }
-
-    // Configurations prédéfinies selon les valeurs de MarkerConfig
-    static CopyMarkerConfig getConfigById(int configId) {
-        switch (configId) {
-            case QR_ALL_CORNERS:
-                return CopyMarkerConfig(Marker(MarkerType::QR_CODE),   // top_left
-                                        Marker(MarkerType::QR_CODE),   // top_right
-                                        Marker(MarkerType::QR_CODE),   // bottom_left
-                                        Marker(MarkerType::QR_CODE),   // bottom_right
-                                        Marker(MarkerType::RMQR, true) // header
-                );
-
-            case QR_BOTTOM_RIGHT_ONLY:
-                return CopyMarkerConfig(Marker(),                          // top_left
-                                        Marker(),                          // top_right
-                                        Marker(),                          // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-
-            case CIRCLES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::CIRCLE),        // top_left
-                                        Marker(MarkerType::CIRCLE),        // top_right
-                                        Marker(MarkerType::CIRCLE),        // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-
-            case TOP_CIRCLES_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::CIRCLE),        // top_left
-                                        Marker(MarkerType::CIRCLE),        // top_right
-                                        Marker(),                          // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-
-            case CUSTOM_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::CUSTOM),        // top_left
-                                        Marker(MarkerType::CUSTOM),        // top_right
-                                        Marker(MarkerType::CUSTOM),        // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-
-            case ARUCO_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::ARUCO),         // top_left
-                                        Marker(MarkerType::ARUCO),         // top_right
-                                        Marker(MarkerType::ARUCO),         // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-
-            case TWO_ARUCO_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::ARUCO),         // top_left
-                                        Marker(MarkerType::ARUCO),         // top_right
-                                        Marker(),                          // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-
-            case CIRCLE_OUTLINES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::CIRCLE, false, true), // top_left (outlined)
-                                        Marker(MarkerType::CIRCLE, false, true), // top_right (outlined)
-                                        Marker(MarkerType::CIRCLE, false, true), // bottom_left (outlined)
-                                        Marker(MarkerType::QR_CODE, true),       // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)        // header
-                );
-
-            case SQUARES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::SQUARE),        // top_left
-                                        Marker(MarkerType::SQUARE),        // top_right
-                                        Marker(MarkerType::SQUARE),        // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-
-            case SQUARE_OUTLINES_WITH_QR_BR:
-                return CopyMarkerConfig(Marker(MarkerType::SQUARE, false, true), // top_left (outlined)
-                                        Marker(MarkerType::SQUARE, false, true), // top_right (outlined)
-                                        Marker(MarkerType::SQUARE, false, true), // bottom_left (outlined)
-                                        Marker(MarkerType::QR_CODE, true),       // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)        // header
-                );
-
-            default:
-                // Configuration par défaut: QR code encodé dans tous les coins
-                return CopyMarkerConfig(Marker(MarkerType::QR_CODE, true), // top_left
-                                        Marker(MarkerType::QR_CODE, true), // top_right
-                                        Marker(MarkerType::QR_CODE, true), // bottom_left
-                                        Marker(MarkerType::QR_CODE, true), // bottom_right
-                                        Marker(MarkerType::QR_CODE, true)  // header
-                );
-        }
-    }
-};
-
-/**
- * @brief Structure contenant les informations sur les configurations de marqueurs
- */
-struct MarkerConfigInfo {
-    int id;
-    std::string description;
-};
-
-/**
- * @brief Liste des configurations de marqueurs disponibles
- */
-const std::vector<MarkerConfigInfo> marker_configs = {
-    { QR_ALL_CORNERS, "QR codes in all corners" },
-    { QR_BOTTOM_RIGHT_ONLY, "QR code only in bottom-right corner" },
-    { CIRCLES_WITH_QR_BR, "Circles in first three corners, QR code in bottom-right" },
-    { TOP_CIRCLES_QR_BR, "Circles on top, nothing in bottom-left, QR code in bottom-right" },
-    { CUSTOM_WITH_QR_BR, "Custom SVG markers in three corners, QR code in bottom-right" },
-    { ARUCO_WITH_QR_BR, "ArUco markers, QR code in bottom-right" },
-    { TWO_ARUCO_WITH_QR_BR, "Two ArUco markers, nothing in bottom-left, QR code in bottom-right" },
-    { CIRCLE_OUTLINES_WITH_QR_BR, "Circle outlines in first three corners, QR code in bottom-right" },
-    { SQUARES_WITH_QR_BR, "Squares in first three corners, QR code in bottom-right" },
-    { SQUARE_OUTLINES_WITH_QR_BR, "Square outlines in first three corners, QR code in bottom-right" }
+    /**
+     * @brief Analyse une chaîne de caractères et configure l'objet en conséquence
+     *
+     * @param str Chaîne au format "(marker1,marker2,marker3,marker4,marker5)"
+     * @param config Configuration à mettre à jour
+     * @return int 0 en cas de succès, 1 en cas d'erreur
+     */
+    static int fromString(const std::string& str, CopyMarkerConfig& config);
 };
 
 /**
  * @brief Structure contenant les paramètres de style pour la génération de copies
  */
 struct CopyStyleParams {
-    int encoded_marker_size;
-    int unencoded_marker_size;
-    int header_marker_size;
-    int stroke_width;
-    int marker_margin;
-    int grey_level;
-    int dpi;
-    bool generating_content;
+    int encoded_marker_size = 15; // Taille du marqueur encodé
+    int unencoded_marker_size = 3; // Taille du marqueur encodé
+    int header_marker_size = 7; // Taille du marqueur d'en-tête
+    int stroke_width = 1; // Épaisseur du trait des marqueurs
+    int marker_margin = 3; // Marge entre les marqueurs
+    int grey_level = 0; // 0 = noir et blanc, 1 = niveaux de gris, 2 = couleur
+    int dpi = 300; // Résolution de l'image en DPI
+    bool generating_content = true; // true = contenu généré, false = contenu statique
 
-    // Constructeur avec valeurs par défaut
-    CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 2, int mm = 3, int gl = 0, int dpi = 300, bool gc = true)
+    CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 1, int mm = 3, int gl = 0, int dpi = 300,
+                    bool gc = true)
         : encoded_marker_size(ems), unencoded_marker_size(ums), header_marker_size(hms), stroke_width(sw),
           marker_margin(mm), grey_level(gl), dpi(dpi), generating_content(gc) {
     }

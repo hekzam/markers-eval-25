@@ -66,7 +66,6 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
   --dpi N               : Résolution en points par pouce (par défaut: 300)
   --generating-content BOOL : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
-  --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
   --filename NAME       : Nom du fichier de sortie (par défaut: copy)
   
   Options de configuration personnalisée des marqueurs:
@@ -98,22 +97,6 @@ Exemple avec une configuration complète personnalisée:
 | pdf417          | aruco             |                  |
 | rmqr            | qr-eye            |                  |
 | code128         | custom            |                  |
-
-
-### Configurations de marqueurs disponibles
-
-Le paramètre `--config` permet de sélectionner parmi les configurations suivantes :
-
-1.  : QR codes avec données encodées dans tous les coins
-2.  : QR codes avec données encodées uniquement dans le coin bas-droit
-3.  : Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-4.  : Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-5.  : Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-6.  : Différents marqueurs ArUco, QR code avec données en bas-droit
-7.  : Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-8.  : Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 
 ## 📊 Exécution du benchmark
 
@@ -148,7 +131,6 @@ Options communes :
 - `--header-marker_size=<N>` : Taille du marqueur d'en-tête en mm
 - `--grey-level=<0-255>` : Niveau de gris pour les marqueurs
 - `--dpi=<N>` : Résolution en points par pouce
-- `--marker-config=<1-10>` : Configuration des marqueurs à utiliser
 
 Options spécifiques pour les benchmarks de performance :
 - `--nb-copies=<N>` : Nombre de copies à générer pour le test

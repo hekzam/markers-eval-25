@@ -1,7 +1,7 @@
 #ifndef TIME_GENERATION_H
 #define TIME_GENERATION_H
 
-#include <map>
+#include <unordered_map>
 #include <string>
 
 /**
@@ -22,6 +22,6 @@
  *
  * @param config La configuration du benchmark, incluant les paramètres de génération de copies.
  */
-void generation_benchmark(const std::map<std::string, Config>& config);
+void generation_benchmark(const std::unordered_map<std::string, Config>& config);
 
 #endif // TIME_GENERATION_H

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <map>
+#include <unordered_map>
 #include <variant>
 
 #include <common.h>
@@ -14,7 +14,7 @@
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
 
-bool parsing_constraint(const std::map<std::string, Config>& config) {
+bool parsing_constraint(const std::unordered_map<std::string, Config>& config) {
     if (std::get<std::string>(config.at("output-dir").value).empty() ||
         std::get<std::string>(config.at("atomic-boxes-file").value).empty() ||
         std::get<std::string>(config.at("input-dir").value).empty()) {
@@ -71,27 +71,39 @@ void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, cons
     cv::circle(image, center, radius, color, thickness);
 }
 
-void parsing_benchmark(const std::map<std::string, Config>& config) {
+void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
     if (!parsing_constraint(config)) {
         return;
     }
 
-    int warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
+    auto warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
+    auto nb_copies = std::get<int>(config.at("nb-copies").value);
     auto atomic_boxes_file = std::get<std::string>(config.at("atomic-boxes-file").value);
     auto input_dir = std::get<std::string>(config.at("input-dir").value);
+    auto output_dir = std::get<std::string>(config.at("output-dir").value);
     auto encoded_marker_size = std::get<int>(config.at("encoded-marker_size").value);
     auto unencoded_marker_size = std::get<int>(config.at("unencoded-marker_size").value);
     auto grey_level = std::get<int>(config.at("grey-level").value);
     auto dpi = std::get<int>(config.at("dpi").value);
-    auto marker_config = std::get<int>(config.at("marker-config").value);
-    ParserType selected_parser = select_parser_for_marker_config(marker_config);
+    auto marker_config = std::get<std::string>(config.at("marker-config").value);
 
-    CopyStyleParams style_params(encoded_marker_size, unencoded_marker_size, 7, 2, 5, grey_level, dpi, true);
+    CopyMarkerConfig copy_marker_config;
+    if (CopyMarkerConfig::fromString(marker_config, copy_marker_config) != 0) {
+        std::cerr << "Invalid marker configuration: " << marker_config << std::endl;
+        return;
+    }
+    ParserType selected_parser = select_parser_for_marker_config(copy_marker_config);
 
-    BenchmarkSetup benchmark_setup = prepare_benchmark_directories(config, true, true);
+    CopyStyleParams style_params;
+    style_params.encoded_marker_size = encoded_marker_size;
+    style_params.unencoded_marker_size = unencoded_marker_size;
+    style_params.grey_level = grey_level;
+    style_params.dpi = dpi;
+
+    BenchmarkSetup benchmark_setup = prepare_benchmark_directories(output_dir, true, true);
     std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
 
-    generate_copies(config, style_params);
+    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config);
 
     json atomic_boxes_json = parse_json_file(atomic_boxes_file);
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
