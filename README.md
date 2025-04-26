@@ -61,16 +61,6 @@ Utilisez la commande suivante pour générer des copies avec des options personn
 
 Les copies générées sont sauvegardées dans le dossier **copies/**.
 
-#### 2. Configuration rapide
-
-Si vous ne spécifiez pas d'options, les valeurs par défaut seront utilisées :
-
-```sh
-./create-copie.sh
-```
-
-Ceci génère une copie avec des marqueurs QR code et les paramètres par défaut.
-
 ### Types de marqueurs disponibles
 
 | Encodable       | Non encodable     | Rectangulaire    |
