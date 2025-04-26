@@ -14,7 +14,6 @@
   
   // Initialisation des états
   copy-counter.update(0)
-  generating-content.update(true)
   
   // Affichage de la première copie
   content-wrapper(content)
@@ -30,7 +29,6 @@
     content-wrapper(content)
   }
 
-  generating-content.update(false)
   finalize-states()
 }
 
@@ -40,23 +38,27 @@
  * @param nb-copies Nombre de copies à générer
  * @param duplex-printing Impression recto verso
  * @param marker-config Configuration des marqueurs pour chaque coin et en-tête
+ * @param style-params Paramètres de style pour les marqueurs
+ * @param should-generate-content Indique si le contenu et le repère de pagination doivent être générés
  */
 #let gen-copies(
   exam-id,
   nb-copies,
   duplex-printing,
   marker-config,
-  style-params
+  style-params,
+  should-generate-content
 ) = {
   check-type(exam-id, str, "exam-id must be a string")
   assert(not exam-id.contains(","), message: "exam-id cannot contain comma ','")
   check-type(nb-copies, int, "nb-copies must be an integer")
   check-type(duplex-printing, bool, "duplex-printing must be a boolean")
-  
+  check-type(should-generate-content, bool, "should-generate-content must be a boolean")
+
   update-page-state(PAGE_WIDTH, PAGE_HEIGHT, exam-id)
 
   let page-fn = () => {
-    context if generating-content.get() {
+    context {
       let positions = (
         top-left:    (x: 0pt,         y: 0pt),
         top-right:   (x: PAGE_WIDTH,  y: 0pt),
@@ -90,16 +92,18 @@
         place-header-marker(marker-config.at("header"), style-params)
       }
       
-      // Place un marqueur de pagination en bas au centre de la page
-      place(
-        center,
-        dy: PAGE_HEIGHT - 15mm,
-        block(width: 100%, {
-          [Page #counter(page).display() / #context counter(page).final().at(0)]
-          linebreak()
-          [#exam-id]
-        })
-      )
+      // Place un repère de pagination en bas au centre de la page
+      if should-generate-content {
+        place(
+          center,
+          dy: PAGE_HEIGHT - 15mm,
+          block(width: 100%, {
+            [Page #counter(page).display() / #context counter(page).final().at(0)]
+            linebreak()
+            [#exam-id]
+          })
+        )
+      }
     }
   }
   // Configuration de la page - sans marges pour les marqueurs
@@ -112,7 +116,13 @@
 
   // Applique les marges uniquement au contenu
   let content-with-margins(content) = {
-    pad(x: MARGIN_X, y: MARGIN_Y, content)
+    context {
+      if should-generate-content {
+        pad(x: MARGIN_X, y: MARGIN_Y, content)
+      } else {
+        none
+      }
+    }
   }
 
   // Traitement des copies avec le contenu dans les marges

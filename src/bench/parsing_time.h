@@ -1,8 +1,13 @@
-#ifndef TIME_COPY_H
-#define TIME_COPY_H
+#ifndef PARSING_TIME_H
+#define PARSING_TIME_H
+
+#include <unordered_map>
+#include <string>
+#include <vector>
+#include <utility>
 
 /**
- * @file time_copy.h
+ * @file parsing_time.h
  * @brief Module pour l'évaluation des performances de la détection et du traitement des copies.
  *
  * Ce fichier contient les déclarations des fonctions utilisées pour évaluer les performances
@@ -19,17 +24,6 @@
  *
  * @param config Un dictionnaire contenant les paramètres de configuration du benchmark.
  */
-void run_benchmark(std::unordered_map<std::string, Config> config);
+void parsing_benchmark(const std::unordered_map<std::string, Config>& config);
 
-/**
- * @brief Vérifie que les paramètres de configuration respectent les contraintes nécessaires.
- *
- * Cette fonction s'assure que les chemins de fichiers et répertoires existent et que les paramètres
- * numériques sont dans les plages acceptables.
- *
- * @param config Un dictionnaire contenant les paramètres de configuration à vérifier.
- * @return true si la configuration est valide, false sinon.
- */
-bool constraint(std::unordered_map<std::string, Config> config);
-
-#endif // TIME_COPY_H
+#endif // PARSING_TIME_H

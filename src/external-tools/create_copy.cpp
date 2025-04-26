@@ -1,11 +1,163 @@
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <filesystem>
 #include <cstdlib>
 
 #include <create_copy.h>
 
 namespace fs = std::filesystem;
+
+namespace {
+const std::unordered_map<MarkerType, std::string> markerTypeToString = { { MarkerType::QR_CODE, "qrcode" },
+                                                                         { MarkerType::MICRO_QR_CODE, "micro-qr" },
+                                                                         { MarkerType::DATAMATRIX, "datamatrix" },
+                                                                         { MarkerType::AZTEC, "aztec" },
+                                                                         { MarkerType::PDF417, "pdf417" },
+                                                                         { MarkerType::RMQR, "rmqr" },
+                                                                         { MarkerType::BARCODE, "code128" },
+                                                                         { MarkerType::CIRCLE, "circle" },
+                                                                         { MarkerType::SQUARE, "square" },
+                                                                         { MarkerType::TRIANGLE, "triangle" },
+                                                                         { MarkerType::ARUCO, "aruco" },
+                                                                         { MarkerType::QR_EYE, "qr-eye" },
+                                                                         { MarkerType::CROSS, "cross" },
+                                                                         { MarkerType::CUSTOM, "custom" },
+                                                                         { MarkerType::NONE, "" } };
+
+const std::unordered_map<std::string, MarkerType> stringToMarkerType = { { "qrcode", MarkerType::QR_CODE },
+                                                                         { "micro-qr", MarkerType::MICRO_QR_CODE },
+                                                                         { "datamatrix", MarkerType::DATAMATRIX },
+                                                                         { "aztec", MarkerType::AZTEC },
+                                                                         { "pdf417", MarkerType::PDF417 },
+                                                                         { "rmqr", MarkerType::RMQR },
+                                                                         { "code128", MarkerType::BARCODE },
+                                                                         { "circle", MarkerType::CIRCLE },
+                                                                         { "square", MarkerType::SQUARE },
+                                                                         { "triangle", MarkerType::TRIANGLE },
+                                                                         { "aruco", MarkerType::ARUCO },
+                                                                         { "qr-eye", MarkerType::QR_EYE },
+                                                                         { "cross", MarkerType::CROSS },
+                                                                         { "custom", MarkerType::CUSTOM },
+                                                                         { "none", MarkerType::NONE },
+                                                                         { "", MarkerType::NONE } };
+} // namespace
+
+std::string toString(MarkerType type) {
+    auto it = markerTypeToString.find(type);
+    if (it != markerTypeToString.end()) {
+        return it->second;
+    }
+    return "";
+}
+
+std::string Marker::toString() const {
+    if (type == MarkerType::NONE) {
+        return "";
+    }
+
+    std::string result = ::toString(type);
+
+    if (outlined) {
+        result += "-outlined";
+    }
+    if (encoded) {
+        result += "-encoded";
+    }
+    return result;
+}
+
+MarkerType markerTypeFromString(const std::string& typeStr) {
+    auto it = stringToMarkerType.find(typeStr);
+    if (it != stringToMarkerType.end()) {
+        return it->second;
+    }
+    return MarkerType::NONE;
+}
+
+Marker Marker::parseMarker(const std::string& spec) {
+    if (spec.empty() || spec == "none") {
+        return Marker();
+    }
+
+    std::string type = spec;
+    bool encoded = false;
+    bool outlined = false;
+
+    size_t encodedPos = spec.find("-encoded");
+    if (encodedPos != std::string::npos) {
+        encoded = true;
+        type = spec.substr(0, encodedPos);
+    } else {
+        encodedPos = spec.find(":encoded");
+        if (encodedPos != std::string::npos) {
+            encoded = true;
+            type = spec.substr(0, encodedPos);
+        }
+    }
+
+    size_t outlinedPos = spec.find("-outlined");
+    if (outlinedPos != std::string::npos) {
+        outlined = true;
+        if (encodedPos != std::string::npos && outlinedPos < encodedPos) {
+            type = spec.substr(0, outlinedPos);
+        } else if (encodedPos == std::string::npos) {
+            type = spec.substr(0, outlinedPos);
+        }
+    } else {
+        outlinedPos = spec.find(":outlined");
+        if (outlinedPos != std::string::npos) {
+            outlined = true;
+            if (encodedPos != std::string::npos && outlinedPos < encodedPos) {
+                type = spec.substr(0, outlinedPos);
+            } else if (encodedPos == std::string::npos) {
+                type = spec.substr(0, outlinedPos);
+            }
+        }
+    }
+
+    return Marker(markerTypeFromString(type), encoded, outlined);
+}
+
+std::string CopyMarkerConfig::toString() const {
+    auto formatMarker = [](const Marker& m) -> std::string {
+        if (m.type == MarkerType::NONE) {
+            return "none";
+        }
+
+        return m.toString();
+    };
+
+    return "(" + formatMarker(top_left) + "," + formatMarker(top_right) + "," + formatMarker(bottom_left) + "," +
+           formatMarker(bottom_right) + "," + formatMarker(header) + ")";
+}
+
+int CopyMarkerConfig::fromString(const std::string& str, CopyMarkerConfig& config) {
+    if (str.size() < 2 || str[0] != '(' || str[str.size() - 1] != ')') {
+        return 1;
+    }
+
+    std::string content = str.substr(1, str.size() - 2);
+
+    std::vector<std::string> markerStrs;
+    size_t pos = 0, found;
+    while ((found = content.find(',', pos)) != std::string::npos) {
+        markerStrs.push_back(content.substr(pos, found - pos));
+        pos = found + 1;
+    }
+    markerStrs.push_back(content.substr(pos));
+
+    if (markerStrs.size() != 5) {
+        return 1;
+    }
+
+    config.top_left = Marker::parseMarker(markerStrs[0]);
+    config.top_right = Marker::parseMarker(markerStrs[1]);
+    config.bottom_left = Marker::parseMarker(markerStrs[2]);
+    config.bottom_right = Marker::parseMarker(markerStrs[3]);
+    config.header = Marker::parseMarker(markerStrs[4]);
+
+    return 0;
+}
 
 std::string getOutputRedirection() {
 #ifdef _WIN32
@@ -30,6 +182,7 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
                          "--input stroke-width=" + std::to_string(style_params.stroke_width) + " " +
                          "--input marker-margin=" + std::to_string(style_params.marker_margin) + " " +
                          "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
+                         "--input generating-content=" + (style_params.generating_content ? "1" : "0") + " " +
                          "--input marker-types=" + "\"" + marker_config.toString() + "\"";
 
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"typst/" + doc + "\" \"./copies/" +

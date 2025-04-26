@@ -19,29 +19,68 @@
 /**
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
  *
- * @param marker_config Le numéro de configuration de marqueur (1-10)
+ * @param marker_config Configuration des marqueurs utilisés
  * @return ParserType Le type de parseur à utiliser
  */
-ParserType select_parser_for_marker_config(int marker_config) {
-    switch (marker_config) {
-        case QR_ALL_CORNERS:
-        case QR_BOTTOM_RIGHT_ONLY:
-            return ParserType::QRCODE;
-        case CIRCLES_WITH_QR_BR:
-        case TOP_CIRCLES_QR_BR:
-        case CIRCLE_OUTLINES_WITH_QR_BR:
-            return ParserType::CIRCLE;
-        case CUSTOM_WITH_QR_BR:
-            return ParserType::CUSTOM_MARKER;
-        case ARUCO_WITH_QR_BR:
-        case TWO_ARUCO_WITH_QR_BR:
-            return ParserType::ARUCO;
-        case SQUARES_WITH_QR_BR:
-        case SQUARE_OUTLINES_WITH_QR_BR:
-            return ParserType::SHAPE;
-        default:
-            return ParserType::DEFAULT_PARSER;
+ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config) {
+    int qrcode_count = 0;
+    int circle_count = 0;
+    int aruco_count = 0;
+    int shape_count = 0;
+    int empty_count = 0;
+
+    const Marker* corners[] = {&marker_config.top_left, &marker_config.top_right, 
+                              &marker_config.bottom_left, &marker_config.bottom_right};
+    
+    for (const Marker* marker : corners) {
+        switch (marker->type) {
+            case MarkerType::QR_CODE:
+            case MarkerType::MICRO_QR_CODE:
+            case MarkerType::DATAMATRIX:
+            case MarkerType::AZTEC:
+            case MarkerType::PDF417:
+            case MarkerType::RMQR:
+            case MarkerType::BARCODE:
+                qrcode_count++;
+                break;
+                
+            case MarkerType::CIRCLE:
+                circle_count++;
+                break;
+                
+            case MarkerType::ARUCO:
+                aruco_count++;
+                break;
+                
+            case MarkerType::SQUARE:
+            case MarkerType::TRIANGLE:
+            case MarkerType::QR_EYE:
+            case MarkerType::CROSS:
+                shape_count++;
+                break;
+                
+            case MarkerType::NONE:
+                empty_count++;
+                break;
+                
+            default:
+                break;
+        }
     }
+    
+    if (qrcode_count > 0) {
+        return ParserType::QRCODE;
+    } else if (circle_count > 0) {
+        return ParserType::CIRCLE;
+    } else if (aruco_count > 0) {
+        return ParserType::ARUCO;
+    } else if (shape_count > 0) {
+        return ParserType::SHAPE;
+    } else if (empty_count == 4) {
+        return ParserType::EMPTY;
+    }
+    
+    return ParserType::DEFAULT_PARSER;
 }
 
 /// TODO: Corentin je te laisse le soin de t'en occuper stp

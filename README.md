@@ -47,47 +47,31 @@ cmake --build build-cmake -j
 
 ## 📄 Génération de copie
 
-Une fois la compilation terminée, utilisez la commande suivante pour générer les copies :
+Une fois la compilation terminée, vous pouvez générer des copies d'examen avec différents types de marqueurs.
+
+### Méthodes de génération
+
+#### 1. Mode ligne de commande
+
+Utilisez la commande suivante pour générer des copies avec des options personnalisées :
 
 ```sh
 ./create-copie.sh [options]
 ```
 
-Ce script permet de produire une copie vers le dossier de sortie **copies/**.
+Les copies générées sont sauvegardées dans le dossier **copies/**.
 
-### Options disponibles
+#### 2. Configuration rapide
 
-```
-  --encoded-size N      : Taille des marqueurs encodés (par défaut: 15)
-  --unencoded-size N     : Taille des marqueurs non encodés (par défaut: 3)
-  --header-size N       : Taille du marqueur d'entête (par défaut: 7)
-  --stroke-width N      : Largeur du trait des marqueurs (par défaut: 2)
-  --margin N            : Marge autour des marqueurs (par défaut: 3)
-  --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
-  --dpi N               : Résolution en points par pouce (par défaut: 300)
-  --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
-  --filename NAME       : Nom du fichier de sortie (par défaut: copy)
-  
-  Options de configuration personnalisée des marqueurs:
-  --tl TYPE             : Type de marqueur pour le coin supérieur gauche
-  --tr TYPE             : Type de marqueur pour le coin supérieur droit
-  --bl TYPE             : Type de marqueur pour le coin inférieur gauche
-  --br TYPE             : Type de marqueur pour le coin inférieur droit
-  --header TYPE         : Type de marqueur pour l'en-tête
+Si vous ne spécifiez pas d'options, les valeurs par défaut seront utilisées :
 
-  Format des types de marqueurs: type[:encoded][:outlined]
-  - type:outlined     : Marqueur non rempli (Ne fonctionne que pour les formes géométriques simples)
-  - type:encoded      : Marqueur avec données encodées
-  - type:unencoded    : Marqueur sans données encodées
-```
-```
-
-Exemple avec une configuration complète personnalisée:
 ```sh
-./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
+./create-copie.sh
 ```
 
-### Marqueurs disponibles
+Ceci génère une copie avec des marqueurs QR code et les paramètres par défaut.
+
+### Types de marqueurs disponibles
 
 | Encodable       | Non encodable     | Rectangulaire    |
 |-----------------|-------------------|------------------|
@@ -99,75 +83,110 @@ Exemple avec une configuration complète personnalisée:
 | rmqr            | qr-eye            |                  |
 | code128         | custom            |                  |
 
+### Options de configuration
 
-### Configurations de marqueurs disponibles
+- `--encoded-size <N>`          : Taille des marqueurs encodés (par défaut: 15)
+- `--unencoded-size <N>`        : Taille des marqueurs non encodés (par défaut: 3)
+- `--header-size <N>`           : Taille du marqueur d'entête (par défaut: 7)
+- `--stroke-width <N>`          : Largeur du trait des marqueurs (par défaut: 2)
+- `--margin <N>`                : Marge autour des marqueurs (par défaut: 3)
+- `--grey-level <N>`            : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
+- `--dpi <N>`                   : Résolution en points par pouce (par défaut: 300)
+- `--generating-content <BOOL>` : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
+- `--filename <name>`           : Nom du fichier de sortie (par défaut: copy)
+- `--tl <type>`                 : Type de marqueur pour le coin supérieur gauche
+- `--tr <type>`                 : Type de marqueur pour le coin supérieur droit
+- `--bl <type>`                 : Type de marqueur pour le coin inférieur gauche
+- `--br <type>`                 : Type de marqueur pour le coin inférieur droit
+- `--header <type>`             : Type de marqueur pour l'en-tête
 
-Le paramètre `--config` permet de sélectionner parmi les configurations suivantes :
+#### Format des types de marqueurs
 
-1.  : QR codes avec données encodées dans tous les coins
-2.  : QR codes avec données encodées uniquement dans le coin bas-droit
-3.  : Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-4.  : Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-5.  : Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-6.  : Différents marqueurs ArUco, QR code avec données en bas-droit
-7.  : Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-8.  : Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+```
+  Format: type[:encoded][:outlined]
+  - type:outlined     : Marqueur non rempli (uniquement pour formes géométriques simples)
+  - type:encoded      : Marqueur avec données encodées
+  - type:unencoded    : Marqueur sans données encodées
+```
+
+### Exemples
+
+#### Exemple simple avec des QR codes
+```sh
+./create-copie.sh --tl qrcode --tr qrcode --bl qrcode --br qrcode --header qrcode
+```
+
+#### Configuration avancée avec différents marqueurs
+```sh
+./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
+```
 
 ## 📊 Exécution du benchmark
 
-Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
+### Exécution des benchmarks
+
+Vous disposez de deux méthodes pour exécuter les benchmarks :
+
+#### 1. Mode ligne de commande (recommandé)
+
+Spécifiez directement tous les paramètres dans votre commande :
 
 ```sh
-./run_benchmark.sh
+./run_benchmark.sh --benchmark [nom-du-benchmark] [autres-options]
 ```
 
-L'outil vous demandera plusieurs informations interactivement :
+Exemple :
+```sh
+./run_benchmark.sh --benchmark parsing-time --input-dir ./copies --dpi 600
+```
 
-1. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
-2. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
-3. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
-4. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
-5. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
-6. **Warmup iterations** : Nombre d'itérations d'échauffement (par défaut: `0`)
-7. **Encoded marker size** : Taille des marqueurs encodés en mm (par défaut: `15`)
-8. **Fiducial marker size** : Taille des marqueurs fiduciaires en mm (par défaut: `10`)
-9. **Header marker size** : Taille du marqueur d'en-tête en mm (par défaut: `7`)
-10. **Grey level** : Niveau de gris pour les marqueurs (0: noir, 255: blanc) (par défaut: `0`)
-11. **DPI** : Résolution en points par pouce (par défaut: `300`)
+#### 2. Mode interactif
 
-Vous pouvez également passer ces paramètres directement en ligne de commande:
-`--output-dir`, `--atomic-boxes-file`, `--input-dir`, `--nb-copies`, `--marker-config`, `--warmup-iterations`, `--encoded-size`, `--unencoded-size`, `--header-size`, `--grey-level`, `--dpi`.
+Exécutez simplement la commande en spécifiant au minimum le type de benchmark :
 
 ```sh
-./build-cmake/benchmark --output-dir=./mon_output --atomic-boxes-file=./boxes.json --input-dir=./mes_copies --nb-copies=5 --marker-config=3
+./run_benchmark.sh --benchmark [nom-du-benchmark]
 ```
 
-L'option `--warmup-iterations` est particulièrement utile pour obtenir des mesures plus précises. Les itérations d'échauffement exécutent le même code que les itérations de mesure, mais leurs résultats ne sont pas comptabilisés dans les statistiques finales. Cela permet d'éviter que les coûts de démarrage (chargement initial des bibliothèques, initialisation des caches, etc.) n'affectent les mesures de performance.
+Le script vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
 
-### Résultats du benchmark
+> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `parsing-time`.
 
-Après l'exécution, le benchmark produit plusieurs types de sorties :
+#### Types de benchmark disponibles
 
-- **Images calibrées** : Versions redressées des copies scannées avec les zones détectées surlignées
-- **CSV de résultats** : Fichier `benchmark_results.csv` contenant les temps d'exécution et taux de succès pour chaque image
-- **Images de débogage** (si compilé en mode DEBUG) : Visualisation du processus de détection des marqueurs
+Voici les différents types de benchmarks que vous pouvez exécuter :
 
-Le fichier CSV contient trois colonnes:
-- **File**: Nom du fichier traité
-- **Time(ms)**: Temps d'exécution en millisecondes
-- **Success**: Indique si la détection des marqueurs a réussi (1) ou échoué (0)
+1. **parsing-time** : Évalue le temps de traitement et le taux de succès de la détection des marqueurs.
+   ```sh
+   ./run_benchmark.sh --benchmark parsing-time
+   ```
 
-Ces données vous permettent d'analyser:
-- Le taux de succès global de la détection pour chaque configuration de marqueurs
-- Le temps moyen de traitement
-- L'impact des différents paramètres (taille, niveau de gris, etc.) sur les performances
+2. **generation-time** : Mesure le temps nécessaire pour générer des copies avec différents types de marqueurs.
+   ```sh
+   ./run_benchmark.sh --benchmark generation-time
+   ```
 
-Les images calibrées montrent les zones détectées avec les codes couleur suivants:
-- **Rose**: Zones utilisateur (zones de réponse)
-- **Bleu**: Marqueurs de coin
-- **Vert**: Centre des marqueurs de coin
+3. **ink-estimation** : Analyse la consommation d'encre pour chaque type de marqueur et fournit :
+   - La surface totale couverte en cm²
+   - Le pourcentage de couverture d'encre
+   - Le volume d'encre estimé en millilitres
+   ```sh
+   ./run_benchmark.sh --benchmark ink-estimation
+   ```
+
+### Options communes
+
+- `--benchmark <type>`          : Type de benchmark à exécuter (par défaut: `parsing-time`)
+- `--marker-config <config>`    : Fichier de configuration des marqueurs (par défaut: `(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)`)
+- `--encoded-marker_size <N>`   : Taille des marqueurs encodés en mm (par défaut: 13)
+- `--unencoded-marker_size <N>` : Taille des marqueurs non encodés en mm (par défaut: 10)
+- `--header-marker_size <N>`    : Taille du marqueur d'en-tête en mm (par défaut: 7)
+- `--grey-level <0-255>`        : Niveau de gris pour les marqueurs (par défaut: 0)
+- `--dpi <N>`                   : Résolution en points par pouce (par défaut: 300)
+
+Options spécifiques pour les benchmarks `parsing-time` et `generation-time` :
+- `--nb-copies <N>`             : Nombre de copies à générer pour le test (par défaut: 1)
+- `--warmup-iterations <N>`     : Nombre d'itérations d'échauffement avant la mesure. Cela permet d'obtenir des mesures plus précises en évitant les coûts de démarrage (par défaut: 0)
 
 ## 📂 Structure du projet
 

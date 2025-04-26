@@ -1,6 +1,8 @@
 #ifndef PARSE_HELPER_H
 #define PARSE_HELPER_H
 
+#include "external-tools/create_copy.h"
+
 /**
  * @file parse_helper.h
  * @brief Module d'analyse des images pour la détection de marqueurs et de codes-barres.
@@ -24,10 +26,10 @@ enum class ParserType { ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, DEFAULT_PAR
 /**
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
  *
- * @param marker_config Le numéro de configuration de marqueur (1-10)
+ * @param marker_config Configuration des marqueurs utilisés
  * @return ParserType Le type de parseur à utiliser
  */
-ParserType select_parser_for_marker_config(int marker_config);
+ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config);
 
 /**
  * @brief Structure représentant un code-barres détecté dans l'image

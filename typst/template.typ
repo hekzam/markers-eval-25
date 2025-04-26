@@ -29,6 +29,7 @@
 #let nb-copies = int(sys.inputs.at("nb-copies", default: "1")) // Ne fonctionne pas a plus de 1 copie
 #let duplex-printing = int(sys.inputs.at("duplex-printing", default: "0")) == 1
 #let marker-types = sys.inputs.at("marker-types", default: "(qrcode,qrcode,qrcode,qrcode,rmqr)")
+#let should-generate-content = int(sys.inputs.at("generating-content", default: "1")) == 1
 
 #let marker-config = parse-marker-types(marker-types)
 
@@ -37,5 +38,6 @@
   nb-copies, 
   duplex-printing,
   marker-config,
-  style-params
+  style-params,
+  should-generate-content
 )

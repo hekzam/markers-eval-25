@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <iostream>
 #include <iomanip>
 #include <variant>
@@ -34,29 +35,29 @@ struct Config {
 /**
  * @brief Affiche l'aide pour les paramètres de configuration disponibles
  *
- * @param default_config Dictionnaire des paramètres de configuration par défaut
+ * @param default_config Vecteur des paramètres de configuration par défaut
  */
-void print_help_config(std::unordered_map<std::string, Config> default_config);
+void print_help_config(const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
  * @brief Extrait les paramètres de configuration depuis les arguments de la ligne de commande
  *
  * @param argc Nombre d'arguments
  * @param argv Tableau des arguments
- * @param default_config Dictionnaire des paramètres de configuration par défaut
+ * @param default_config Vecteur des paramètres de configuration par défaut
  * @return std::optional<std::unordered_map<std::string, Config>> Configuration extraite ou nullopt en cas d'erreur
  */
 std::optional<std::unordered_map<std::string, Config>>
-get_config(int argc, char* argv[], std::unordered_map<std::string, Config> default_config);
+get_config(int argc, char* argv[], const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
  * @brief Ajoute les paramètres de configuration manquants en demandant à l'utilisateur
  *
  * @param config Dictionnaire de configuration à compléter
- * @param default_config Dictionnaire des paramètres de configuration par défaut
+ * @param default_config Vecteur des paramètres de configuration par défaut
  */
 void add_missing_config(std::unordered_map<std::string, Config>& config,
-                        const std::unordered_map<std::string, Config>& default_config);
+                        const std::vector<std::pair<std::string, Config>>& default_config);
 
 /**
  * @brief Formats de texte disponibles pour l'affichage dans le terminal
@@ -79,17 +80,6 @@ std::string to_string(TerminalFormat format);
  */
 void display_banner(const std::string& title = "BENCHMARK TOOL - MARKERS EVALUATION",
                     const std::string& subtitle = "Document Processing & Analysis");
-
-/**
- * @brief Affiche une liste de configurations disponibles
- *
- * @param marker_configs Liste des configurations à afficher
- * @param default_config La configuration par défaut à utiliser
- * @param title Titre à afficher en gras avant la liste
- * @return int La configuration par défaut à utiliser
- */
-int display_marker_configs(const std::vector<MarkerConfigInfo>& marker_configs, const int default_config,
-                           const std::string& title = "Available configurations:");
 
 /**
  * @brief Affiche une configuration avec formatage coloré
