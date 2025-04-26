@@ -67,8 +67,6 @@ Ce script permet de produire une copie vers le dossier de sortie **copies/**.
   --dpi N               : Résolution en points par pouce (par défaut: 300)
   --generating-content BOOL : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
   --filename NAME       : Nom du fichier de sortie (par défaut: copy)
-  
-  Options de configuration personnalisée des marqueurs:
   --tl TYPE             : Type de marqueur pour le coin supérieur gauche
   --tr TYPE             : Type de marqueur pour le coin supérieur droit
   --bl TYPE             : Type de marqueur pour le coin inférieur gauche
@@ -86,7 +84,7 @@ Exemple avec une configuration complète personnalisée:
 ./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
 ```
 
-### Marqueurs disponibles
+### Types de marqueur disponibles
 
 | Encodable       | Non encodable     | Rectangulaire    |
 |-----------------|-------------------|------------------|
