@@ -119,13 +119,13 @@ struct CopyMarkerConfig {
  * @brief Structure contenant les paramètres de style pour la génération de copies
  */
 struct CopyStyleParams {
-    int encoded_marker_size = 15; // Taille du marqueur encodé
-    int unencoded_marker_size = 3; // Taille du marqueur encodé
-    int header_marker_size = 7; // Taille du marqueur d'en-tête
-    int stroke_width = 1; // Épaisseur du trait des marqueurs
-    int marker_margin = 3; // Marge entre les marqueurs
-    int grey_level = 0; // 0 = noir et blanc, 1 = niveaux de gris, 2 = couleur
-    int dpi = 300; // Résolution de l'image en DPI
+    int encoded_marker_size = 15;   // Taille du marqueur encodé
+    int unencoded_marker_size = 3;  // Taille du marqueur encodé
+    int header_marker_size = 7;     // Taille du marqueur d'en-tête
+    int stroke_width = 1;           // Épaisseur du trait des marqueurs
+    int marker_margin = 3;          // Marge entre les marqueurs
+    int grey_level = 0;             // 0 = noir et blanc, 1 = niveaux de gris, 2 = couleur
+    int dpi = 300;                  // Résolution de l'image en DPI
     bool generating_content = true; // true = contenu généré, false = contenu statique
 
     CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 1, int mm = 3, int gl = 0, int dpi = 300,

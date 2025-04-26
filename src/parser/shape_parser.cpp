@@ -16,18 +16,18 @@
 
 #include "shape_parser.h"
 
-cv::Point2f center_of_rec(cv::Rect rect) {
+static cv::Point2f center_of_rec(cv::Rect rect) {
     return cv::Point2f(rect.x + rect.width / 2, rect.y + rect.height / 2);
 }
 
 #define MIN_SIZE 25
 #define MAX_SIZE 100
 
-bool discriminate(cv::Rect rect) {
+static bool discriminate(cv::Rect rect) {
     return rect.width > MIN_SIZE && rect.height > MIN_SIZE && rect.width < MAX_SIZE && rect.height < MAX_SIZE;
 }
 
-std::vector<cv::Point2f> detect_shape(cv::Mat img) {
+static std::vector<cv::Point2f> detect_shape(cv::Mat img) {
     std::vector<cv::Point2f> detected_shapes;
 
     std::vector<std::vector<cv::Point>> contours;

@@ -12,6 +12,7 @@
 #include "circle_parser.h"
 #include "custom_marker_parser.h"
 #include "qrcode_empty_parser.h"
+#include "center_marker_parser.h"
 #include "aruco_parser.h"
 #include "shape_parser.h"
 #include "cli_helper.h"
@@ -29,9 +30,9 @@ ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config
     int shape_count = 0;
     int empty_count = 0;
 
-    const Marker* corners[] = {&marker_config.top_left, &marker_config.top_right, 
-                              &marker_config.bottom_left, &marker_config.bottom_right};
-    
+    const Marker* corners[] = { &marker_config.top_left, &marker_config.top_right, &marker_config.bottom_left,
+                                &marker_config.bottom_right };
+
     for (const Marker* marker : corners) {
         switch (marker->type) {
             case MarkerType::QR_CODE:
@@ -43,31 +44,31 @@ ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config
             case MarkerType::BARCODE:
                 qrcode_count++;
                 break;
-                
+
             case MarkerType::CIRCLE:
                 circle_count++;
                 break;
-                
+
             case MarkerType::ARUCO:
                 aruco_count++;
                 break;
-                
+
             case MarkerType::SQUARE:
             case MarkerType::TRIANGLE:
             case MarkerType::QR_EYE:
             case MarkerType::CROSS:
                 shape_count++;
                 break;
-                
+
             case MarkerType::NONE:
                 empty_count++;
                 break;
-                
+
             default:
                 break;
         }
     }
-    
+
     if (qrcode_count > 0) {
         return ParserType::QRCODE;
     } else if (circle_count > 0) {
@@ -79,7 +80,7 @@ ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config
     } else if (empty_count == 4) {
         return ParserType::EMPTY;
     }
-    
+
     return ParserType::DEFAULT_PARSER;
 }
 
