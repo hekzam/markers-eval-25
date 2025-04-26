@@ -183,6 +183,8 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 
 - `--benchmark <type>`          : Type de benchmark à exécuter (par défaut: `parsing-time`)
 - `--marker-config <config>`    : Fichier de configuration des marqueurs (par défaut: `(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)`)
+  > Format: (tl,tr,bl,br,header) où tl=top-left, tr=top-right, bl=bottom-left, br=bottom-right.
+  > Utilisez "none" pour les positions qui ne sont pas occupées par des marqueurs.
 - `--encoded-marker-size <N>`   : Taille des marqueurs encodés en mm (par défaut: 13)
 - `--unencoded-marker-size <N>` : Taille des marqueurs non encodés en mm (par défaut: 10)
 - `--header-marker-size <N>`    : Taille du marqueur d'en-tête en mm (par défaut: 7)
