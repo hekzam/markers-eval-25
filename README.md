@@ -83,11 +83,6 @@ Ceci génère une copie avec des marqueurs QR code et les paramètres par défau
 | rmqr            | qreye             |                  |
 | code128         | custom            |                  |
 
-> **Important :** Le parseur actuel présente des limitations : 
-> - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
-> - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
-> - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
-
 ### Options de configuration
 
 - `--encoded-size <N>`          : Taille des marqueurs encodés (par défaut: 15)
@@ -166,6 +161,10 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
    ```sh
    ./run_benchmark.sh --benchmark parsing-time
    ```
+   > **Important :** Le parseur actuel présente des limitations : 
+   > - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
+   > - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
+   > - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
 
 2. **generation-time** : Mesure le temps nécessaire pour générer des copies avec différents types de marqueurs.
    ```sh
@@ -183,7 +182,7 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 ### Options communes
 
 - `--benchmark <type>`          : Type de benchmark à exécuter (par défaut: `parsing-time`)
-- `--marker-config <config>`    : Fichier de configuration des marqueurs (par défaut: `(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)`)
+- `--marker-config <config>`    : Configuration des marqueurs (par défaut: `(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)`)
   > Format: (tl,tr,bl,br,header) où tl=top-left, tr=top-right, bl=bottom-left, br=bottom-right.
   > Utilisez "none" pour les positions qui ne sont pas occupées par des marqueurs.
 - `--encoded-marker-size <N>`   : Taille des marqueurs encodés en mm (par défaut: 13)
