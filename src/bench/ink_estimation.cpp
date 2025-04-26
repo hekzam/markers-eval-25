@@ -62,7 +62,7 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
         }
 
         if (!found_image) {
-            throw std::runtime_error("No image file found in directory: " + "./copies");
+            throw std::runtime_error("No image file found in directory: ./copies");
         }
 
         cv::Mat img;
