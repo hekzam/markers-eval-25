@@ -22,7 +22,7 @@
 
   let barcode_fns = (
     "qrcode": tiaoma.qrcode,
-    "microqr": tiaoma.microqr,
+    "microqr": tiaoma.micro-qr,
     "aztec": tiaoma.aztec,
     "datamatrix": tiaoma.data-matrix,
     "pdf417": tiaoma.pdf417,
