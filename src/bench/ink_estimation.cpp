@@ -11,49 +11,11 @@
 
 #define INCH 2.54
 
-bool ink_estimation_constraint(const std::unordered_map<std::string, Config>& config) {
-    if (config.count("input-dir")) {
-        auto input_dir = std::get<std::string>(config.at("input-dir").value);
-        if (input_dir.empty()) {
-            std::cerr << "Input directory must not be empty" << std::endl;
-            return false;
-        }
-
-        if (!std::filesystem::exists(input_dir)) {
-            std::cerr << "Input directory '" << input_dir << "' does not exist" << std::endl;
-            return false;
-        }
-    } else {
-        std::cerr << "Input directory must be specified" << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
 /**
  * @brief Benchmark d'estimation de consommation d'encre pour une seule image
  */
 void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& config) {
     try {
-        if (!ink_estimation_constraint(config)) {
-            return;
-        }
-
-        std::vector<std::string> required_keys = { "input-dir",          "encoded-marker_size", "unencoded-marker_size",
-                                                   "header-marker_size", "grey-level",          "dpi",
-                                                   "marker-config" };
-        for (const auto& key : required_keys) {
-            if (config.find(key) == config.end()) {
-                throw std::runtime_error("Missing required configuration key: " + key);
-            }
-        }
-
-        auto input_dir = std::get<std::string>(config.at("input-dir").value);
-        if (input_dir.empty()) {
-            throw std::runtime_error("Input directory cannot be empty");
-        }
-
         auto encoded_marker_size = std::get<int>(config.at("encoded-marker_size").value);
         auto unencoded_marker_size = std::get<int>(config.at("unencoded-marker_size").value);
         auto header_marker_size = std::get<int>(config.at("header-marker_size").value);
@@ -67,13 +29,6 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
             return;
         }
 
-        if (dpi <= 0) {
-            throw std::runtime_error("DPI must be positive");
-        }
-        if (grey_level < 0 || grey_level > 255) {
-            throw std::runtime_error("Grey level must be between 0 and 255");
-        }
-
         double calibration_factor = 0.001;
 
         CopyStyleParams style_params;
@@ -83,10 +38,7 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
         style_params.dpi = dpi;
         style_params.generating_content = false;
 
-        std::filesystem::path dir_path{ input_dir };
-        if (!std::filesystem::is_directory(dir_path)) {
-            throw std::runtime_error("Could not open directory '" + dir_path.string() + "'");
-        }
+        std::filesystem::path dir_path{ "./copies" };
         std::filesystem::remove_all(dir_path);
         create_copy(style_params, copy_marker_config);
 
@@ -110,7 +62,7 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
         }
 
         if (!found_image) {
-            throw std::runtime_error("No image file found in directory: " + input_dir);
+            throw std::runtime_error("No image file found in directory: " + "./copies");
         }
 
         cv::Mat img;

@@ -36,11 +36,7 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "unencoded-marker_size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
     { "header-marker_size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
-    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "output-dir", { "Output directory", "The directory where the output images will be saved", "./output" } },
-    { "input-dir", { "Input directory", "The directory containing the input images", "./copies" } },
-    { "atomic-boxes-file",
-      { "Atomic boxes file", "The path to the JSON file containing the atomic boxes", "./original_boxes.json" } }
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } }
 };
 
 /**

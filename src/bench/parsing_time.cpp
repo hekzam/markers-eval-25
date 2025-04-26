@@ -14,26 +14,6 @@
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
 
-bool parsing_constraint(const std::unordered_map<std::string, Config>& config) {
-    if (std::get<std::string>(config.at("output-dir").value).empty() ||
-        std::get<std::string>(config.at("atomic-boxes-file").value).empty() ||
-        std::get<std::string>(config.at("input-dir").value).empty()) {
-        std::cerr << "Output directory, atomic boxes file and input directory must not be empty" << std::endl;
-        return false;
-    }
-
-    if (!std::filesystem::exists(std::get<std::string>(config.at("atomic-boxes-file").value))) {
-        std::cerr << "Atomic boxes file '" << std::get<std::string>(config.at("atomic-boxes-file").value)
-                  << "' does not exist" << std::endl;
-        return false;
-    }
-    if (std::get<int>(config.at("nb-copies").value) <= 0 || std::get<int>(config.at("nb-copies").value) > 50) {
-        std::cerr << "Number of copies must be between 1 and 50" << std::endl;
-        return false;
-    }
-    return true;
-}
-
 /**
  * @brief Dessine un contour autour d'une boîte
  *
@@ -72,15 +52,9 @@ void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, cons
 }
 
 void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
-    if (!parsing_constraint(config)) {
-        return;
-    }
 
     auto warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
     auto nb_copies = std::get<int>(config.at("nb-copies").value);
-    auto atomic_boxes_file = std::get<std::string>(config.at("atomic-boxes-file").value);
-    auto input_dir = std::get<std::string>(config.at("input-dir").value);
-    auto output_dir = std::get<std::string>(config.at("output-dir").value);
     auto encoded_marker_size = std::get<int>(config.at("encoded-marker_size").value);
     auto unencoded_marker_size = std::get<int>(config.at("unencoded-marker_size").value);
     auto grey_level = std::get<int>(config.at("grey-level").value);
@@ -100,18 +74,18 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
     style_params.grey_level = grey_level;
     style_params.dpi = dpi;
 
-    BenchmarkSetup benchmark_setup = prepare_benchmark_directories(output_dir, true, true);
+    BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true);
     std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
 
     generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config);
 
-    json atomic_boxes_json = parse_json_file(atomic_boxes_file);
+    json atomic_boxes_json = parse_json_file("./original_boxes.json");
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
     std::vector<std::shared_ptr<AtomicBox>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
-    std::filesystem::path dir_path{ input_dir };
+    std::filesystem::path dir_path{ "./copies" };
     if (!std::filesystem::is_directory(dir_path)) {
         throw std::runtime_error("could not open directory '" + dir_path.string() + "'");
     }

@@ -187,7 +187,6 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 Options spécifiques pour les benchmarks `parsing-time` et `generation-time` :
 - `--nb-copies <N>`             : Nombre de copies à générer pour le test (par défaut: 1)
 - `--warmup-iterations <N>`     : Nombre d'itérations d'échauffement avant la mesure. Cela permet d'obtenir des mesures plus précises en évitant les coûts de démarrage (par défaut: 0)
-- `--atomic-boxes-file <path>`  : Fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
 
 ## 📂 Structure du projet
 
