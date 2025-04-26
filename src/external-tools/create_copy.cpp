@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 
 namespace {
 const std::unordered_map<MarkerType, std::string> markerTypeToString = { { MarkerType::QR_CODE, "qrcode" },
-                                                                         { MarkerType::MICRO_QR_CODE, "micro-qr" },
+                                                                         { MarkerType::MICRO_QR_CODE, "microqr" },
                                                                          { MarkerType::DATAMATRIX, "datamatrix" },
                                                                          { MarkerType::AZTEC, "aztec" },
                                                                          { MarkerType::PDF417, "pdf417" },
@@ -19,13 +19,13 @@ const std::unordered_map<MarkerType, std::string> markerTypeToString = { { Marke
                                                                          { MarkerType::SQUARE, "square" },
                                                                          { MarkerType::TRIANGLE, "triangle" },
                                                                          { MarkerType::ARUCO, "aruco" },
-                                                                         { MarkerType::QR_EYE, "qr-eye" },
+                                                                         { MarkerType::QR_EYE, "qreye" },
                                                                          { MarkerType::CROSS, "cross" },
                                                                          { MarkerType::CUSTOM, "custom" },
                                                                          { MarkerType::NONE, "" } };
 
 const std::unordered_map<std::string, MarkerType> stringToMarkerType = { { "qrcode", MarkerType::QR_CODE },
-                                                                         { "micro-qr", MarkerType::MICRO_QR_CODE },
+                                                                         { "microqr", MarkerType::MICRO_QR_CODE },
                                                                          { "datamatrix", MarkerType::DATAMATRIX },
                                                                          { "aztec", MarkerType::AZTEC },
                                                                          { "pdf417", MarkerType::PDF417 },
@@ -35,7 +35,7 @@ const std::unordered_map<std::string, MarkerType> stringToMarkerType = { { "qrco
                                                                          { "square", MarkerType::SQUARE },
                                                                          { "triangle", MarkerType::TRIANGLE },
                                                                          { "aruco", MarkerType::ARUCO },
-                                                                         { "qr-eye", MarkerType::QR_EYE },
+                                                                         { "qreye", MarkerType::QR_EYE },
                                                                          { "cross", MarkerType::CROSS },
                                                                          { "custom", MarkerType::CUSTOM },
                                                                          { "none", MarkerType::NONE },

@@ -21,7 +21,7 @@
 #let PREFIX_TOP_CENTER = "hztc"
 
 #let ARUCO = "aruco"
-#let QR_EYE_TYPE = "qr-eye"
+#let QR_EYE_TYPE = "qreye"
 #let CROSS_TYPE = "cross"
 #let CUSTOM_TYPE = "custom"
 

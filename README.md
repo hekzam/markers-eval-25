@@ -76,11 +76,11 @@ Ceci génère une copie avec des marqueurs QR code et les paramètres par défau
 | Encodable       | Non encodable     | Rectangulaire    |
 |-----------------|-------------------|------------------|
 | qrcode          | circle            | pdf417           |
-| micro-qr        | square            | rmqr             |
+| microqr        | square            | rmqr             |
 | datamatrix      | triangle          | code128          |
 | aztec           | cross             |                  |
 | pdf417          | aruco             |                  |
-| rmqr            | qr-eye            |                  |
+| rmqr            | qreye            |                  |
 | code128         | custom            |                  |
 
 ### Options de configuration
