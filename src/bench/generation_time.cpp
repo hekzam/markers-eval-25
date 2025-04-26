@@ -46,26 +46,22 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
 }
 
 void generation_benchmark(const std::unordered_map<std::string, Config>& config) {
-    try {
-        auto [encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi, copy_marker_config, nb_copies,
-              warmup_iterations] = validate_parameters(config);
+    auto [encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi, copy_marker_config,
+          nb_copies, warmup_iterations] = validate_parameters(config);
 
-        CopyStyleParams style_params;
-        style_params.encoded_marker_size = encoded_marker_size;
-        style_params.unencoded_marker_size = unencoded_marker_size;
-        style_params.header_marker_size = header_marker_size;
-        style_params.grey_level = grey_level;
-        style_params.dpi = dpi;
+    CopyStyleParams style_params;
+    style_params.encoded_marker_size = encoded_marker_size;
+    style_params.unencoded_marker_size = unencoded_marker_size;
+    style_params.header_marker_size = header_marker_size;
+    style_params.grey_level = grey_level;
+    style_params.dpi = dpi;
 
-        BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", false);
-        std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
+    BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", false);
+    std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
 
-        generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, benchmark_csv);
+    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, benchmark_csv);
 
-        if (benchmark_csv.is_open()) {
-            benchmark_csv.close();
-        }
-    } catch (const std::invalid_argument& e) {
-        std::cerr << "Parameter validation error: " << e.what() << std::endl;
-    } catch (const std::exception& e) { std::cerr << "Error in generation_benchmark: " << e.what() << std::endl; }
+    if (benchmark_csv.is_open()) {
+        benchmark_csv.close();
+    }
 }
