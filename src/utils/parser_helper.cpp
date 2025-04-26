@@ -71,6 +71,8 @@ ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config
 
     if (qrcode_count > 0) {
         return ParserType::QRCODE;
+    } else if (circle_count > 0 && marker_config.header.type == MarkerType::QR_CODE) {
+        return ParserType::CENTER_MARKER_PARSER;
     } else if (circle_count > 0) {
         return ParserType::CIRCLE;
     } else if (aruco_count > 0) {
@@ -91,7 +93,9 @@ std::unordered_map<ParserType, Parser> parsers = {
     { ParserType::CIRCLE, { circle_parser } },
     { ParserType::ARUCO, { aruco_parser } },
     { ParserType::SHAPE, { shape_parser } },
-    // { ParserType::CUSTOM_MARKER, { custom_marker_parser, draw_custom_marker } }, // drop custom parser because of his complexity
+    { ParserType::CENTER_MARKER_PARSER, { center_marker_parser } },
+    // { ParserType::CUSTOM_MARKER, { custom_marker_parser, draw_custom_marker } }, // drop custom parser because of his
+    // complexity
     { ParserType::EMPTY, { qrcode_empty_parser } },
 };
 
