@@ -109,7 +109,7 @@ Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des di
 Le système propose plusieurs types de benchmarks, sélectionnables avec l'option `--benchmark` :
 
 - `parsing-time` : Évalue les performances d'analyse et de détection des marqueurs
-- `generation-time` : Évalue les performances de génération des copies (par défaut)
+- `generation-time` : Évalue les performances de génération des copies
 - `ink-estimation` : Estime la consommation d'encre pour différentes configurations de marqueurs
 
 ### Options en ligne de commande
@@ -117,23 +117,21 @@ Le système propose plusieurs types de benchmarks, sélectionnables avec l'optio
 Vous pouvez passer les paramètres directement en ligne de commande :
 
 ```sh
-./run_benchmark.sh --benchmark ink-estimation --input-dir=./copies --dpi=600
+./run_benchmark.sh --benchmark ink-estimation --input-dir ./copies --dpi 600
 ```
 
 Options communes :
-- `--benchmark=<type>` : Type de benchmark à exécuter (parsing-time, generation-time, ink-estimation)
-- `--output-dir=<path>` : Répertoire de sortie pour les résultats
-- `--input-dir=<path>` : Répertoire contenant les images d'entrée
-- `--encoded-marker_size=<N>` : Taille des marqueurs encodés en mm
-- `--unencoded-marker_size=<N>` : Taille des marqueurs non encodés en mm
-- `--header-marker_size=<N>` : Taille du marqueur d'en-tête en mm
-- `--grey-level=<0-255>` : Niveau de gris pour les marqueurs
-- `--dpi=<N>` : Résolution en points par pouce
+- `--benchmark <type>` : Type de benchmark à exécuter (par défaut: `parsing-time`)
+- `--encoded-marker_size <N>` : Taille des marqueurs encodés en mm (par défaut: 13)
+- `--unencoded-marker_size <N>` : Taille des marqueurs non encodés en mm (par défaut: 10)
+- `--header-marker_size <N>` : Taille du marqueur d'en-tête en mm (par défaut: 7)
+- `--grey-level <0-255>` : Niveau de gris pour les marqueurs (par défaut: 0)
+- `--dpi <N>` : Résolution en points par pouce (par défaut: 300)
 
-Options spécifiques pour les benchmarks de performance :
-- `--nb-copies=<N>` : Nombre de copies à générer pour le test
-- `--warmup-iterations=<N>` : Nombre d'itérations d'échauffement avant la mesure
-- `--atomic-boxes-file=<path>` : Fichier JSON contenant les définitions des zones
+Options spécifiques pour les benchmarks `parsing-time` et `generation-time` :
+- `--nb-copies <N>` : Nombre de copies à générer pour le test (par défaut: 1)
+- `--warmup-iterations <N>` : Nombre d'itérations d'échauffement avant la mesure (par défaut: 0)
+- `--atomic-boxes-file <path>` : Fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
 
 ### Résultats des benchmarks
 
