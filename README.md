@@ -76,12 +76,17 @@ Ceci génère une copie avec des marqueurs QR code et les paramètres par défau
 | Encodable       | Non encodable     | Rectangulaire    |
 |-----------------|-------------------|------------------|
 | qrcode          | circle            | pdf417           |
-| microqr        | square            | rmqr             |
+| microqr         | square            | rmqr             |
 | datamatrix      | triangle          | code128          |
 | aztec           | cross             |                  |
 | pdf417          | aruco             |                  |
-| rmqr            | qreye            |                  |
+| rmqr            | qreye             |                  |
 | code128         | custom            |                  |
+
+> **Important :** Le parseur actuel présente des limitations : 
+> - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
+> - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
+> - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
 
 ### Options de configuration
 
