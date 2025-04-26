@@ -49,10 +49,6 @@ cmake --build build-cmake -j
 
 Une fois la compilation terminée, vous pouvez générer des copies d'examen avec différents types de marqueurs.
 
-### Méthodes de génération
-
-#### 1. Mode ligne de commande
-
 Utilisez la commande suivante pour générer des copies avec des options personnalisées :
 
 ```sh
@@ -142,7 +138,7 @@ Exécutez simplement la commande en spécifiant au minimum le type de benchmark 
 
 Le script vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
 
-> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `parsing-time`.
+> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `ink-estimation`.
 
 #### Types de benchmark disponibles
 
@@ -234,33 +230,37 @@ python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brigh
 
 ```
 .
-├── include/            # Fichiers d'en-tête (*.h, *.hpp)
-│   ├── benchmark.hpp   # En-têtes pour le benchmarking
-│   └── common.h        # Définitions de structures communes
-├── src/                # Code source C++ principal
-│   ├── bench/          # Code source des benchmarks
-│   ├── benchmark.cpp   # Outil de benchmarking
-│   ├── expl_pars.cpp   # Parseur principal
-│   ├── typst_interface.cpp # Interface avec Typst
-│   ├── utils/          # Utilitaires partagés
-│   ├── parser/         # Implémentation des parseurs de marqueurs
-│   └── external-tools/ # Outils externes (création de copies)
-├── typst/              # Sources de templates Typst
-│   ├── components/     # Composants réutilisables (marqueurs, conteneurs)
-│   ├── common/         # Variables et utilitaires communs
-│   ├── content/        # Contenu des formulaires
-│   ├── src/            # Scripts de génération
-│   ├── style/          # Configuration de style
-│   └── template.typ    # Template principal
-├── stats-analysis/     # Scripts et outils d'analyse statistique
-├── copies/             # Dossier de sortie pour les copies générées
-├── output/             # Dossier de sortie pour les résultats d'analyse
-├── build-cmake/        # Répertoire de build (généré)
-├── CMakeLists.txt      # Configuration du projet CMake
-├── create-copie.sh     # Script de génération de copies
-├── run_benchmark.sh    # Script d'exécution du benchmark
-├── README.md           # Ce fichier
-└── LICENSE             # Fichier de licence
+├── include/                   # Fichiers d'en-tête (*.h, *.hpp)
+│   ├── benchmark.hpp          # En-têtes pour le benchmarking
+│   └── common.h               # Définitions de structures communes
+├── src/                       # Code source C++ principal
+│   ├── bench/                 # Code source des benchmarks
+│   ├── benchmark.cpp          # Outil de benchmarking
+│   ├── expl_pars.cpp          # Parseur principal
+│   ├── typst_interface.cpp    # Interface avec Typst
+│   ├── utils/                 # Utilitaires partagés
+│   ├── parser/                # Implémentation des parseurs de marqueurs
+│   └── external-tools/        # Outils externes (création de copies)
+├── tools/                     # Scripts et utilitaires
+│   ├── format.py              # Formatter de code (clang-format)
+│   └── pdf_noiser/            # Outils de simulation de défauts
+│       └── printer_emulator.py # Simulateur de défauts d'impression/scan
+├── typst/                     # Sources de templates Typst
+│   ├── components/            # Composants réutilisables (marqueurs, conteneurs)
+│   ├── common/                # Variables et utilitaires communs
+│   ├── content/               # Contenu des formulaires
+│   ├── src/                   # Scripts de génération
+│   ├── style/                 # Configuration de style
+│   └── template.typ           # Template principal
+├── stats-analysis/            # Scripts et outils d'analyse statistique
+├── copies/                    # Dossier de sortie pour les copies générées
+├── output/                    # Dossier de sortie pour les résultats d'analyse
+├── build-cmake/               # Répertoire de build (généré)
+├── CMakeLists.txt             # Configuration du projet CMake
+├── create-copie.sh            # Script de génération de copies
+├── run_benchmark.sh           # Script d'exécution du benchmark
+├── README.md                  # Ce fichier
+└── LICENSE                    # Fichier de licence
 ```
 
 ## 📖 Références techniques
