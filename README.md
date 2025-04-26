@@ -94,11 +94,11 @@ Ceci génère une copie avec des marqueurs QR code et les paramètres par défau
 - `--dpi <N>`                   : Résolution en points par pouce (par défaut: 300)
 - `--generating-content <BOOL>` : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
 - `--filename <name>`           : Nom du fichier de sortie (par défaut: copy)
-- `--tl <type>`                 : Type de marqueur pour le coin supérieur gauche
-- `--tr <type>`                 : Type de marqueur pour le coin supérieur droit
-- `--bl <type>`                 : Type de marqueur pour le coin inférieur gauche
-- `--br <type>`                 : Type de marqueur pour le coin inférieur droit
-- `--header <type>`             : Type de marqueur pour l'en-tête
+- `--tl <type>`                 : Type de marqueur pour le coin supérieur gauche (par défaut: qrcode:encoded)
+- `--tr <type>`                 : Type de marqueur pour le coin supérieur droit (par défaut: qrcode:encoded)
+- `--bl <type>`                 : Type de marqueur pour le coin inférieur gauche (par défaut: qrcode:encoded)
+- `--br <type>`                 : Type de marqueur pour le coin inférieur droit (par défaut: qrcode:encoded)
+- `--header <type>`             : Type de marqueur pour l'en-tête (par défaut: none)
 
 #### Format des types de marqueurs
 
@@ -106,6 +106,7 @@ Ceci génère une copie avec des marqueurs QR code et les paramètres par défau
   Format: type[:encoded][:outlined]
   - type:outlined     : Marqueur non rempli (uniquement pour formes géométriques simples)
   - type:encoded      : Marqueur avec données encodées
+  - none              : Aucun marqueur à cette position
 ```
 
 > **Note sur l'encodage :** Par défaut, les marqueurs encodables contiennent uniquement l'information de leur position (coin supérieur gauche, supérieur droit, etc.). Avec l'option `:encoded`, le marqueur encodera également le numéro de la page, de la copie ainsi que le nom de l'examen.
