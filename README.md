@@ -161,10 +161,10 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
    ```sh
    ./run_benchmark.sh --benchmark parsing-time
    ```
-   > **Important :** Le parseur actuel présente des limitations : 
-   > - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
-   > - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
-   > - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
+   **Important :** Le parseur actuel présente des limitations : 
+   - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
+   - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
+   - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
 
 2. **generation-time** : Mesure le temps nécessaire pour générer des copies avec différents types de marqueurs.
    ```sh
