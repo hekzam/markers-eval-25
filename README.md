@@ -76,12 +76,17 @@ Ceci génère une copie avec des marqueurs QR code et les paramètres par défau
 | Encodable       | Non encodable     | Rectangulaire    |
 |-----------------|-------------------|------------------|
 | qrcode          | circle            | pdf417           |
-| microqr        | square            | rmqr             |
+| microqr         | square            | rmqr             |
 | datamatrix      | triangle          | code128          |
 | aztec           | cross             |                  |
 | pdf417          | aruco             |                  |
-| rmqr            | qreye            |                  |
+| rmqr            | qreye             |                  |
 | code128         | custom            |                  |
+
+> **Important :** Le parseur actuel présente des limitations : 
+> - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
+> - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
+> - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
 
 ### Options de configuration
 
@@ -187,6 +192,50 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 Options spécifiques pour les benchmarks `parsing-time` et `generation-time` :
 - `--nb-copies <N>`             : Nombre de copies à générer pour le test (par défaut: 1)
 - `--warmup-iterations <N>`     : Nombre d'itérations d'échauffement avant la mesure. Cela permet d'obtenir des mesures plus précises en évitant les coûts de démarrage (par défaut: 0)
+
+## 🖨️ Simulateur de scan et d'impression
+
+Le projet inclut un simulateur Python qui permet d'appliquer diverses transformations aux documents générés, simulant ainsi des défauts d'impression et de numérisation pour des tests de robustesse.
+
+### Exécution du simulateur
+
+Pour exécuter le simulateur sur une image originale, utilisez la commande suivante :
+
+```sh
+python tools/pdf_noiser/printer_emulator.py [options]
+```
+
+Par défaut, le script appliquera des transformations aléatoires à l'image originale située dans `copies/original.png` et générera 10 copies avec des défauts différents dans le dossier `tools/pdf_noiser/noisy_copies/`.
+
+### Transformations disponibles
+
+Le simulateur peut appliquer les transformations suivantes pour imiter les défauts d'impression et de numérisation :
+
+- **Rotation** (`-r`, `--rotation`) : Applique une rotation à l'image (en degrés, ±3° max par défaut)
+- **Translation** (`-t`, `--translation`) : Déplace l'image (déplacement X,Y, ±25px max par défaut)
+- **Contraste** (`-c`, `--contrast`) : Modifie le contraste (0-100%, plage effective 0.8-1.2)
+- **Luminosité** (`-b`, `--brightness`) : Ajuste la luminosité (0-100%, plage effective 0.8-1.2)
+- **Bruit gaussien** (`-g`, `--gaussian`) : Ajoute du bruit gaussien (0-100%, intensité 4-6 max)
+- **Bruit sel et poivre** (`-s`, `--salt_pepper`) : Ajoute des pixels noirs et blancs aléatoires (0-100%, 6% max)
+- **Taches aléatoires** (`-p`, `--spot`) : Ajoute des taches noires (0-100%, 2-5 taches par défaut)
+- **Nombre de copies** (`-n`, `--nb_copy`) : Nombre de copies à générer (10 par défaut)
+
+### Exemples d'utilisation
+
+#### Générer 5 copies avec des défauts aléatoires
+```sh
+python tools/pdf_noiser/printer_emulator.py --nb_copy 5
+```
+
+#### Générer une copie avec une rotation spécifique
+```sh
+python tools/pdf_noiser/printer_emulator.py --rotation 2 --nb_copy 1
+```
+
+#### Combiner plusieurs transformations
+```sh
+python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brightness 60 --gaussian 30 --nb_copy 3
+```
 
 ## 📂 Structure du projet
 
