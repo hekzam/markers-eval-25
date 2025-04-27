@@ -2,15 +2,13 @@
 #include <common.h>
 #include <cstdlib>
 #include <string.h>
+#include <random>
 #include "utils/math_utils.h"
 
 int img_depth;
 int seed=0;
 
 
-struct PERSON {   // Declare PERSON struct type
-    
-} family_member;
 
 /**
  * @brief Ajout de bruit poivre et sel
@@ -24,7 +22,13 @@ struct PERSON {   // Declare PERSON struct type
 
 void add_salt_pepper_noise(cv::Mat &img, int max_pepper, int max_salt)      //chevauchements
 {   
-    cv::RNG rng; 
+    cv::RNG rng;
+    if (seed)
+        rng = cv::RNG();  
+    else
+        rng = cv::RNG(time(0));
+
+    
     int amount1=img.rows*img.cols*max_pepper/100;   // /100 pour passer un pourcentage entier en paramètre
     int amount2=img.rows*img.cols*max_salt/100;
     for(int counter=0; counter<amount1; ++counter)
@@ -106,7 +110,7 @@ void gestion_arg(int argc, char const* argv[])
     for(int i=2; i<argc; i++)
     {
         std::string arg(argv[i]);  
-        size_t pos = arg.find('-seed=');
+        size_t pos = arg.find("-seed=");
         if (pos != std::string::npos)
         {
             seed_found=true;
@@ -129,7 +133,7 @@ void gestion_arg(int argc, char const* argv[])
                     //usage()
                 }
             }
-            seed_exec();        //fct calling all transf fcts
+            //seed_exec();        //fct calling all transf fcts
             return;
 
         }
@@ -138,10 +142,10 @@ void gestion_arg(int argc, char const* argv[])
     //si seed not in params
 }
 
-void seed_exec()
-{
+// void seed_exec()
+// {
     
-}
+// }
 
 //si aleatoire pur  : Initialisation avec l'horloge système = srand(time(0));
 
@@ -164,11 +168,11 @@ int main(int argc, char const* argv[])
     identity = identity(cv::Rect(0, 0, 3, 2));
     //print_mat(identity);
     cv::Mat noisy_img = img.clone();
-    ajouterTaches(noisy_img);  // Ajoute le bruit
-    contrast_brightness_modifier(noisy_img,60, 40);                          //SEG_FAULT
-    add_gaussian_noise(noisy_img, 20, 20);
+    // ajouterTaches(noisy_img);  // Ajoute le bruit
+    // contrast_brightness_modifier(noisy_img,60, 40);                          //SEG_FAULT
+    // add_gaussian_noise(noisy_img, 20, 20);
     add_salt_pepper_noise(noisy_img, 1, 10);
-    cv::warpAffine(noisy_img, calibrated_img, identity, noisy_img.size(), cv::INTER_LINEAR);
+    //cv::warpAffine(noisy_img, calibrated_img, identity, noisy_img.size(), cv::INTER_LINEAR);
     cv::imwrite("calibrated_img.png",calibrated_img);
     gestion_arg( argc,  argv);
 
