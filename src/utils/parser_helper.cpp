@@ -71,7 +71,12 @@ ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config
 
     if (qrcode_count > 0) {
         return ParserType::QRCODE;
-    } else if (circle_count > 0 && marker_config.header.type == MarkerType::QR_CODE) {
+    } else if (circle_count > 0 &&
+               (marker_config.header.type == MarkerType::QR_CODE ||
+                marker_config.header.type == MarkerType::MICRO_QR_CODE ||
+                marker_config.header.type == MarkerType::DATAMATRIX || marker_config.header.type == MarkerType::AZTEC ||
+                marker_config.header.type == MarkerType::PDF417 || marker_config.header.type == MarkerType::RMQR ||
+                marker_config.header.type == MarkerType::BARCODE)) {
         return ParserType::CENTER_MARKER_PARSER;
     } else if (circle_count > 0) {
         return ParserType::CIRCLE;
@@ -309,11 +314,35 @@ cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
     return calibrated_img_col;
 }
 
+std::string parser_type_to_string(ParserType parser_type) {
+    switch (parser_type) {
+        case ParserType::ARUCO:
+            return "ARUCO";
+        case ParserType::CIRCLE:
+            return "CIRCLE";
+        case ParserType::QRCODE:
+            return "QRCODE";
+        case ParserType::CUSTOM_MARKER:
+            return "CUSTOM_MARKER";
+        case ParserType::SHAPE:
+            return "SHAPE";
+        case ParserType::CENTER_MARKER_PARSER:
+            return "CENTER_MARKER_PARSER";
+        case ParserType::DEFAULT_PARSER:
+            return "DEFAULT_PARSER";
+        case ParserType::EMPTY:
+            return "EMPTY";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,
 #endif
                                   Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+    printf("run_parser: %s\n", parser_type_to_string(parser_type).c_str());
     auto parser = parsers[parser_type];
     return parser.parser(img,
 #ifdef DEBUG
