@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <string.h>
+#include <random>
+#include <opencv2/core.hpp>  
 
 
 
@@ -18,7 +20,13 @@ int main(int argc, char const* argv[])
     pos = arg.find("-seed");
 
     }
-    std::cout<<pos<<std::endl;
+    int seed=time(0);
+    cv::RNG rng = cv::RNG(10);
+    int rd_nb = rng.uniform(0,100);
+    
+    std::cout<<rd_nb<<std::endl;
+    rng.next();
+    std::cout<<rng.uniform(0,100)<<std::endl;
 
 
     return 0;

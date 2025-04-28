@@ -7,6 +7,10 @@
 
 int img_depth;
 int seed=0;
+int nb_arg;
+cv::Mat img;
+cv::Mat noisy_img;
+
 
 
 
@@ -20,13 +24,25 @@ int seed=0;
  */
 
 
-void add_salt_pepper_noise(cv::Mat &img, int max_pepper, int max_salt)      //chevauchements
+void add_salt_pepper_noise(cv::Mat &img, float max_pepper, float max_salt)      //chevauchements
 {   
     cv::RNG rng;
     if (seed)
-        rng = cv::RNG();  
-    else
+    {
+        rng = cv::RNG(seed);
+        max_pepper = rng.uniform(0.01,0.13);                      //0.5 = MAX_PEPPER
+        rng.next();
+        max_salt = rng.uniform(0.01,0.13);
+    }
+    if(seed==0 && nb_arg==0)
+    {
+        printf("in_if_!seed\n");
         rng = cv::RNG(time(0));
+        max_pepper = rng.uniform(0.001,0.45);                      //0.5 = MAX_PEPPER
+        rng.next();
+        max_salt = rng.uniform(0.001,0.45);
+    }
+    
 
     
     int amount1=img.rows*img.cols*max_pepper/100;   // /100 pour passer un pourcentage entier en paramètre
@@ -41,8 +57,6 @@ void add_salt_pepper_noise(cv::Mat &img, int max_pepper, int max_salt)      //ch
 }
 
 
-
-
 /**
  * @brief Ajout de bruit gaussien
  *
@@ -53,8 +67,23 @@ void add_salt_pepper_noise(cv::Mat &img, int max_pepper, int max_salt)      //ch
  */
 
 void add_gaussian_noise(cv::Mat &img, int dispersion, int offset) {
+    cv::RNG rng;
+    if (seed)
+    {
+        rng = cv::RNG(seed);
+        dispersion = rng.uniform(1.0,5.0);               //0.5 = MAX_DISP
+        rng.next();
+        offset = rng.uniform(1.0,5.0);
+    }
+    if(seed==0 && nb_arg==0)
+    {
+        rng = cv::RNG(time(0));
+        dispersion = rng.uniform(1.0,4.5);               //0.5 = MAX_DISP
+        rng.next();
+        offset = rng.uniform(1.0,4.5);
+    }
+
     cv::Mat noise = cv::Mat::zeros(img.size(), CV_32FC(img.channels())); 
-    cv::RNG rng(static_cast<unsigned int>(cv::getTickCount()));
     rng.fill(noise, cv::RNG::NORMAL, percentage_to_dispersion(img_depth, dispersion), percentage_to_offset(img_depth, offset));
     cv::Mat img_float;
     img.convertTo(img_float, CV_32F);
@@ -73,7 +102,21 @@ void add_gaussian_noise(cv::Mat &img, int dispersion, int offset) {
 
 void contrast_brightness_modifier(cv::Mat &img, int contrast, int bright)
 {
-    // Clamp les valeurs pour éviter les dépassements
+    cv::RNG rng;
+    if (seed)
+    {
+        rng = cv::RNG(seed);
+        contrast = rng.uniform(-20,20);               //0.5 = MAX_DISP
+        rng.next();
+        bright = rng.uniform(-20,20);
+    }
+    if(seed==0 && nb_arg==0)
+    {
+        rng = cv::RNG(time(0));
+        contrast = rng.uniform(-20,20);               //0.5 = MAX_DISP
+        rng.next();
+        bright = rng.uniform(-20,20);
+    }
     if(contrast>0 && contrast<=100)
         contrast+=50;
     contrast = std::max(-100, std::min(100, contrast));
@@ -86,16 +129,40 @@ void contrast_brightness_modifier(cv::Mat &img, int contrast, int bright)
 }
 
 void ajouterTaches(cv::Mat& image, int nombreTaches = 10, int rayonMin = 5, int rayonMax = 20) {
-    cv::RNG rng(cv::getTickCount()); // Générateur aléatoire
-
+    
+    cv::RNG rng;
+    if (seed)
+    {
+        rng = cv::RNG(seed);
+        nombreTaches = rng.uniform(0,8);               //0.5 = MAX_DISP
+        rng.next();
+        rayonMin = rng.uniform(4,8);
+        rng.next();
+        rayonMax = rng.uniform(9,20);
+    }
+    if(seed==0 && nb_arg==0)
+    {
+        rng = cv::RNG(time(0));
+        nombreTaches = rng.uniform(0,8);               //0.5 = MAX_DISP
+        rng.next();
+        rayonMin = rng.uniform(3,5);
+        rng.next();
+        rayonMax = rng.uniform(6,20);
+    }
     for(int i = 0; i < nombreTaches; i++) {
         cv::Point centre(rng.uniform(rayonMax, image.cols - rayonMax), rng.uniform(rayonMax, image.rows - rayonMax));
         int rayon = rng.uniform(rayonMin, rayonMax);
         cv::Scalar color = cv::Scalar(1, 1, 1);
-        
-        
         cv::circle(image, centre, rayon, color, -1);
     }
+}
+
+void seed_exec()
+{
+    add_salt_pepper_noise(noisy_img, 0, 0);
+    add_gaussian_noise(noisy_img,0,0);
+    contrast_brightness_modifier(noisy_img,0,0);
+    ajouterTaches(noisy_img,0,0,0);
 }
 
 void gestion_arg(int argc, char const* argv[])
@@ -106,10 +173,11 @@ void gestion_arg(int argc, char const* argv[])
         std::cerr << "call -> usage() -> exit()" << std::endl;        
         exit (1);
     }
+    nb_arg = argc-2;
     bool seed_found=false;
     for(int i=2; i<argc; i++)
     {
-        std::string arg(argv[i]);  
+        std::string arg(argv[i]);
         size_t pos = arg.find("-seed=");
         if (pos != std::string::npos)
         {
@@ -133,7 +201,7 @@ void gestion_arg(int argc, char const* argv[])
                     //usage()
                 }
             }
-            //seed_exec();        //fct calling all transf fcts
+            seed_exec();        //fct calling all transf fcts
             return;
 
         }
@@ -142,10 +210,7 @@ void gestion_arg(int argc, char const* argv[])
     //si seed not in params
 }
 
-// void seed_exec()
-// {
-    
-// }
+
 
 //si aleatoire pur  : Initialisation avec l'horloge système = srand(time(0));
 
@@ -157,24 +222,25 @@ int main(int argc, char const* argv[])
         return 1;
     }
     std::string image_max_pepperth = argv[1];
-    cv::Mat img = cv::imread(image_max_pepperth);
+    img = cv::imread(image_max_pepperth);
     img_depth = img.depth();
     cv::Mat calibrated_img = img.clone();
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
-     identity *= rotate_center(5, img.cols / 2, img.rows / 2);
+    //  identity *= rotate_center(5, img.cols / 2, img.rows / 2);
     //print_mat(identity);
-     identity *= translate(3, 0);
+    //identity *= translate(3, 0);
     //print_mat(identity);
-    identity = identity(cv::Rect(0, 0, 3, 2));
+    //identity = identity(cv::Rect(0, 0, 3, 2));
     //print_mat(identity);
-    cv::Mat noisy_img = img.clone();
+    noisy_img = img.clone();
     // ajouterTaches(noisy_img);  // Ajoute le bruit
     // contrast_brightness_modifier(noisy_img,60, 40);                          //SEG_FAULT
     // add_gaussian_noise(noisy_img, 20, 20);
-    add_salt_pepper_noise(noisy_img, 1, 10);
+    //add_salt_pepper_noise(noisy_img, 1, 10);
     //cv::warpAffine(noisy_img, calibrated_img, identity, noisy_img.size(), cv::INTER_LINEAR);
-    cv::imwrite("calibrated_img.png",calibrated_img);
-    gestion_arg( argc,  argv);
+    
+    gestion_arg(argc, argv);
+    cv::imwrite("calibrated_img.png",noisy_img);
 
     return 0;
 }
