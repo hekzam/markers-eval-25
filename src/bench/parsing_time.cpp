@@ -149,7 +149,7 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
 #ifdef DEBUG
                                           debug_img,
 #endif
-                                          meta, dst_corner_points);
+                                          meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
 
             std::cout << "  Result: " << (affine_transform.has_value() ? "Success" : "Failed") << std::endl;
         } else {
@@ -158,7 +158,7 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
 #ifdef DEBUG
                                           debug_img,
 #endif
-                                          meta, dst_corner_points);
+                                          meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
             benchmark_guard.setSuccess(affine_transform.has_value());
         }
 

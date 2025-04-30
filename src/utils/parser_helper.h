@@ -121,7 +121,10 @@ std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,
 #endif
-                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points);
+                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points,
+                                  int flag_barcode = (int) ZXing::BarcodeFormat::QRCode);
+
+int copy_config_to_flag(const CopyMarkerConfig& copy_marker_config);
 
 /**
  * @brief Sélectionne le code-barres correspondant au coin inférieur droit

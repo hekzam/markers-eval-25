@@ -120,8 +120,9 @@ std::optional<cv::Mat> center_marker_parser(const cv::Mat& img,
 #ifdef DEBUG
                                             cv::Mat debug_img,
 #endif
-                                            Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
-    auto barcodes = identify_barcodes(img, ZXing::BarcodeFormat::PDF417);
+                                            Metadata& meta, std::vector<cv::Point2f>& dst_corner_points,
+                                            int flag_barcode) {
+    auto barcodes = identify_barcodes(img, (ZXing::BarcodeFormat) flag_barcode);
 
     if (barcodes.empty()) {
         printf("no barcode found\n");

@@ -20,15 +20,10 @@ std::optional<cv::Mat> qrcode_empty_parser(const cv::Mat& img,
 #ifdef DEBUG
                                            cv::Mat debug_img,
 #endif
-                                           Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
+                                           Metadata& meta, std::vector<cv::Point2f>& dst_corner_points,
+                                           int flag_barcode) {
 
-    auto barcodes = identify_barcodes(img,
-#ifdef ENABLE_ZBAR
-                                      zbar::ZBAR_QRCODE
-#else
-                                      ZXing::BarcodeFormat::QRCode | ZXing::BarcodeFormat::MicroQRCode
-#endif
-    );
+    auto barcodes = identify_barcodes(img, (ZXing::BarcodeFormat) flag_barcode);
 
 #ifdef DEBUG
     draw_qrcode(barcodes, debug_img);
