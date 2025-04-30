@@ -102,17 +102,6 @@
         cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR);
     }
     
-    // void random_exec()
-    // {
-    //     cv::RNG rng = cv::RNG(time(0));
-    //     rotate_img(rng.uniform(-5,5));
-    //     translate_img(rng.uniform(-5,5), rng.uniform(-5,5));
-    //     add_salt_pepper_noise(noisy_img, rng, rng.uniform(0.01,0.13), rng.uniform(0.01,0.13));
-    //     add_gaussian_noise(noisy_img, rng, rng.uniform(1.0,5.0), rng.uniform(1.0,5.0));
-    //     contrast_brightness_modifier(noisy_img, rng.uniform(-20,20), rng.uniform(-20,20));
-    //     ajouterTaches(noisy_img, rng, rng.uniform(0,8), rng.uniform(4,8), rng.uniform(9,35));
-        
-    // }
 
     void random_exec()
     {
@@ -121,6 +110,7 @@
             rng= cv::RNG(seed);
         else
             rng = cv::RNG(time(0));
+
         rotate_img(rng.uniform(-5,5));
         translate_img(rng.uniform(-5,5), rng.uniform(-5,5));
         add_salt_pepper_noise(img, rng, rng.uniform(0.01,0.13), rng.uniform(0.01,0.13));
@@ -133,13 +123,7 @@
     {   
         // juste sous votre prototype de gestion_arg()
         static const std::vector<std::string> poss_opt = {
-            "-s=",
-            "-g=",
-            "-cb=",
-            "-sp=",
-            "-r=",
-            "-t=",
-            "-nb="
+            "-s=", "-g=", "-cb=", "-sp=", "-r=", "-t=", "-nb="
         };
         if (argc < 2)
         {
@@ -176,12 +160,8 @@
                     } catch (const std::out_of_range& e) {
                         std::cerr << "Erreur : valeur trop grande pour -seed : '" << str_seed_val << "'" << std::endl;
                         //usage()
-                    }
                 }
-                random_exec();        //fct calling all transf fcts with seed
-                return;
             }
-            
         }
         std::map<std::string, std::string> parsed_opts;
         for(int i = 2; i < argc; ++i) {
@@ -194,15 +174,16 @@
                     // Stocke en mappant l'option à sa valeur
                     parsed_opts[opt] = value;
                     break;  // passe à l'argument suivant
-                }
+                }   
             }
         }
-        auto it = parsed_opts.find("-sp=");
+        auto it = parsed_opts.find("-r=");
         if (it != parsed_opts.end()) {
-            float pepper = std::stof(it->second);  // conversion sans surcoût
-            // /add_salt_pepper_noise(noisy_img, cv::RNG rng, pepper, …)
+            int angle = std::stof(it->second);  // conversion sans surcoût
+            rotate_img(angle);
     }
         //si seed not in params
+    }
     }
 
     
@@ -216,8 +197,7 @@
             return 1;
         }
         std::string image_max_pepperth = argv[1];
-        img = cv::imread(image_max_pepperth);
-        img_depth = img.depth();
+        img=cv::imread(image_max_pepperth);
         cv::Mat calibrated_img = img.clone();
         cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
         //  identity *= rotate_center(5, img.cols / 2, img.rows / 2);
