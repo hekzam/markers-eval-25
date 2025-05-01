@@ -1,8 +1,8 @@
 Statistiques pour le parseur circle_parser :
 
-Nombre de copies analysées : 15 
-Temps moyen : 30.64453 ms
-Temps médian : 29.959 ms
-Écart-type : 10.10458 ms
+Nombre de copies analysées : 12 
+Temps moyen : 30.75033 ms
+Temps médian : 29.931 ms
+Écart-type : 9.838869 ms
 Copie la plus rapide : copy8.png 
 Copie la plus lente : copy15.png 

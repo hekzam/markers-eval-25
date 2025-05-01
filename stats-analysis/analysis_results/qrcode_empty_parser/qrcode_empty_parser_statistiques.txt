@@ -1,0 +1,8 @@
+Statistiques pour le parseur qrcode_empty_parser :
+
+Nombre de copies analysées : 12 
+Temps moyen : 48.53758 ms
+Temps médian : 49.1365 ms
+Écart-type : 15.55775 ms
+Copie la plus rapide : copy9.png 
+Copie la plus lente : copy5.png 

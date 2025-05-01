@@ -16,11 +16,11 @@ PARSEURS <- c("aruco_parser", "circle_parser", "custom_marker_parser",
 # Fonction pour créer des dossiers s'ils n'existent pas
 creer_dossiers <- function() {
   # Créer un dossier principal pour les résultats
-  dir_create("resultats_analyse", recurse = TRUE)
+  dir_create("analysis_results", recurse = TRUE)
   
   # Créer un sous-dossier pour chaque parseur
   for (parseur in PARSEURS) {
-    dir_create(paste0("resultats_analyse/", parseur), recurse = TRUE)
+    dir_create(paste0("analysis_results/", parseur), recurse = TRUE)
   }
   
   cat("Dossiers créés avec succès\n")
@@ -51,7 +51,7 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
   cat(paste("\nAnalyse du parseur:", nom_parseur, "\n"))
   
   # Créer le chemin du dossier pour ce parseur
-  dossier_parseur <- paste0("resultats_analyse/", nom_parseur)
+  dossier_parseur <- paste0("analysis_results/", nom_parseur)
   
   # Extraire le numéro de copie original à partir du nom du fichier
   donnees$Numero_Copie_Original <- as.numeric(gsub("copy([0-9]+)\\.png", "\\1", donnees$File))
@@ -188,7 +188,7 @@ analyser_impact_bruit_parseur <- function(donnees, nom_parseur) {
   }
   
   # Créer le chemin du dossier pour ce parseur
-  dossier_parseur <- paste0("resultats_analyse/", nom_parseur)
+  dossier_parseur <- paste0("analysis_results/", nom_parseur)
   
   # Statistiques par niveau de bruit
   stats_bruit <- donnees %>%
@@ -240,7 +240,7 @@ analyser_impact_bruit_parseur <- function(donnees, nom_parseur) {
 # Fonction pour analyser les différences entre les parseurs
 analyser_differences_parseurs <- function(donnees_completes) {
   # Créer le dossier pour l'analyse comparative
-  dir_create("resultats_analyse/comparaison_parseurs", recurse = TRUE)
+  dir_create("analysis_results/comparaison_parseurs", recurse = TRUE)
   
   # Calculer les statistiques par parseur
   stats_parseurs <- donnees_completes %>%
@@ -257,7 +257,7 @@ analyser_differences_parseurs <- function(donnees_completes) {
     arrange(Temps_Moyen)
   
   # Écrire les statistiques dans un fichier
-  write.csv(stats_parseurs, "resultats_analyse/comparaison_parseurs/statistiques_parseurs.csv", row.names = FALSE)
+  write.csv(stats_parseurs, "analysis_results/comparaison_parseurs/statistiques_parseurs.csv", row.names = FALSE)
   
   # Créer un graphique comparatif des temps moyens
   p1 <- ggplot(stats_parseurs, aes(x = reorder(Parser, Temps_Moyen), y = Temps_Moyen)) +
@@ -274,7 +274,7 @@ analyser_differences_parseurs <- function(donnees_completes) {
       axis.title = element_text(face = "bold", color = "darkblue")
     )
   
-  ggsave("resultats_analyse/comparaison_parseurs/comparaison_temps_moyens.png", p1, width = 12, height = 8, bg = "white")
+  ggsave("analysis_results/comparaison_parseurs/comparaison_temps_moyens.png", p1, width = 12, height = 8, bg = "white")
   
   # Créer un boxplot pour comparer les distributions
   p2 <- ggplot(donnees_completes, aes(x = reorder(Parser, Time_ms, FUN = median), y = Time_ms)) +
@@ -290,7 +290,7 @@ analyser_differences_parseurs <- function(donnees_completes) {
       legend.position = "none"
     )
   
-  ggsave("resultats_analyse/comparaison_parseurs/distribution_temps_parseurs.png", p2, width = 12, height = 8, bg = "white")
+  ggsave("analysis_results/comparaison_parseurs/distribution_temps_parseurs.png", p2, width = 12, height = 8, bg = "white")
   
   # Si la colonne Noise_Level existe, créer un graphique d'interaction
   if ("Noise_Level" %in% colnames(donnees_completes)) {
@@ -315,7 +315,7 @@ analyser_differences_parseurs <- function(donnees_completes) {
         axis.title = element_text(face = "bold", color = "darkblue")
       )
     
-    ggsave("resultats_analyse/comparaison_parseurs/effet_bruit_parseurs.png", p3, width = 12, height = 8, bg = "white")
+    ggsave("analysis_results/comparaison_parseurs/effet_bruit_parseurs.png", p3, width = 12, height = 8, bg = "white")
   }
   
   return(stats_parseurs)
@@ -369,7 +369,7 @@ analyser_tous_parseurs <- function(chemin_csv) {
   stats_parseurs <- analyser_differences_parseurs(donnees_completes)
   
   cat("\n========== ANALYSE TERMINÉE ==========\n")
-  cat("Les graphiques ont été enregistrés dans le dossier 'resultats_analyse'.\n")
+  cat("Les graphiques ont été enregistrés dans le dossier 'analysis_results'.\n")
   
   return(list(resultats_parseurs = resultats_parseurs, stats_parseurs = stats_parseurs))
 }
