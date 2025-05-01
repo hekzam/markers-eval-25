@@ -19,7 +19,7 @@
  * Cette fonction analyse les arguments de la ligne de commande pour configurer
  * et générer une copie avec les marqueurs spécifiés. Les arguments supportés sont :
  * --encoded-size, --unencoded-size, --stroke-width, --margin, --config,
- * --tl, --tr, --bl, --br, --header, --grey-level, --header-size, --filename, --dpi
+ * --tl, --tr, --bl, --br, --header, --grey-level, --header-size, --filename, --dpi, --verbose
  *
  * @param argc Nombre d'arguments passés au programme
  * @param argv Tableau des arguments passés au programme
@@ -28,6 +28,7 @@
 int main(int argc, char* argv[]) {
     CopyStyleParams style_params;
     std::string filename = "copy";
+    bool verbose = false;
 
     Marker top_left, top_right, bottom_left, bottom_right, header;
     top_left = Marker(MarkerType::QR_CODE, true);
@@ -38,7 +39,13 @@ int main(int argc, char* argv[]) {
 
     for (int i = 1; i < argc; i += 2) {
         std::string arg = argv[i];
-
+        
+        if (arg == "--verbose") {
+            verbose = true;
+            i--;
+            continue;
+        }
+        
         if (i + 1 >= argc) {
             std::cerr << "Missing value for argument: " << arg << std::endl;
             return 1;
@@ -80,7 +87,7 @@ int main(int argc, char* argv[]) {
 
     CopyMarkerConfig markerConfig = CopyMarkerConfig(top_left, top_right, bottom_left, bottom_right, header);
 
-    bool success = create_copy(style_params, markerConfig, filename);
+    bool success = create_copy(style_params, markerConfig, filename, verbose);
 
     return success ? 0 : 1;
 }

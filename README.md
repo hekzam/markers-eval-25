@@ -63,11 +63,11 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 |-----------------|-------------------|------------------|
 | qrcode          | circle            | pdf417           |
 | microqr         | square            | rmqr             |
-| datamatrix      | triangle          | code128          |
-| aztec           | cross             |                  |
-| pdf417          | aruco             |                  |
-| rmqr            | qreye             |                  |
-| code128         | custom            |                  |
+| datamatrix      | cross             | code128          |
+| aztec           | aruco             |                  |
+| pdf417          | qreye             |                  |
+| rmqr            | custom            |                  |
+| code128         |                   |                  |
 
 ### Options de configuration
 
@@ -85,6 +85,7 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 - `--bl <type>`                 : Type de marqueur pour le coin inférieur gauche (par défaut: qrcode:encoded)
 - `--br <type>`                 : Type de marqueur pour le coin inférieur droit (par défaut: qrcode:encoded)
 - `--header <type>`             : Type de marqueur pour l'en-tête (par défaut: none)
+- `--verbose`                   : Affiche tous les messages de sortie des commandes de typst (par défaut: non affiché)
 
 #### Format des types de marqueurs
 

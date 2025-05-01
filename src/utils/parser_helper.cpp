@@ -54,7 +54,6 @@ ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config
                 break;
 
             case MarkerType::SQUARE:
-            case MarkerType::TRIANGLE:
             case MarkerType::QR_EYE:
             case MarkerType::CROSS:
                 shape_count++;

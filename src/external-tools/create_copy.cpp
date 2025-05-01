@@ -17,7 +17,6 @@ const std::unordered_map<MarkerType, std::string> markerTypeToString = { { Marke
                                                                          { MarkerType::BARCODE, "code128" },
                                                                          { MarkerType::CIRCLE, "circle" },
                                                                          { MarkerType::SQUARE, "square" },
-                                                                         { MarkerType::TRIANGLE, "triangle" },
                                                                          { MarkerType::ARUCO, "aruco" },
                                                                          { MarkerType::QR_EYE, "qreye" },
                                                                          { MarkerType::CROSS, "cross" },
@@ -33,7 +32,6 @@ const std::unordered_map<std::string, MarkerType> stringToMarkerType = { { "qrco
                                                                          { "code128", MarkerType::BARCODE },
                                                                          { "circle", MarkerType::CIRCLE },
                                                                          { "square", MarkerType::SQUARE },
-                                                                         { "triangle", MarkerType::TRIANGLE },
                                                                          { "aruco", MarkerType::ARUCO },
                                                                          { "qreye", MarkerType::QR_EYE },
                                                                          { "cross", MarkerType::CROSS },
@@ -168,13 +166,13 @@ std::string getOutputRedirection() {
 }
 
 bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
-                 const std::string& filename) {
+                 const std::string& filename, bool verbose) {
 
     fs::create_directories("./copies");
 
     std::string doc = "template.typ";
     std::string root = ".";
-    std::string redirect = getOutputRedirection();
+    std::string redirect = verbose ? "" : getOutputRedirection();
 
     std::string params = "--input encoded-marker-size=" + std::to_string(style_params.encoded_marker_size) + " " +
                          "--input unencoded-marker-size=" + std::to_string(style_params.unencoded_marker_size) + " " +
