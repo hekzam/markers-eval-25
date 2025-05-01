@@ -12,6 +12,7 @@
 #include "circle_parser.h"
 #include "custom_marker_parser.h"
 #include "qrcode_empty_parser.h"
+#include "center_marker_parser.h"
 #include "aruco_parser.h"
 #include "shape_parser.h"
 #include "cli_helper.h"
@@ -19,43 +20,90 @@
 /**
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
  *
- * @param marker_config Le numéro de configuration de marqueur (1-10)
- * @return std::string Le type de parseur à utiliser
+ * @param marker_config Configuration des marqueurs utilisés
+ * @return ParserType Le type de parseur à utiliser
  */
-std::string select_parser_for_marker_config(int marker_config) {
-    switch (marker_config) {
-        case QR_ALL_CORNERS:
-        case QR_BOTTOM_RIGHT_ONLY:
-            return QRCODE;
-        case CIRCLES_WITH_QR_BR:
-        case TOP_CIRCLES_QR_BR:
-        case CIRCLE_OUTLINES_WITH_QR_BR:
-            return CIRCLE;
-        case CUSTOM_SVG_WITH_QR_BR:
-            return CUSTOM_MARKER;
-        case ARUCO_WITH_QR_BR:
-        case TWO_ARUCO_WITH_QR_BR:
-            return ARUCO;
-        case SQUARES_WITH_QR_BR:
-        case SQUARE_OUTLINES_WITH_QR_BR:
-            return SHAPE;
-        default:
-            return DEFAULT_PARSER;
+ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config) {
+    int qrcode_count = 0;
+    int circle_count = 0;
+    int aruco_count = 0;
+    int shape_count = 0;
+    int empty_count = 0;
+
+    const Marker* corners[] = { &marker_config.top_left, &marker_config.top_right, &marker_config.bottom_left,
+                                &marker_config.bottom_right };
+
+    for (const Marker* marker : corners) {
+        switch (marker->type) {
+            case MarkerType::QR_CODE:
+            case MarkerType::MICRO_QR_CODE:
+            case MarkerType::DATAMATRIX:
+            case MarkerType::AZTEC:
+            case MarkerType::PDF417:
+            case MarkerType::RMQR:
+            case MarkerType::BARCODE:
+                qrcode_count++;
+                break;
+
+            case MarkerType::CIRCLE:
+                circle_count++;
+                break;
+
+            case MarkerType::ARUCO:
+                aruco_count++;
+                break;
+
+            case MarkerType::SQUARE:
+            case MarkerType::QR_EYE:
+            case MarkerType::CROSS:
+                shape_count++;
+                break;
+
+            case MarkerType::NONE:
+                empty_count++;
+                break;
+
+            default:
+                break;
+        }
     }
+
+    if (qrcode_count > 0) {
+        return ParserType::QRCODE;
+    } else if (circle_count > 0 &&
+               (marker_config.header.type == MarkerType::QR_CODE ||
+                marker_config.header.type == MarkerType::MICRO_QR_CODE ||
+                marker_config.header.type == MarkerType::DATAMATRIX || marker_config.header.type == MarkerType::AZTEC ||
+                marker_config.header.type == MarkerType::PDF417 || marker_config.header.type == MarkerType::RMQR ||
+                marker_config.header.type == MarkerType::BARCODE)) {
+        return ParserType::CENTER_MARKER_PARSER;
+    } else if (circle_count > 0) {
+        return ParserType::CIRCLE;
+    } else if (aruco_count > 0) {
+        return ParserType::ARUCO;
+    } else if (shape_count > 0) {
+        return ParserType::SHAPE;
+    } else if (empty_count == 4) {
+        return ParserType::EMPTY;
+    }
+
+    return ParserType::DEFAULT_PARSER;
 }
 
 /// TODO: Corentin je te laisse le soin de t'en occuper stp
-std::unordered_map<std::string, Parser> parsers = {
-    { DEFAULT_PARSER, { default_parser } },
-    { QRCODE, { qrcode_parser } },
-    { CIRCLE, { circle_parser } },
-    { ARUCO, { aruco_parser } },
-    { SHAPE, { shape_parser } },
-    // { "custom", { custom_marker_parser, draw_custom_marker } }, drop custom parser because of his complexity
-    { "empty", { qrcode_empty_parser } },
+std::unordered_map<ParserType, Parser> parsers = {
+    { ParserType::DEFAULT_PARSER, { default_parser } },
+    { ParserType::QRCODE, { qrcode_parser } },
+    { ParserType::CIRCLE, { circle_parser } },
+    { ParserType::ARUCO, { aruco_parser } },
+    { ParserType::SHAPE, { shape_parser } },
+    { ParserType::CENTER_MARKER_PARSER, { center_marker_parser } },
+    // { ParserType::CUSTOM_MARKER, { custom_marker_parser, draw_custom_marker } }, // drop custom parser because of his
+    // complexity
+    { ParserType::EMPTY, { qrcode_empty_parser } },
 };
 
-std::vector<DetectedBarcode> identify_barcodes(cv::Mat img,
+std::vector<DetectedBarcode> identify_barcodes(const cv::Mat& img,
 #ifdef ENABLE_ZBAR
                                                zbar_symbol_type_t flags
 #else
@@ -165,9 +213,9 @@ std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
  * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants dans la description JSON.
  */
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
-                                std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
+                                std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
                                 std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page) {
-    corner_markers.resize(4);
+    corner_markers.resize(5);
     user_boxes_per_page.clear();
 
     if (boxes.empty())
@@ -191,7 +239,8 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
                 corner = BOTTOM_LEFT;
             else if (starts_with(box->id, "hzbr"))
                 corner = BOTTOM_RIGHT;
-
+            else if (starts_with(box->id, "hztc"))
+                corner = TOP_CENTER;
             if (corner != -1) {
                 corner_markers[corner] = box;
                 corner_mask |= (1 << corner);
@@ -217,15 +266,16 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
  * @param dst_img_size Taille de l'image destination (largeur, hauteur).
  * @return std::vector<cv::Point2f> Vecteur contenant les points centraux des marqueurs redimensionnés.
  */
-std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
-                                                    const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
+std::vector<cv::Point2f>
+calculate_center_of_marker(const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
+                           const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
     std::vector<cv::Point2f> corner_points;
     corner_points.resize(4);
     for (int corner = 0; corner < 4; ++corner) {
-        auto marker = corner_markers[corner];
-        if (marker == nullptr) {
+        if (corner_markers[corner].has_value() == false) {
             continue;
         }
+        auto marker = corner_markers[corner].value();
         const std::vector<cv::Point2f> marker_bounding_box = {
             cv::Point2f{ marker->x, marker->y }, cv::Point2f{ marker->x + marker->width, marker->y },
             cv::Point2f{ marker->x + marker->width, marker->y + marker->height },
@@ -265,17 +315,65 @@ cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
     return calibrated_img_col;
 }
 
-std::optional<cv::Mat> run_parser(const std::string& parser_name, cv::Mat img,
+int copy_config_to_flag(const CopyMarkerConfig& copy_marker_config) {
+    int flag = 0;
+
+    for (const auto& marker :
+         { copy_marker_config.top_left, copy_marker_config.top_right, copy_marker_config.bottom_left,
+           copy_marker_config.bottom_right, copy_marker_config.header }) {
+        if (marker.type == MarkerType::QR_CODE)
+            flag |= (int) ZXing::BarcodeFormat::QRCode;
+        else if (marker.type == MarkerType::MICRO_QR_CODE)
+            flag |= (int) ZXing::BarcodeFormat::MicroQRCode;
+        else if (marker.type == MarkerType::DATAMATRIX)
+            flag |= (int) ZXing::BarcodeFormat::DataMatrix;
+        else if (marker.type == MarkerType::AZTEC)
+            flag |= (int) ZXing::BarcodeFormat::Aztec;
+        else if (marker.type == MarkerType::PDF417)
+            flag |= (int) ZXing::BarcodeFormat::PDF417;
+        else if (marker.type == MarkerType::RMQR)
+            flag |= (int) ZXing::BarcodeFormat::RMQRCode;
+        else if (marker.type == MarkerType::BARCODE)
+            flag |= (int) ZXing::BarcodeFormat::Code128;
+    }
+    return flag;
+}
+
+std::string parser_type_to_string(ParserType parser_type) {
+    switch (parser_type) {
+        case ParserType::ARUCO:
+            return "ARUCO";
+        case ParserType::CIRCLE:
+            return "CIRCLE";
+        case ParserType::QRCODE:
+            return "QRCODE";
+        case ParserType::CUSTOM_MARKER:
+            return "CUSTOM_MARKER";
+        case ParserType::SHAPE:
+            return "SHAPE";
+        case ParserType::CENTER_MARKER_PARSER:
+            return "CENTER_MARKER_PARSER";
+        case ParserType::DEFAULT_PARSER:
+            return "DEFAULT_PARSER";
+        case ParserType::EMPTY:
+            return "EMPTY";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,
 #endif
-                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
-    auto parser = parsers[parser_name];
+                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
+    printf("run_parser: %s\n", parser_type_to_string(parser_type).c_str());
+    auto parser = parsers[parser_type];
     return parser.parser(img,
 #ifdef DEBUG
                          debug_img,
 #endif
-                         meta, dst_corner_points);
+                         meta, dst_corner_points, flag_barcode);
 }
 
 std::optional<DetectedBarcode> select_bottom_right_corner(const std::vector<DetectedBarcode>& barcodes) {

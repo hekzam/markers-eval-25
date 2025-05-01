@@ -3,10 +3,14 @@
 #include <iomanip>
 #include <sstream>
 #include <filesystem>
+#include <optional>
+#include <functional>
 
 #include <common.h>
 #include "benchmark_helper.h"
 #include "../external-tools/create_copy.h"
+#include "../utils/cli_helper.h"
+#include "benchmark.hpp"
 
 std::filesystem::path create_subdir(const std::filesystem::path& base_dir, const std::string& subdir_name) {
     std::filesystem::path subdir_path = base_dir / subdir_name;
@@ -37,8 +41,30 @@ json parse_json_file(const std::string& filepath) {
     }
 }
 
-bool generate_copies(int nb_copies, int marker_config, int encoded_marker_size, int fiducial_marker_size,
-                     int grey_level) {
+bool generate_single_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
+                          const std::string& copy_name,
+                          std::optional<std::reference_wrapper<std::ofstream>> benchmark_csv) {
+    bool success = false;
+    if (benchmark_csv.has_value()) {
+        BenchmarkGuard benchmark_guard(copy_name, &benchmark_csv->get());
+        success = create_copy(style_params, marker_config, copy_name);
+    } else {
+        success = create_copy(style_params, marker_config, copy_name);
+    }
+
+    if (!success) {
+        std::cerr << "Failed to generate " << copy_name << std::endl;
+    } else {
+        std::cout << "Generated " << copy_name << std::endl;
+    }
+
+    return success;
+}
+
+bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
+                     const CopyMarkerConfig& marker_config,
+                     std::optional<std::reference_wrapper<std::ofstream>> benchmark_csv) {
+
     std::filesystem::path copies_dir = "copies";
     if (std::filesystem::exists(copies_dir)) {
         std::cout << "Cleaning existing copies directory..." << std::endl;
@@ -46,30 +72,83 @@ bool generate_copies(int nb_copies, int marker_config, int encoded_marker_size, 
     }
     std::filesystem::create_directories(copies_dir);
 
-    std::cout << "Generating " << nb_copies << " copies..." << std::endl;
     bool all_success = true;
-    for (int i = 1; i <= nb_copies; i++) {
+    int total_iterations = warmup_iterations + nb_copies;
+
+    if (benchmark_csv.has_value()) {
+        if (warmup_iterations > 0) {
+            std::cout << "Starting benchmark with " << warmup_iterations << " warm-up iterations and " << nb_copies
+                      << " measured iterations" << std::endl;
+        } else {
+            std::cout << "Starting benchmark with " << nb_copies << " iterations" << std::endl;
+        }
+    } else {
+        if (warmup_iterations > 0) {
+            std::cout << "Generating " << total_iterations << " copies (" << warmup_iterations << " warm-up + "
+                      << nb_copies << " benchmark)..." << std::endl;
+        } else {
+            std::cout << "Generating " << nb_copies << " copies..." << std::endl;
+        }
+    }
+
+    for (int i = 1; i <= total_iterations; i++) {
+        bool is_warmup = i <= warmup_iterations;
         std::ostringstream copy_name;
         copy_name << "copy" << std::setw(2) << std::setfill('0') << i;
 
-        bool success = create_copy(encoded_marker_size,  // encoded_marker_size
-                                   fiducial_marker_size, // fiducial_marker_size
-                                   1,                    // stroke_width
-                                   5,                    // marker_margin
-                                   1,                    // nb_copies per call
-                                   0,                    // duplex_printing
-                                   marker_config,        // marker_config
-                                   grey_level,           // grey_level
-                                   0,                    // header_marker
-                                   copy_name.str()       // filename
-        );
+        if (benchmark_csv.has_value() && is_warmup) {
+            std::cout << "Warmup iteration " << i << "/" << warmup_iterations << " generating: " << copy_name.str()
+                      << std::endl;
+        } else if (benchmark_csv.has_value()) {
+            std::cout << "Benchmark iteration " << (i - warmup_iterations) << "/" << nb_copies
+                      << " generating: " << copy_name.str() << std::endl;
+        }
 
+        bool should_measure = benchmark_csv.has_value() && !is_warmup;
+        bool success = generate_single_copy(style_params, marker_config, copy_name.str(),
+                                            should_measure ? benchmark_csv : std::nullopt);
         if (!success) {
-            std::cerr << "Failed to generate " << copy_name.str() << std::endl;
             all_success = false;
-        } else {
-            std::cout << "Generated " << copy_name.str() << std::endl;
         }
     }
+
+    if (benchmark_csv.has_value()) {
+        std::cout << "Benchmark completed with " << warmup_iterations << " warmup iterations and " << nb_copies
+                  << " measured iterations." << std::endl;
+    }
+
+    if (!all_success) {
+        std::cerr << "Error: Failed to generate some or all copies." << std::endl;
+    }
+
     return all_success;
+}
+
+BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column,
+                                             bool create_subimg_dir) {
+    BenchmarkSetup setup;
+
+    setup.output_dir = std::filesystem::path{ output_dir };
+    if (std::filesystem::exists(setup.output_dir)) {
+        std::cout << "Cleaning existing output directory..." << std::endl;
+        std::filesystem::remove_all(setup.output_dir);
+    }
+    std::filesystem::create_directories(setup.output_dir);
+
+    if (create_subimg_dir) {
+        setup.subimg_output_dir = create_subdir(setup.output_dir, "subimg");
+    }
+    setup.csv_output_dir = create_subdir(setup.output_dir, "csv");
+
+    std::filesystem::path benchmark_csv_path = setup.csv_output_dir / "benchmark_results.csv";
+    setup.benchmark_csv.open(benchmark_csv_path);
+    if (setup.benchmark_csv.is_open()) {
+        if (include_success_column) {
+            setup.benchmark_csv << "File,Time(ms),Success" << std::endl;
+        } else {
+            setup.benchmark_csv << "File,Time(ms)" << std::endl;
+        }
+    }
+
+    return setup;
 }

@@ -47,107 +47,221 @@ cmake --build build-cmake -j
 
 ## 📄 Génération de copie
 
-Une fois la compilation terminée, utilisez la commande suivante pour générer les copies :
+Une fois la compilation terminée, vous pouvez générer des copies d'examen avec différents types de marqueurs.
+
+Utilisez la commande suivante pour générer des copies avec des options personnalisées :
 
 ```sh
 ./create-copie.sh [options]
 ```
 
-Ce script permet de produire une copie vers le dossier de sortie **copies/**.
+Les copies générées sont sauvegardées dans le dossier **copies/**.
 
-### Options disponibles
+### Types de marqueurs disponibles
+
+| Encodable       | Non encodable     | Rectangulaire    |
+|-----------------|-------------------|------------------|
+| qrcode          | circle            | pdf417           |
+| microqr         | square            | rmqr             |
+| datamatrix      | cross             | code128          |
+| aztec           | aruco             |                  |
+| pdf417          | qreye             |                  |
+| rmqr            | custom            |                  |
+| code128         |                   |                  |
+
+### Options de configuration
+
+- `--encoded-size <N>`          : Taille des marqueurs encodés (par défaut: 15)
+- `--unencoded-size <N>`        : Taille des marqueurs non encodés (par défaut: 3)
+- `--header-size <N>`           : Taille du marqueur d'entête (par défaut: 7)
+- `--stroke-width <N>`          : Largeur du trait des marqueurs (par défaut: 2)
+- `--margin <N>`                : Marge autour des marqueurs (par défaut: 3)
+- `--grey-level <N>`            : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
+- `--dpi <N>`                   : Résolution en points par pouce (par défaut: 300)
+- `--generating-content <BOOL>` : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
+- `--filename <name>`           : Nom du fichier de sortie (par défaut: copy)
+- `--tl <type>`                 : Type de marqueur pour le coin supérieur gauche (par défaut: qrcode:encoded)
+- `--tr <type>`                 : Type de marqueur pour le coin supérieur droit (par défaut: qrcode:encoded)
+- `--bl <type>`                 : Type de marqueur pour le coin inférieur gauche (par défaut: qrcode:encoded)
+- `--br <type>`                 : Type de marqueur pour le coin inférieur droit (par défaut: qrcode:encoded)
+- `--header <type>`             : Type de marqueur pour l'en-tête (par défaut: none)
+- `--verbose`                   : Affiche tous les messages de sortie des commandes de typst (par défaut: non affiché)
+
+#### Format des types de marqueurs
 
 ```
-  --encoded-size N      : Taille des marqueurs encodés (par défaut: 15)
-  --fiducial-size N     : Taille des marqueurs fiduciaires (par défaut: 10)
-  --stroke-width N      : Largeur du trait des marqueurs (par défaut: 2)
-  --margin N            : Marge autour des marqueurs (par défaut: 3)
-  --duplex N            : Mode d'impression recto-verso (0: simple face, 1: recto-verso) (par défaut: 0)
-  --config N            : Configuration des marqueurs (1-10) (par défaut: 10)
-  --grey-level N        : Niveau de gris (0: noir, 255: blanc) (par défaut: 100)
-  --header-marker N     : Affiche un marqueur d'entête (par défaut: 1)
-  --filename NAME       : Nom du fichier de sortie (par défaut: copy)
+  Format: type[:encoded][:outlined]
+  - type:outlined     : Marqueur non rempli (uniquement pour formes géométriques simples)
+  - type:encoded      : Marqueur avec données encodées
+  - none              : Aucun marqueur à cette position
 ```
 
-Exemple d'utilisation :
+> **Note sur l'encodage :** Par défaut, les marqueurs encodables contiennent uniquement l'information de leur position (coin supérieur gauche, supérieur droit, etc.). Avec l'option `:encoded`, le marqueur encodera également le numéro de la page, de la copie ainsi que le nom de l'examen.
+
+### Exemples
+
+#### Exemple simple avec des QR codes
 ```sh
-./create-copie.sh --config 3 --grey-level 50
+./create-copie.sh --tl qrcode --tr qrcode --bl qrcode --br qrcode --header qrcode
 ```
 
-Une autre exemple avec un nom de fichier personnalisé :
+#### Configuration avancée avec différents marqueurs
 ```sh
-./create-copie.sh --config 3 --grey-level 50 --filename exam01
+./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
 ```
-
-### Configurations de marqueurs disponibles
-
-Le paramètre `--config` permet de sélectionner parmi les configurations suivantes :
-
-1.  : QR codes avec données encodées dans tous les coins
-2.  : QR codes avec données encodées uniquement dans le coin bas-droit
-3.  : Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-4.  : Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-5.  : Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-6.  : Différents marqueurs ArUco, QR code avec données en bas-droit
-7.  : Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-8.  : Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-9.  : Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-10. : Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
 
 ## 📊 Exécution du benchmark
 
-Vous pouvez exécuter l'outil de benchmark pour évaluer les performances des différentes configurations de marqueurs :
+### Exécution des benchmarks
+
+Vous disposez de deux méthodes pour exécuter les benchmarks :
+
+#### 1. Mode ligne de commande (recommandé)
+
+Spécifiez directement tous les paramètres dans votre commande :
 
 ```sh
-./run_benchmark.sh
+./run_benchmark.sh --benchmark [nom-du-benchmark] [autres-options]
 ```
 
-L'outil vous demandera plusieurs informations interactivement :
+Exemple :
+```sh
+./run_benchmark.sh --benchmark parsing-time --input-dir ./copies --dpi 600
+```
 
-1. **Output directory** : Répertoire de sortie pour les résultats (par défaut: `./output`)
-2. **Atomic boxes JSON file path** : Chemin vers le fichier JSON contenant les définitions des zones (par défaut: `./original_boxes.json`)
-3. **Input directory** : Répertoire contenant les copies à analyser (par défaut: `./copies`)
-4. **Number of copies** : Nombre de copies à générer pour le test (par défaut: `1`)
-5. **Marker configuration** : Configuration des marqueurs à utiliser (1-10, par défaut: `6`)
+#### 2. Mode interactif
 
-### Résultats du benchmark
+Exécutez simplement la commande en spécifiant au minimum le type de benchmark :
 
-Après l'exécution, le benchmark produit plusieurs types de sorties :
+```sh
+./run_benchmark.sh --benchmark [nom-du-benchmark]
+```
 
-- **Images calibrées** : Versions redressées des copies scannées avec les zones détectées surlignées
-- **CSV de résultats** : Fichier `benchmark_results.csv` contenant les temps d'exécution et taux de succès pour chaque image
-- **Images de débogage** (si compilé en mode DEBUG) : Visualisation du processus de détection des marqueurs
+Le script vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
+
+> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `ink-estimation`.
+
+#### Types de benchmark disponibles
+
+Voici les différents types de benchmarks que vous pouvez exécuter :
+
+1. **parsing-time** : Évalue le temps de traitement et le taux de succès de la détection des marqueurs.
+   ```sh
+   ./run_benchmark.sh --benchmark parsing-time
+   ```
+   **Important :** Le parseur actuel présente des limitations : 
+   - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
+   - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
+   - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
+
+2. **generation-time** : Mesure le temps nécessaire pour générer des copies avec différents types de marqueurs.
+   ```sh
+   ./run_benchmark.sh --benchmark generation-time
+   ```
+
+3. **ink-estimation** : Analyse la consommation d'encre pour chaque type de marqueur et fournit :
+   - La surface totale couverte en cm²
+   - Le pourcentage de couverture d'encre
+   - Le volume d'encre estimé en millilitres
+   ```sh
+   ./run_benchmark.sh --benchmark ink-estimation
+   ```
+
+### Options communes
+
+- `--benchmark <type>`          : Type de benchmark à exécuter (par défaut: `parsing-time`)
+- `--marker-config <config>`    : Configuration des marqueurs (par défaut: `(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)`)
+  > Format: (tl,tr,bl,br,header) où tl=top-left, tr=top-right, bl=bottom-left, br=bottom-right.
+  > Utilisez "none" pour les positions qui ne sont pas occupées par des marqueurs.
+- `--encoded-marker-size <N>`   : Taille des marqueurs encodés en mm (par défaut: 13)
+- `--unencoded-marker-size <N>` : Taille des marqueurs non encodés en mm (par défaut: 10)
+- `--header-marker-size <N>`    : Taille du marqueur d'en-tête en mm (par défaut: 7)
+- `--grey-level <0-255>`        : Niveau de gris pour les marqueurs (par défaut: 0)
+- `--dpi <N>`                   : Résolution en points par pouce (par défaut: 300)
+
+Options spécifiques pour les benchmarks `parsing-time` et `generation-time` :
+- `--nb-copies <N>`             : Nombre de copies à générer pour le test (par défaut: 1)
+- `--warmup-iterations <N>`     : Nombre d'itérations d'échauffement avant la mesure. Cela permet d'obtenir des mesures plus précises en évitant les coûts de démarrage (par défaut: 0)
+
+## 🖨️ Simulateur de scan et d'impression
+
+Le projet inclut un simulateur Python qui permet d'appliquer diverses transformations aux documents générés, simulant ainsi des défauts d'impression et de numérisation pour des tests de robustesse.
+
+### Exécution du simulateur
+
+Pour exécuter le simulateur sur une image originale, utilisez la commande suivante :
+
+```sh
+python tools/pdf_noiser/printer_emulator.py [options]
+```
+
+Par défaut, le script appliquera des transformations aléatoires à l'image originale située dans `copies/original.png` et générera 10 copies avec des défauts différents dans le dossier `tools/pdf_noiser/noisy_copies/`.
+
+### Transformations disponibles
+
+Le simulateur peut appliquer les transformations suivantes pour imiter les défauts d'impression et de numérisation :
+
+- **Rotation** (`-r`, `--rotation`) : Applique une rotation à l'image (en degrés, ±3° max par défaut)
+- **Translation** (`-t`, `--translation`) : Déplace l'image (déplacement X,Y, ±25px max par défaut)
+- **Contraste** (`-c`, `--contrast`) : Modifie le contraste (0-100%, plage effective 0.8-1.2)
+- **Luminosité** (`-b`, `--brightness`) : Ajuste la luminosité (0-100%, plage effective 0.8-1.2)
+- **Bruit gaussien** (`-g`, `--gaussian`) : Ajoute du bruit gaussien (0-100%, intensité 4-6 max)
+- **Bruit sel et poivre** (`-s`, `--salt_pepper`) : Ajoute des pixels noirs et blancs aléatoires (0-100%, 6% max)
+- **Taches aléatoires** (`-p`, `--spot`) : Ajoute des taches noires (0-100%, 2-5 taches par défaut)
+- **Nombre de copies** (`-n`, `--nb_copy`) : Nombre de copies à générer (10 par défaut)
+
+### Exemples d'utilisation
+
+#### Générer 5 copies avec des défauts aléatoires
+```sh
+python tools/pdf_noiser/printer_emulator.py --nb_copy 5
+```
+
+#### Générer une copie avec une rotation spécifique
+```sh
+python tools/pdf_noiser/printer_emulator.py --rotation 2 --nb_copy 1
+```
+
+#### Combiner plusieurs transformations
+```sh
+python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brightness 60 --gaussian 30 --nb_copy 3
+```
 
 ## 📂 Structure du projet
 
 ```
 .
-├── include/            # Fichiers d'en-tête (*.h, *.hpp)
-│   ├── benchmark.hpp   # En-têtes pour le benchmarking
-│   └── common.h        # Définitions de structures communes
-├── src/                # Code source C++ principal
-│   ├── benchmark.cpp   # Outil de benchmarking
-│   ├── expl_pars.cpp   # Parseur principal
-│   ├── typst_interface.cpp # Interface avec Typst
-│   ├── utils/          # Utilitaires partagés
-│   ├── parser/         # Implémentation des parseurs de marqueurs
-|   ├── command-line-interface/  # Interface de ligne de commande
-│   └── external-tools/ # Outils externes (création de copies)
-├── typst/              # Sources de templates Typst
-│   ├── components/     # Composants réutilisables (marqueurs, conteneurs)
-│   ├── common/         # Variables et utilitaires communs
-│   ├── content/        # Contenu des formulaires
-│   ├── src/            # Scripts de génération
-│   ├── style/          # Configuration de style
-│   └── template.typ    # Template principal
-├── copies/             # Dossier de sortie pour les copies générées
-├── output/             # Dossier de sortie pour les résultats d'analyse
-├── build-cmake/        # Répertoire de build (généré)
-├── CMakeLists.txt      # Configuration du projet CMake
-├── create-copie.sh     # Script de génération de copies
-├── run_benchmark.sh    # Script d'exécution du benchmark
-├── README.md           # Ce fichier
-└── LICENSE             # Fichier de licence
+├── include/                   # Fichiers d'en-tête (*.h, *.hpp)
+│   ├── benchmark.hpp          # En-têtes pour le benchmarking
+│   └── common.h               # Définitions de structures communes
+├── src/                       # Code source C++ principal
+│   ├── bench/                 # Code source des benchmarks
+│   ├── benchmark.cpp          # Outil de benchmarking
+│   ├── expl_pars.cpp          # Parseur principal
+│   ├── typst_interface.cpp    # Interface avec Typst
+│   ├── utils/                 # Utilitaires partagés
+│   ├── parser/                # Implémentation des parseurs de marqueurs
+│   └── external-tools/        # Outils externes (création de copies)
+├── tools/                     # Scripts et utilitaires
+│   ├── format.py              # Formatter de code (clang-format)
+│   └── pdf_noiser/            # Outils de simulation de défauts
+│       └── printer_emulator.py # Simulateur de défauts d'impression/scan
+├── typst/                     # Sources de templates Typst
+│   ├── components/            # Composants réutilisables (marqueurs, conteneurs)
+│   ├── common/                # Variables et utilitaires communs
+│   ├── content/               # Contenu des formulaires
+│   ├── src/                   # Scripts de génération
+│   ├── style/                 # Configuration de style
+│   └── template.typ           # Template principal
+├── stats-analysis/            # Scripts et outils d'analyse statistique
+├── copies/                    # Dossier de sortie pour les copies générées
+├── output/                    # Dossier de sortie pour les résultats d'analyse
+├── build-cmake/               # Répertoire de build (généré)
+├── CMakeLists.txt             # Configuration du projet CMake
+├── create-copie.sh            # Script de génération de copies
+├── run_benchmark.sh           # Script d'exécution du benchmark
+├── README.md                  # Ce fichier
+└── LICENSE                    # Fichier de licence
 ```
 
 ## 📖 Références techniques

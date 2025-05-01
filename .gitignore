@@ -40,6 +40,10 @@ copies/*
 output/*
 tools/pdf_noiser/noisy_copies/*.png
 *.png
+
 test
 test.cpp
 app
+
+stats-analysis/*.txt
+stats-analysis/analysis_results

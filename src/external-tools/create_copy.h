@@ -1,56 +1,150 @@
 #ifndef CREATE_COPY_H
 #define CREATE_COPY_H
 
+/**
+ * @file create_copy.h
+ * @brief Module de génération de copies avec différents types de marqueurs.
+ *
+ * Ce fichier définit les structures et fonctions nécessaires pour créer des copies
+ * de documents avec divers types de marqueurs (QR codes, cercles, carrés, ArUco, etc.).
+ * Il propose une interface flexible pour configurer l'apparence et le placement des marqueurs,
+ * ainsi que différentes configurations prédéfinies pour s'adapter à diverses utilisations.
+ */
+
 #include <string>
 #include <vector>
 
-enum MarkerConfig {
-    QR_ALL_CORNERS = 1,        // QR codes avec données encodées dans tous les coins
-    QR_BOTTOM_RIGHT_ONLY = 2,  // QR codes avec données encodées uniquement dans le coin bas-droit
-    CIRCLES_WITH_QR_BR = 3,    // Cercles dans les trois premiers coins, QR code avec données dans le coin bas-droit
-    TOP_CIRCLES_QR_BR = 4,     // Cercles en haut, rien en bas-gauche, QR code avec données en bas-droit
-    CUSTOM_SVG_WITH_QR_BR = 5, // Marqueurs SVG personnalisés dans trois coins, QR code avec données en bas-droit
-    ARUCO_WITH_QR_BR = 6,      // Différents marqueurs ArUco, QR code avec données en bas-droit
-    TWO_ARUCO_WITH_QR_BR = 7,  // Deux marqueurs ArUco, rien en bas-gauche, QR code avec données en bas-droit
-    CIRCLE_OUTLINES_WITH_QR_BR =
-        8, // Cercles non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-    SQUARES_WITH_QR_BR =
-        9, // Carrés dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
-    SQUARE_OUTLINES_WITH_QR_BR =
-        10 // Carrés non remplis dans les trois premiers coins, QR code avec données encodées dans le coin bas-droit
+enum class MarkerType {
+    QR_CODE,
+    MICRO_QR_CODE,
+    DATAMATRIX,
+    AZTEC,
+    PDF417,
+    RMQR,
+    BARCODE,
+    CIRCLE,
+    SQUARE,
+    ARUCO,
+    QR_EYE,
+    CROSS,
+    CUSTOM,
+    NONE
+};
+
+std::string toString(MarkerType type);
+
+/**
+ * @brief Convertit une chaîne de caractères en type MarkerType
+ *
+ * Cette fonction prend une représentation textuelle d'un type de marqueur
+ * et la convertit en son équivalent dans l'énumération MarkerType.
+ *
+ * @param typeStr Chaîne représentant le type de marqueur
+ * @return MarkerType Type de marqueur correspondant, ou NONE si non reconnu
+ */
+MarkerType markerTypeFromString(const std::string& typeStr);
+
+/**
+ * @brief Structure représentant un marqueur avec son statut d'encodage
+ */
+struct Marker {
+    MarkerType type; // Type du marqueur (enum)
+    bool encoded;    // Indique si le marqueur est encodé
+    bool outlined;   // Indique si le marqueur est affiché uniquement avec son contour (non rempli)
+
+    // Constructeur par défaut: pas de marqueur, non encodé, non contouré
+    Marker() : type(MarkerType::NONE), encoded(false), outlined(false) {
+    }
+
+    // Constructeur avec paramètres
+    Marker(MarkerType t, bool enc = false, bool out = false) : type(t), encoded(enc), outlined(out) {
+    }
+
+    /**
+     * @brief Convertit le marqueur en chaîne de caractères
+     *
+     * @return std::string La représentation du marqueur sous forme de chaîne
+     */
+    std::string toString() const;
+
+    /**
+     * @brief Analyse une spécification de marqueur et crée l'objet Marker correspondant
+     *
+     * Cette fonction prend une chaîne de caractères qui décrit un marqueur
+     * (par exemple "qrcode:encoded" ou "circle:outlined") et retourne
+     * un objet Marker configuré selon cette spécification.
+     *
+     * @param spec Chaîne de spécification du marqueur au format "type[:encoded][:outlined]"
+     * @return Marker Objet Marker configuré selon la spécification, ou marqueur vide si spec est vide ou "none"
+     */
+    static Marker parseMarker(const std::string& spec);
 };
 
 /**
- * @brief Structure contenant les informations sur les configurations de marqueurs
+ * @brief Structure pour configurer précisément les marqueurs sur une copie
  */
-struct MarkerConfigInfo {
-    int id;
-    std::string description;
+struct CopyMarkerConfig {
+    Marker top_left;
+    Marker top_right;
+    Marker bottom_left;
+    Marker bottom_right;
+    Marker header;
+
+    CopyMarkerConfig() {
+    }
+
+    CopyMarkerConfig(Marker tl, Marker tr, Marker bl, Marker br, Marker h)
+        : top_left(tl), top_right(tr), bottom_left(bl), bottom_right(br), header(h) {
+    }
+
+    /**
+     * @brief Convertit la configuration en chaîne de caractères
+     *
+     * @return std::string La représentation de la configuration au format "(marker1,marker2,marker3,marker4,marker5)"
+     */
+    std::string toString() const;
+
+    /**
+     * @brief Analyse une chaîne de caractères et configure l'objet en conséquence
+     *
+     * @param str Chaîne au format "(marker1,marker2,marker3,marker4,marker5)"
+     * @param config Configuration à mettre à jour
+     * @return int 0 en cas de succès, 1 en cas d'erreur
+     */
+    static int fromString(const std::string& str, CopyMarkerConfig& config);
 };
 
 /**
- * @brief Liste des configurations de marqueurs disponibles
+ * @brief Structure contenant les paramètres de style pour la génération de copies
  */
-extern const std::vector<MarkerConfigInfo> marker_configs;
+struct CopyStyleParams {
+    int encoded_marker_size = 15;   // Taille du marqueur encodé
+    int unencoded_marker_size = 3;  // Taille du marqueur encodé
+    int header_marker_size = 7;     // Taille du marqueur d'en-tête
+    int stroke_width = 1;           // Épaisseur du trait des marqueurs
+    int marker_margin = 3;          // Marge entre les marqueurs
+    int grey_level = 0;             // 0 = noir et blanc, 1 = niveaux de gris, 2 = couleur
+    int dpi = 300;                  // Résolution de l'image en DPI
+    bool generating_content = true; // true = contenu généré, false = contenu statique
+
+    CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 1, int mm = 3, int gl = 0, int dpi = 300,
+                    bool gc = true)
+        : encoded_marker_size(ems), unencoded_marker_size(ums), header_marker_size(hms), stroke_width(sw),
+          marker_margin(mm), grey_level(gl), dpi(dpi), generating_content(gc) {
+    }
+};
 
 /**
  * @brief Génère et exporte une copie paramétrée, enregistrée dans le répertoire ./copies
- * 
- * @param encoded_marker_size Taille des marqueurs encodés
- * @param fiducial_marker_size Taille des marqueurs fiduciaires
- * @param stroke_width Largeur du trait des marqueurs
- * @param marker_margin Marge autour des marqueurs
- * @param nb_copies Nombre de copies à générer
- * @param duplex_printing Mode d'impression recto-verso (0: simple face, 1: recto-verso)
- * @param marker_config Configuration des marqueurs
- * @param grey_level Niveau de gris
- * @param header_marker Affiche un marqueur d'entête
+ *
+ * @param style_params Paramètres de style pour la génération
+ * @param marker_config Configuration des marqueurs à utiliser
  * @param filename Nom du fichier de sortie
+ * @param verbose Si true, affiche tous les messages de sortie des commandes
  * @return true si la copie a été générée avec succès
  * @return false si une erreur est survenue
  */
-bool create_copy(int encoded_marker_size, int fiducial_marker_size, int stroke_width, int marker_margin, int nb_copies,
-                 int duplex_printing, int marker_config, int grey_level, int header_marker,
-                 const std::string& filename = "copy");
+bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
+                 const std::string& filename = "copy", bool verbose = false);
 
 #endif

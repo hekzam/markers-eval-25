@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-"./build-cmake/benchmark"
+# Exécute le benchmark en passant tous les arguments reçus
+"./build-cmake/benchmark" "$@"

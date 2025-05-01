@@ -267,6 +267,7 @@ int main(int argc, char const* argv[]) {
     std::string image_max_pepperth = argv[1];
     img = cv::imread(image_max_pepperth);
     cv::Mat calibrated_img = img.clone();
+    
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
     //  identity *= rotate_center(5, img.cols / 2, img.rows / 2);
     // print_mat(identity);
