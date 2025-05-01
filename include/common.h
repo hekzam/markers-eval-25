@@ -10,7 +10,7 @@
 
 using json = nlohmann::json;
 
-enum Corner { TOP_LEFT = 0x00, TOP_RIGHT = 0x01, BOTTOM_LEFT = 0x02, BOTTOM_RIGHT = 0x03 };
+enum Corner { TOP_LEFT = 0x00, TOP_RIGHT = 0x01, BOTTOM_LEFT = 0x02, BOTTOM_RIGHT = 0x03, TOP_CENTER = 0x04 };
 
 enum CornerBF { TOP_LEFT_BF = 0x01, TOP_RIGHT_BF = 0x02, BOTTOM_LEFT_BF = 0x04, BOTTOM_RIGHT_BF = 0x08 };
 
@@ -21,6 +21,7 @@ struct AtomicBox {
     float y;
     float width;
     float height;
+    float stroke_width;
 };
 
 struct Metadata {

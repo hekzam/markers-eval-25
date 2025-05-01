@@ -1,10 +1,7 @@
 #import "../common/global_variables.typ": generating-content
 #import "../common/utils.typ": get-indexes, get-exam-id
-#import "markers/barcode.typ": barcode, HEADER_MARKER_TYPE, CORNER_MARKER_TYPE
-#import "./markers/circle.typ": circle-box
-#import "./markers/svg_marker.typ": gen-svg-box
-#import "./container.typ": gen-box
-#import "./markers/triangle.typ": triangle-box
+#import "./barcode.typ": barcode, HEADER_MARKER_TYPE, CORNER_MARKER_TYPE
+#import "./container.typ": container
 
 // Images pour les marqueurs SVG
 #let AR_1 = image("../assets/4x4_1000-190.svg")
@@ -73,7 +70,6 @@
   barcode(prefix-position, barcode-data, marker-size, type: type, color)
 }
 
-
 #let create-svg-marker(prefix-position, type, marker-size) = {
   
   let svg-image = if type.contains(CUSTOM_TYPE) {
@@ -94,10 +90,13 @@
 
   let position-rotation = get-config(prefix-position).rotation
   assert(svg-image != none, message: "SVG image must be provided")
-  gen-svg-box(
+  set align(bottom)
+  container(
     prefix-position,
-    rotate(position-rotation, svg-image),
-    marker-size
+    marker-size,
+    marker-size,
+    stroke-width: 0mm,
+    inner-content: rotate(position-rotation, svg-image)
   )
 }
 
@@ -111,43 +110,19 @@
   let color = luma(style-params.grey_level)
   let fill-color = if type.contains("outline") { white } else { color }
   let stroke-width = if type.contains("outline") { style-params.stroke_width } else { 0mm }
-  let encoded-marker-size = style-params.encoded_marker_size
-  let unencoded-marker-size = style-params.unencoded_marker_size
+  let enc-marker-size = style-params.encoded_marker_size
+  let un-marker-size = style-params.unencoded_marker_size
 
   if type.contains("circle") {
-    circle-box(
-      prefix-position,
-      unencoded-marker-size,
-      fill-color: fill-color,
-      stroke-width: stroke-width,
-      stroke-color: color)
+    let circle = circle(radius: un-marker-size/2, fill: fill-color, stroke: stroke-width + color)
+    let circle_width = measure(circle).width
+    container(prefix-position, circle_width, circle_width, stroke-width: 0mm, inner-content: circle)
   } else if type.contains("square") {
-    gen-box(
-      prefix-position,
-      unencoded-marker-size,
-      unencoded-marker-size,
-      fill-color: fill-color,
-      stroke-width: stroke-width,
-      stroke-color: color)
-  } else if type.contains("triangle") {
-    triangle-box(
-      prefix-position,
-      unencoded-marker-size,
-      fill-color: fill-color,
-      stroke-width: stroke-width,
-      stroke-color: color)
+    container(prefix-position, un-marker-size, un-marker-size, fill-color: fill-color, stroke-width: stroke-width, stroke-color: color)
   } else if SVG_TYPES.contains(type){
-    create-svg-marker(
-      prefix-position,
-      type,
-      unencoded-marker-size)
+    create-svg-marker(prefix-position, type, un-marker-size)
   } else {
-    create-tiaoma-barcode(
-      prefix-position,
-      type,
-      unencoded-marker-size,
-      encoded-marker-size,
-      color)
+    create-tiaoma-barcode(prefix-position, type, un-marker-size, enc-marker-size, color)
   }
 }
 

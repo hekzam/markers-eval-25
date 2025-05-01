@@ -12,6 +12,7 @@ show_usage() {
   echo "  --dpi N               : DPI (default: 300)"
   echo "  --generating-content BOOL : Generate content in document (1/true or 0/false) (default: 1)"
   echo "  --filename NAME       : Output filename (default: copy)"
+  echo "  --verbose             : Show all command outputs (default: false)"
   echo ""
   echo "Custom marker configuration options:"
   echo "  --tl TYPE       : Marker type for top-left corner"
@@ -21,7 +22,7 @@ show_usage() {
   echo "  --header TYPE         : Marker type for header"
   echo ""
   echo "Marker TYPE format: type[:encoded][:outlined]"
-  echo "  Available types: qrcode, microqr, datamatrix, aztec, pdf417, rmqr, code128, circle, square, triangle, aruco, qreye, cross, custom"
+  echo "  Available types: qrcode, microqr, datamatrix, aztec, pdf417, rmqr, code128, circle, square, aruco, qreye, cross, custom"
   echo "  Example: qrcode:encoded - An encoded QR code"
   echo "  Example: circle:outlined - A circle outline (not filled)"
 }

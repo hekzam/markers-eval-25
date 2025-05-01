@@ -24,7 +24,6 @@ enum class MarkerType {
     BARCODE,
     CIRCLE,
     SQUARE,
-    TRIANGLE,
     ARUCO,
     QR_EYE,
     CROSS,
@@ -141,10 +140,11 @@ struct CopyStyleParams {
  * @param style_params Paramètres de style pour la génération
  * @param marker_config Configuration des marqueurs à utiliser
  * @param filename Nom du fichier de sortie
+ * @param verbose Si true, affiche tous les messages de sortie des commandes
  * @return true si la copie a été générée avec succès
  * @return false si une erreur est survenue
  */
 bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
-                 const std::string& filename = "copy");
+                 const std::string& filename = "copy", bool verbose = false);
 
 #endif
