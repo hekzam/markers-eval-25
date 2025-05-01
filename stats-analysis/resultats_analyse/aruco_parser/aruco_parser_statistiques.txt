@@ -1,0 +1,8 @@
+Statistiques pour le parseur aruco_parser :
+
+Nombre de copies analysées : 14 
+Temps moyen : 16.18571 ms
+Temps médian : 17.3 ms
+Écart-type : 2.81503 ms
+Copie la plus rapide : copy88.png 
+Copie la plus lente : copy77.png 

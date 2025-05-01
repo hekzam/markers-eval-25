@@ -1,0 +1,8 @@
+Statistiques pour le parseur default_parser :
+
+Nombre de copies analysées : 17 
+Temps moyen : 14.60588 ms
+Temps médian : 14 ms
+Écart-type : 3.081491 ms
+Copie la plus rapide : copy96.png 
+Copie la plus lente : copy89.png 
