@@ -75,7 +75,7 @@ std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
  * - Les boîtes utilisateur (user_boxes_per_page), regroupées par numéro de page.
  *
  * @param boxes Vecteur de pointeurs partagés sur les AtomicBox à différencier
- * @param corner_markers Vecteur de pointeurs partagés (de taille 4) où chaque index correspond à un coin
+ * @param corner_markers Vecteur de pointeurs partagés (de taille 5) où chaque index correspond à un coin
  * @param user_boxes_per_page Vecteur de vecteurs de pointeurs partagés qui regroupe les boîtes utilisateur par page
  * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants
  */

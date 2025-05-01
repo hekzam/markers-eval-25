@@ -1,5 +1,5 @@
 #import "@preview/tiaoma:0.2.1"
-#import "../container.typ": gen-box
+#import "./container.typ": container
 
 #let HEADER_MARKER_TYPE = ("rmqr", "code128", "pdf417")
 #let CORNER_MARKER_TYPE = ("qrcode", "microqr", "aztec", "datamatrix")
@@ -31,11 +31,10 @@
     default: tiaoma.qrcode,
   )
 
-  let box_width = if HEADER_MARKER_TYPE.contains(type) { 120mm } else { height }
-  let box_height = if HEADER_MARKER_TYPE.contains(type) { 10mm } else { height }
   let options = (fg-color: color)
 
   let barcode = barcode_fns.at(type)(data, height: height, options: options)
-
-  gen-box(label, box_width, box_height, stroke-width: 0mm, inner-content: barcode)
+  let barcode_width = measure(barcode).width
+  let barcode_height = measure(barcode).height
+  container(label, barcode_width, barcode_height, stroke-width: 0mm, inner-content: barcode)
 }
