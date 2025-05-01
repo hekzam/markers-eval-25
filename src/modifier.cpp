@@ -3,13 +3,14 @@
     #include <cstdlib>
     #include <string.h>
     #include <random>
+    #include <tuple>
     #include "utils/math_utils.h"
 
     int img_depth;
     int seed=0;
     cv::Mat img;
     cv::Mat noisy_img;
-
+    int nb_appl=0;
 
     /**
     * @brief Ajout de bruit poivre et sel
@@ -19,7 +20,35 @@
     * @param bright bright = 0 : Neutre; bright > 0 : Éclaircit; bright < 0 : Assombrit
     *
     */
+    std::optional<std::tuple<int,int>> parse_sp(const std::string& value) {
+        auto comma = value.find(',');
+        if (comma == std::string::npos) return std::nullopt;
+    
+         try {
+            int salt   = std::stoi(value.substr(0, comma));
+            int pepper = std::stoi(value.substr(comma + 1));
+            return std::make_tuple(salt, pepper);
+        } catch (...) {
+            return std::nullopt;
+        }
+    }
 
+    std::optional<std::tuple<int,int,int>> parse_3(const std::string& s) {
+        // On cherche deux virgules
+        size_t p1 = s.find(',');
+        if (p1 == std::string::npos) return std::nullopt;
+        size_t p2 = s.find(',', p1 + 1);
+        if (p2 == std::string::npos) return std::nullopt;
+    
+        try {
+            int nb_spot    = std::stoi(s.substr(0,  p1));
+            int min_radius = std::stoi(s.substr(p1 + 1, p2 - p1 - 1));
+            int max_radius = std::stoi(s.substr(p2 + 1));
+            return std::make_tuple(nb_spot, min_radius, max_radius);
+        } catch (...) {
+            return std::nullopt;
+        }
+    }
 
     void add_salt_pepper_noise(cv::Mat &img, cv::RNG rng, float max_pepper, float max_salt)      //chevauchements
     {   
@@ -75,16 +104,7 @@
         img.convertTo(img, -1, alpha, beta);
     }
 
-    void ajouterTaches(cv::Mat& image, cv::RNG rng, int nombreTaches, int rayonMin, int rayonMax) {
-        for(int i = 0; i < nombreTaches; i++) {
-            cv::Point centre(rng.uniform(rayonMax, image.cols - rayonMax), rng.uniform(rayonMax, image.rows - rayonMax));
-            int rayon = rng.uniform(rayonMin, rayonMax);
-            cv::Scalar color = cv::Scalar(1, 1, 1);
-            cv::circle(image, centre, rayon, color, -1);
-        }
-    }
 
-    
 
     void rotate_img(int deg)
     {
@@ -101,7 +121,6 @@
         cv::Mat affine = (cv::Mat_<float>(2,3) << 1, 0, dx, 0, 1, dy);
         cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR);
     }
-    
 
     void random_exec()
     {
@@ -116,7 +135,7 @@
         add_salt_pepper_noise(img, rng, rng.uniform(0.01,0.13), rng.uniform(0.01,0.13));
         add_gaussian_noise(img, rng, rng.uniform(1.0,5.0), rng.uniform(1.0,5.0));
         contrast_brightness_modifier(img, rng.uniform(-20,20), rng.uniform(-20,20));
-        ajouterTaches(img, rng, rng.uniform(0,8), rng.uniform(4,8), rng.uniform(9,35));
+        //ajouterTaches(img, rng, rng.uniform(0,8), rng.uniform(4,8), rng.uniform(9,35));
     }
 
     void gestion_arg(int argc, char const* argv[])
@@ -130,13 +149,12 @@
             std::cerr << "call -> usage() -> exit()" << std::endl;        
             exit (1);
         }
-        if(argc==2)
-        {
-            random_exec();
-            return;
-        }
-            
-        //std::string poss_opt[]={"-s=", "-g=", "-cb=", "-sp=", "-r=", "-t=", "-nb="};
+        //CAS TTES TRANSFORMATIONS FULL ALEATOIRE
+        // if(argc==2){
+        //     random_exec();
+        //     return;
+        // }
+        //CAS TTES TRANSFORMATIONS SEED ALEATOIRES
         for(int i=2; i<argc; i++)
         {
             std::string arg(argv[i]);
@@ -163,6 +181,9 @@
                 }
             }
         }
+
+        //CAS UNE OU PLUSIEURS TRANSFORMATIONS AVEC PARAM
+        cv::RNG rng(time(0));
         std::map<std::string, std::string> parsed_opts;
         for(int i = 2; i < argc; ++i) {
             std::string arg(argv[i]);
@@ -177,13 +198,59 @@
                 }   
             }
         }
-        auto it = parsed_opts.find("-r=");
-        if (it != parsed_opts.end()) {
-            int angle = std::stof(it->second);  // conversion sans surcoût
-            rotate_img(angle);
-    }
+        
+        if (auto it = parsed_opts.find("-sp="); it != parsed_opts.end()) {
+            if (auto res = parse_sp(it->second)) {
+                // Structured binding pour décomposer le tuple
+                auto [salt, pepper] = *res;
+                add_salt_pepper_noise(img, rng, pepper, salt);
+            } else {
+                std::cerr << "Erreur dans le format de -sp= (attendu: salt, pepper)\n";
+                exit(1);
+            }
+        }
+        if (auto it = parsed_opts.find("-g="); it != parsed_opts.end()) {
+            if (auto res = parse_sp(it->second)) {
+                // Structured binding pour décomposer le tuple
+                auto [offset, dispersion] = *res;
+                add_gaussian_noise(img, rng, offset, dispersion);
+            } else {
+                std::cerr << "Erreur dans le format de -g= (attendu: offset, dispersion)\n";
+                exit(1);
+            }
+            }
+            if (auto it = parsed_opts.find("-cb="); it != parsed_opts.end()) {
+                if (auto res = parse_sp(it->second)) {
+                    // Structured binding pour décomposer le tuple
+                    auto [contrast, bright] = *res;
+                    contrast_brightness_modifier(img, contrast, bright);
+                } else {
+                    std::cerr << "Erreur dans le format de -cb= (attendu: contrast, bright)\n";
+                    exit(1);
+                }
+
+            }
+            
+            if (auto it = parsed_opts.find("-s="); it != parsed_opts.end()) {
+                if (auto res = parse_3(it->second)) {
+                    // Structured binding pour décomposer le tuple
+                    auto [nb_spot, min_radius, max_radius] = *res;
+                    ajouterTaches(img, rng, nb_spot, min_radius, max_radius);
+                } else {
+                    std::cerr << "Erreur dans le format de -s= (attendu: nb spot, min radius, max radius)\n";
+                    exit(1);
+                }
+
+            }
+            auto it = parsed_opts.find("-r=");
+            if (it != parsed_opts.end()) {
+                int angle = std::stof(it->second);  // conversion sans surcoût
+                rotate_img(angle);
+            }
+
         //si seed not in params
     }
+    
     }
 
     
@@ -218,6 +285,6 @@
         cv::imwrite("calibrated_img.png",img);
 
         
-
+        std::cout<<nb_appl<<std::endl;
         return 0;
     }

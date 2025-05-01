@@ -40,4 +40,6 @@ copies/*
 output/*
 tools/pdf_noiser/noisy_copies/*.png
 *.png
-test*
+test
+test.cpp
+app
