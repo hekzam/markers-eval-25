@@ -13,7 +13,7 @@
 std::vector<cv::Vec3f> detect_circles(const cv::Mat& img) {
     std::vector<cv::Vec3f> detected_circles;
 
-    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 5, 50);
+    cv::HoughCircles(img, detected_circles, cv::HOUGH_GRADIENT, 1, img.rows / 8, 300, 50, 5, 80);
 
     return detected_circles;
 }
@@ -22,8 +22,8 @@ std::optional<cv::Mat> circle_parser(const cv::Mat& img,
 #ifdef DEBUG
                                      cv::Mat debug_img,
 #endif
-                                     Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
-    auto barcodes = identify_barcodes(img);
+                                     Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
+    auto barcodes = identify_barcodes(img, (ZXing::BarcodeFormat) flag_barcode);
 
     if (barcodes.empty()) {
         printf("no barcode found\n");
@@ -55,8 +55,8 @@ std::optional<cv::Mat> circle_parser(const cv::Mat& img,
 
     meta = parse_metadata(corner_barcode.content);
 
-    // auto detected_circles = detect_circles(img);
-    std::vector<cv::Vec3f> detected_circles = smaller_parse(img, detect_circles);
+    auto detected_circles = detect_circles(img);
+    // std::vector<cv::Vec3f> detected_circles = smaller_parse(img, detect_circles);
     if (detected_circles.empty()) {
         printf("no circle found\n");
         return {};

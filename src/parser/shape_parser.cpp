@@ -54,8 +54,8 @@ std::optional<cv::Mat> shape_parser(const cv::Mat& img,
 #ifdef DEBUG
                                     cv::Mat debug_img,
 #endif
-                                    Metadata& meta, std::vector<cv::Point2f>& dst_corner_points) {
-    auto barcodes = identify_barcodes(img);
+                                    Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
+    auto barcodes = identify_barcodes(img, (ZXing::BarcodeFormat) flag_barcode);
 
     if (barcodes.empty()) {
         printf("no barcode found\n");

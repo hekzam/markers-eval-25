@@ -35,7 +35,7 @@ struct Parser {
 #ifdef DEBUG
                                      cv::Mat debug_img,
 #endif
-                                     Metadata&, std::vector<cv::Point2f>&);
+                                     Metadata&, std::vector<cv::Point2f>&, int flag_barcode);
 };
 
 #endif
