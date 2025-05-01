@@ -104,7 +104,14 @@
         img.convertTo(img, -1, alpha, beta);
     }
 
-
+    void ajouterTaches(cv::Mat& image, cv::RNG rng, int nombreTaches, int rayonMin, int rayonMax) {
+        for(int i = 0; i < nombreTaches; i++) {
+            cv::Point centre(rng.uniform(rayonMax, image.cols - rayonMax), rng.uniform(rayonMax, image.rows - rayonMax));
+            int rayon = rng.uniform(rayonMin, rayonMax);
+            cv::Scalar color = cv::Scalar(1, 1, 1);
+            cv::circle(image, centre, rayon, color, -1);
+        }
+    }
 
     void rotate_img(int deg)
     {
@@ -135,7 +142,7 @@
         add_salt_pepper_noise(img, rng, rng.uniform(0.01,0.13), rng.uniform(0.01,0.13));
         add_gaussian_noise(img, rng, rng.uniform(1.0,5.0), rng.uniform(1.0,5.0));
         contrast_brightness_modifier(img, rng.uniform(-20,20), rng.uniform(-20,20));
-        //ajouterTaches(img, rng, rng.uniform(0,8), rng.uniform(4,8), rng.uniform(9,35));
+        ajouterTaches(img, rng, rng.uniform(0,8), rng.uniform(4,8), rng.uniform(9,35));
     }
 
     void gestion_arg(int argc, char const* argv[])
@@ -150,10 +157,10 @@
             exit (1);
         }
         //CAS TTES TRANSFORMATIONS FULL ALEATOIRE
-        // if(argc==2){
-        //     random_exec();
-        //     return;
-        // }
+        if(argc==2){
+            random_exec();
+            return;
+        }
         //CAS TTES TRANSFORMATIONS SEED ALEATOIRES
         for(int i=2; i<argc; i++)
         {
