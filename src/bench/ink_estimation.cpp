@@ -101,14 +101,14 @@ static double calculate_marker_area_cm2(const std::shared_ptr<AtomicBox>& marker
     if (marker == nullptr) {
         return 0.0;
     }
-    
-    double width_cm = marker->width*0.1;
-    double height_cm = marker->height*0.1;
+
+    double width_cm = marker->width * 0.1;
+    double height_cm = marker->height * 0.1;
     if (marker->stroke_width > 0) {
-        width_cm += marker->stroke_width/2 * 0.1;
-        height_cm += marker->stroke_width/2 * 0.1;
+        width_cm += marker->stroke_width / 2 * 0.1;
+        height_cm += marker->stroke_width / 2 * 0.1;
     }
-    
+
     return width_cm * height_cm;
 }
 
@@ -117,21 +117,25 @@ static double calculate_marker_area_cm2(const std::shared_ptr<AtomicBox>& marker
  * @param corner_markers Vecteur des marqueurs de coin
  * @return Aire totale des marqueurs de coin en cm²
  */
-static double analyze_corner_markers_area(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers) {
+static double
+analyze_corner_markers_area(const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers) {
     double total_corner_markers_area_cm2 = 0.0;
     std::cout << "\n=== Corner Markers Areas ===" << std::endl;
-    
-    const std::string corner_names[] = {"Top Left", "Top Right", "Bottom Left", "Bottom Right", "Top Center"};
-    
+
+    const std::string corner_names[] = { "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Top Center" };
+
     for (size_t i = 0; i < corner_markers.size(); i++) {
-        double area_cm2 = calculate_marker_area_cm2(corner_markers[i]);
+        if (corner_markers[i].has_value() == false) {
+            continue;
+        }
+        double area_cm2 = calculate_marker_area_cm2(corner_markers[i].value());
         total_corner_markers_area_cm2 += area_cm2;
-        
+
         if (corner_markers[i] != nullptr) {
             std::cout << corner_names[i] << " marker area: " << area_cm2 << " cm²" << std::endl;
         }
     }
-    
+
     std::cout << "Total corner markers area: " << total_corner_markers_area_cm2 << " cm²" << std::endl;
     return total_corner_markers_area_cm2;
 }
@@ -173,23 +177,23 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
     }
 
     analyze_ink_consumption(image_path, dpi, calibration_factor);
-    
+
     std::ifstream atomic_boxes_file("./original_boxes.json");
     if (!atomic_boxes_file.is_open()) {
         throw std::runtime_error("could not open file './original_boxes.json'");
     }
-    
+
     json atomic_boxes_json;
     try {
         atomic_boxes_json = json::parse(atomic_boxes_file);
     } catch (const json::exception& e) {
         throw std::runtime_error(std::string("could not json parse file './original_boxes.json': ") + e.what());
     }
-    
+
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
-    std::vector<std::shared_ptr<AtomicBox>> corner_markers;
+    std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
-    
+
     double total_corner_markers_area_cm2 = analyze_corner_markers_area(corner_markers);
 }

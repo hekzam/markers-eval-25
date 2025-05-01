@@ -104,7 +104,7 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
 
     json atomic_boxes_json = parse_json_file("./original_boxes.json");
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
-    std::vector<std::shared_ptr<AtomicBox>> corner_markers;
+    std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
@@ -180,8 +180,12 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
             }
 
             for (auto box : corner_markers) {
-                draw_box_outline(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 0));
-                draw_box_center(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(0, 255, 0));
+                if (box.has_value() == false) {
+                    continue;
+                }
+                auto marker = box.value();
+                draw_box_outline(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 0));
+                draw_box_center(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(0, 255, 0));
             }
 
             save_image(calibrated_img_col, benchmark_setup.output_dir, output_img_path_fname);

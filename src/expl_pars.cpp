@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     // printf("atomic_boxes: %s\n", atomic_boxes_json.dump(2).c_str());
 
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
-    std::vector<std::shared_ptr<AtomicBox>> corner_markers;
+    std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
     std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
@@ -142,21 +142,24 @@ int main(int argc, char* argv[]) {
         }
 
         for (auto box : corner_markers) {
-            if (box == nullptr) {
+            if (box.has_value() == false) {
                 continue;
             }
-            const std::vector<cv::Point2f> vec_box = { cv::Point2f{ box->x, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y },
-                                                       cv::Point2f{ box->x + box->width, box->y + box->height },
-                                                       cv::Point2f{ box->x, box->y + box->height } };
+            auto marker = box.value();
+            const std::vector<cv::Point2f> vec_box = {
+                cv::Point2f{ marker->x, marker->y }, cv::Point2f{ marker->x + marker->width, marker->y },
+                cv::Point2f{ marker->x + marker->width, marker->y + marker->height },
+                cv::Point2f{ marker->x, marker->y + marker->height }
+            };
             std::vector<cv::Point> raster_box = convert_to_raster(vec_box, src_img_size, dimension);
 
             cv::polylines(calibrated_img_col, raster_box, true, cv::Scalar(255, 0, 0), 2);
 
-            cv::circle(calibrated_img_col,
-                       convert_to_raster({ cv::Point2f{ box->x + box->width / 2, box->y + box->height / 2 } },
-                                         src_img_size, dimension)[0],
-                       3, cv::Scalar(0, 255, 0), -1);
+            cv::circle(
+                calibrated_img_col,
+                convert_to_raster({ cv::Point2f{ marker->x + marker->width / 2, marker->y + marker->height / 2 } },
+                                  src_img_size, dimension)[0],
+                3, cv::Scalar(0, 255, 0), -1);
         }
 
         char* output_img_fname = nullptr;

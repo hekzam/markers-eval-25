@@ -80,7 +80,7 @@ std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
  * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants
  */
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
-                                std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
+                                std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
                                 std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page);
 
 /**
@@ -95,8 +95,9 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
  * @param dst_img_size Taille de l'image destination (largeur, hauteur)
  * @return std::vector<cv::Point2f> Vecteur contenant les points centraux des marqueurs redimensionnés
  */
-std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
-                                                    const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size);
+std::vector<cv::Point2f>
+calculate_center_of_marker(const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
+                           const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size);
 
 /**
  * @brief Redresse une image en appliquant une transformation affine

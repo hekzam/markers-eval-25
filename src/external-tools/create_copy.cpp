@@ -8,20 +8,15 @@
 namespace fs = std::filesystem;
 
 namespace {
-const std::unordered_map<MarkerType, std::string> markerTypeToString = { { MarkerType::QR_CODE, "qrcode" },
-                                                                         { MarkerType::MICRO_QR_CODE, "microqr" },
-                                                                         { MarkerType::DATAMATRIX, "datamatrix" },
-                                                                         { MarkerType::AZTEC, "aztec" },
-                                                                         { MarkerType::PDF417, "pdf417" },
-                                                                         { MarkerType::RMQR, "rmqr" },
-                                                                         { MarkerType::BARCODE, "code128" },
-                                                                         { MarkerType::CIRCLE, "circle" },
-                                                                         { MarkerType::SQUARE, "square" },
-                                                                         { MarkerType::ARUCO, "aruco" },
-                                                                         { MarkerType::QR_EYE, "qreye" },
-                                                                         { MarkerType::CROSS, "cross" },
-                                                                         { MarkerType::CUSTOM, "custom" },
-                                                                         { MarkerType::NONE, "" } };
+const std::unordered_map<MarkerType, std::string> markerTypeToString = {
+    { MarkerType::QR_CODE, "qrcode" },        { MarkerType::MICRO_QR_CODE, "microqr" },
+    { MarkerType::DATAMATRIX, "datamatrix" }, { MarkerType::AZTEC, "aztec" },
+    { MarkerType::PDF417, "pdf417" },         { MarkerType::RMQR, "rmqr" },
+    { MarkerType::BARCODE, "code128" },       { MarkerType::CIRCLE, "circle" },
+    { MarkerType::SQUARE, "square" },         { MarkerType::ARUCO, "aruco" },
+    { MarkerType::QR_EYE, "qreye" },          { MarkerType::CROSS, "cross" },
+    { MarkerType::CUSTOM, "custom" },         { MarkerType::NONE, "" }
+};
 
 const std::unordered_map<std::string, MarkerType> stringToMarkerType = { { "qrcode", MarkerType::QR_CODE },
                                                                          { "microqr", MarkerType::MICRO_QR_CODE },
@@ -171,7 +166,7 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
     fs::create_directories("./copies");
 
     std::string doc = "template.typ";
-    std::string root = ".";
+    std::string root = "..";
     std::string redirect = verbose ? "" : getOutputRedirection();
 
     std::string params = "--input encoded-marker-size=" + std::to_string(style_params.encoded_marker_size) + " " +

@@ -213,7 +213,7 @@ std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
  * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants dans la description JSON.
  */
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
-                                std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
+                                std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
                                 std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page) {
     corner_markers.resize(5);
     user_boxes_per_page.clear();
@@ -266,15 +266,16 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
  * @param dst_img_size Taille de l'image destination (largeur, hauteur).
  * @return std::vector<cv::Point2f> Vecteur contenant les points centraux des marqueurs redimensionnés.
  */
-std::vector<cv::Point2f> calculate_center_of_marker(const std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
-                                                    const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
+std::vector<cv::Point2f>
+calculate_center_of_marker(const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
+                           const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
     std::vector<cv::Point2f> corner_points;
     corner_points.resize(4);
     for (int corner = 0; corner < 4; ++corner) {
-        auto marker = corner_markers[corner];
-        if (marker == nullptr) {
+        if (corner_markers[corner].has_value() == false) {
             continue;
         }
+        auto marker = corner_markers[corner].value();
         const std::vector<cv::Point2f> marker_bounding_box = {
             cv::Point2f{ marker->x, marker->y }, cv::Point2f{ marker->x + marker->width, marker->y },
             cv::Point2f{ marker->x + marker->width, marker->y + marker->height },
@@ -332,6 +333,8 @@ int copy_config_to_flag(const CopyMarkerConfig& copy_marker_config) {
             flag |= (int) ZXing::BarcodeFormat::PDF417;
         else if (marker.type == MarkerType::RMQR)
             flag |= (int) ZXing::BarcodeFormat::RMQRCode;
+        else if (marker.type == MarkerType::BARCODE)
+            flag |= (int) ZXing::BarcodeFormat::Code128;
     }
     return flag;
 }
