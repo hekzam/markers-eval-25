@@ -215,7 +215,7 @@ std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
                                 std::vector<std::shared_ptr<AtomicBox>>& corner_markers,
                                 std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page) {
-    corner_markers.resize(4);
+    corner_markers.resize(5);
     user_boxes_per_page.clear();
 
     if (boxes.empty())
@@ -239,7 +239,8 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
                 corner = BOTTOM_LEFT;
             else if (starts_with(box->id, "hzbr"))
                 corner = BOTTOM_RIGHT;
-
+            else if (starts_with(box->id, "hztc"))
+                corner = TOP_CENTER;
             if (corner != -1) {
                 corner_markers[corner] = box;
                 corner_mask |= (1 << corner);
