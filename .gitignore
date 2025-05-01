@@ -40,3 +40,5 @@ copies/*
 output/*
 tools/pdf_noiser/noisy_copies/*.png
 *.png
+stats-analysis/*.txt
+stats-analysis/analysis_results
