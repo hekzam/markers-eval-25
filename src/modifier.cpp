@@ -105,6 +105,7 @@
     }
 
     void ajouterTaches(cv::Mat& image, cv::RNG rng, int nombreTaches, int rayonMin, int rayonMax) {
+        nb_appl++;
         for(int i = 0; i < nombreTaches; i++) {
             cv::Point centre(rng.uniform(rayonMax, image.cols - rayonMax), rng.uniform(rayonMax, image.rows - rayonMax));
             int rayon = rng.uniform(rayonMin, rayonMax);
