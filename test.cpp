@@ -20,13 +20,15 @@ int main(int argc, char const* argv[])
     pos = arg.find("-seed");
 
     }
-    int seed=time(0);
-    cv::RNG rng = cv::RNG(10);
-    int rd_nb = rng.uniform(0,100);
+    int seed=4;
     
-    std::cout<<rd_nb<<std::endl;
-    rng.next();
-    std::cout<<rng.uniform(0,100)<<std::endl;
+
+    cv::RNG rng = cv::RNG(seed);
+    int max_pepper = rng.uniform(1,5);                      
+    //rng.next();
+    int max_salt = rng.uniform(1,5);
+
+    std::cout<<"maxperpper = "<<max_pepper<<"  max_salt ="<<max_salt<<std::endl;
 
 
     return 0;

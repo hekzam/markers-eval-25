@@ -113,7 +113,8 @@ void ajouterTaches(cv::Mat& image, cv::RNG rng, int nombreTaches, int rayonMin, 
     }
 }
 
-void rotate_img(int deg) {
+void rotate_img(int deg) 
+{
     cv::Mat img_out = img.clone();
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
     identity *= rotate_center(deg, img_out.cols / 2, img_out.rows / 2);
@@ -121,7 +122,8 @@ void rotate_img(int deg) {
     cv::warpAffine(img_out, img, identity, img.size(), cv::INTER_LINEAR);
 }
 
-void translate_img(int dx, int dy) {
+void translate_img(int dx, int dy) 
+{
     cv::Mat img_out = img.clone();
     cv::Mat affine = (cv::Mat_<float>(2, 3) << 1, 0, dx, 0, 1, dy);
     cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR);
@@ -167,6 +169,7 @@ void gestion_arg(int argc, char const* argv[]) {
                     int value = std::stoi(str_seed_val);
                     std::cout << "Valeur de -seed : " << value << std::endl;
                     seed = value;
+                    random_exec();
                 } catch (const std::invalid_argument& e) {
                     std::cerr << "Erreur : valeur non numérique pour -seed : '" << str_seed_val << "'" << std::endl;
                     // usage()
@@ -176,7 +179,7 @@ void gestion_arg(int argc, char const* argv[]) {
                 }
             }
         }
-
+    }
         // CAS UNE OU PLUSIEURS TRANSFORMATIONS AVEC PARAM
         cv::RNG rng(time(0));
         std::map<std::string, std::string> parsed_opts;
@@ -240,10 +243,21 @@ void gestion_arg(int argc, char const* argv[]) {
             int angle = std::stof(it->second); // conversion sans surcoût
             rotate_img(angle);
         }
+        if (auto it = parsed_opts.find("-t="); it != parsed_opts.end()) {
+            if (auto res = parse_sp(it->second)) {
+                // Structured binding pour décomposer le tuple
+                auto [dx, dy] = *res;
+                std::cout<<dx<<"  "<<dy<<std::endl;
+                translate_img(dx, dy);
+            } else {
+                std::cerr << "Erreur dans le format de -t= (attendu: dx, dy)\n";
+                exit(1);
+            }
+        }
 
         // si seed not in params
     }
-}
+
 
 int main(int argc, char const* argv[]) {
     if (argc < 2) {
