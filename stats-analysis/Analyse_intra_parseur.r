@@ -7,7 +7,6 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-library(corrplot)
 library(fs) # Pour la gestion des dossiers
 
 # Liste des parseurs à analyser
@@ -54,13 +53,19 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
   # Créer le chemin du dossier pour ce parseur
   dossier_parseur <- paste0("resultats_analyse/", nom_parseur)
   
-  # Extraire le numéro de copie à partir du nom du fichier
-  donnees$Numero_Copie <- as.numeric(gsub("copy([0-9]+)\\.png", "\\1", donnees$File))
+  # Extraire le numéro de copie original à partir du nom du fichier
+  donnees$Numero_Copie_Original <- as.numeric(gsub("copy([0-9]+)\\.png", "\\1", donnees$File))
   
   # Vérifier si l'extraction a réussi
-  if (any(is.na(donnees$Numero_Copie))) {
+  if (any(is.na(donnees$Numero_Copie_Original))) {
     warning("Attention : Impossible d'extraire certains numéros de copie. Vérifiez les noms de fichiers.")
   }
+  
+  # Réindexer pour obtenir une séquence consécutive pour ce parseur spécifique
+  # Trier d'abord par numéro de copie original
+  donnees <- donnees[order(donnees$Numero_Copie_Original), ]
+  # Créer un nouveau numéro de séquence consécutif (1, 2, 3, ...)
+  donnees$Numero_Copie <- seq_len(nrow(donnees))
   
   # Affichage des premières lignes pour vérification
   cat("Aperçu des données :\n")
@@ -232,38 +237,6 @@ analyser_impact_bruit_parseur <- function(donnees, nom_parseur) {
   return(stats_bruit)
 }
 
-# Fonction pour analyser les corrélations par parseur
-analyser_correlations_parseur <- function(donnees, nom_parseur) {
-  # Créer le chemin du dossier pour ce parseur
-  dossier_parseur <- paste0("resultats_analyse/", nom_parseur)
-  
-  # Analyse de corrélation (uniquement pour les variables numériques pertinentes)
-  vars_to_correlate <- intersect(c("Noise_Level", "Time_ms"), colnames(donnees))
-  vars_to_correlate <- vars_to_correlate[sapply(donnees[vars_to_correlate], is.numeric)]
-  
-  if (length(vars_to_correlate) > 1) {
-    # Matrice de corrélation
-    cor_matrix <- cor(donnees[, vars_to_correlate], use = "pairwise.complete.obs")
-    
-    # Plot de corrélation
-    png(paste0(dossier_parseur, "/", nom_parseur, "_correlation_matrix.png"), width = 800, height = 800)
-    corrplot(cor_matrix, method = "circle", type = "upper", 
-             tl.col = "black", tl.srt = 45, 
-             title = paste("Matrice de corrélation -", nom_parseur))
-    dev.off()
-    
-    if (interactive()) {
-      corrplot(cor_matrix, method = "circle", type = "upper", 
-               tl.col = "black", tl.srt = 45, 
-               title = paste("Matrice de corrélation -", nom_parseur))
-    }
-    
-    return(cor_matrix)
-  }
-  
-  return(NULL)
-}
-
 # Fonction pour analyser les différences entre les parseurs
 analyser_differences_parseurs <- function(donnees_completes) {
   # Créer le dossier pour l'analyse comparative
@@ -383,14 +356,10 @@ analyser_tous_parseurs <- function(chemin_csv) {
       # Analyser l'impact du bruit si applicable
       stats_bruit <- analyser_impact_bruit_parseur(donnees_parseur, parseur)
       
-      # Analyser les corrélations
-      correlations <- analyser_correlations_parseur(donnees_parseur, parseur)
-      
       # Stocker les résultats
       resultats_parseurs[[parseur]] <- list(
         donnees = donnees_analysees,
-        stats_bruit = stats_bruit,
-        correlations = correlations
+        stats_bruit = stats_bruit
       )
     }
   }

@@ -1,8 +1,8 @@
 Statistiques pour le parseur custom_marker_parser :
 
-Nombre de copies analysées : 17 
-Temps moyen : 15.49412 ms
-Temps médian : 16.5 ms
-Écart-type : 3.277474 ms
-Copie la plus rapide : copy18.png 
+Nombre de copies analysées : 15 
+Temps moyen : 43.30067 ms
+Temps médian : 44.308 ms
+Écart-type : 10.91738 ms
+Copie la plus rapide : copy13.png 
 Copie la plus lente : copy15.png 
