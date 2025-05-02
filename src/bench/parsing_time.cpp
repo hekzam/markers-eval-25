@@ -14,6 +14,7 @@
 #include "benchmark.hpp"
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
+#include "external-tools/modifier.h"
 
 /**
  * @brief Dessine un contour autour d'une boîte
@@ -128,6 +129,7 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
 
     for (const auto& entry : all_entries) {
         cv::Mat img = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
+        random_exec(img);
         const cv::Point2f dst_img_size(img.cols, img.rows);
         auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
 
