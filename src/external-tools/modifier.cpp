@@ -6,10 +6,18 @@ void add_salt_pepper_noise(cv::Mat& img, cv::RNG rng, float max_pepper, float ma
     int amount1 = img.rows * img.cols * max_pepper / 100; // /100 pour passer un pourcentage entier en paramètre
     int amount2 = img.rows * img.cols * max_salt / 100;
     for (int counter = 0; counter < amount1; ++counter) {
-        img.at<cv::Vec3b>(rng.uniform(0, img.rows), rng.uniform(0, img.cols)) = cv::Vec3b(0, 0, 0);
+        if (img.channels() == 1) {
+            img.at<uchar>(rng.uniform(0, img.rows), rng.uniform(0, img.cols)) = 0;
+        } else if (img.channels() == 3) {
+            img.at<cv::Vec3b>(rng.uniform(0, img.rows), rng.uniform(0, img.cols)) = cv::Vec3b(0, 0, 0);
+        }
     }
     for (int counter = 0; counter < amount2; ++counter) {
-        img.at<cv::Vec3b>(rng.uniform(0, img.rows), rng.uniform(0, img.cols)) = cv::Vec3b(255, 255, 255);
+        if (img.channels() == 1) {
+            img.at<uchar>(rng.uniform(0, img.rows), rng.uniform(0, img.cols)) = 255;
+        } else if (img.channels() == 3) {
+            img.at<cv::Vec3b>(rng.uniform(0, img.rows), rng.uniform(0, img.cols)) = cv::Vec3b(255, 255, 255);
+        }
     }
 }
 
@@ -87,10 +95,9 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed = 0) {
         rng = cv::RNG(time(0));
 
     // expend image
-    cv::Mat img_out = img.clone();
     int percent = 30;
-    cv::copyMakeBorder(img_out, img_out, percent, percent, percent, percent, cv::BORDER_CONSTANT,
-                       cv::Scalar(255, 255, 255));
+    cv::copyMakeBorder(img, img, percent, percent, percent, percent, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+    cv::Mat img_out = img.clone();
     // rotate_img(img, rng.uniform(-2.0, 2.0));
     // translate_img(img, rng.uniform(-5, 5), rng.uniform(-5, 5));
     modification_matrix = cv::Mat::eye(3, 3, CV_32F);
