@@ -54,6 +54,15 @@ std::vector<DetectedBarcode> get_barcodes(const cv::Mat& img) {
     return identify_barcodes(img);
 }
 
+int nb_corner_found(int found_mask) {
+    int nb_found = 0;
+    for (int i = 0; i < 4; ++i) {
+        if ((1 << i) & found_mask)
+            nb_found++;
+    }
+    return nb_found;
+}
+
 std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
 #ifdef DEBUG
                                      cv::Mat debug_img,
@@ -71,8 +80,8 @@ std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
     std::vector<DetectedBarcode*> corner_barcodes;
     int found_corner_mask = identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
 
-    if (found_corner_mask != (TOP_LEFT_BF | TOP_RIGHT_BF | BOTTOM_LEFT_BF | BOTTOM_RIGHT_BF)) {
-        std::cerr << "not all corner points were found" << std::endl;
+    if (nb_corner_found(found_corner_mask) < 3) {
+        printf("need at least 3 corner barcodes\n");
         return {};
     }
 
