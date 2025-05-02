@@ -79,7 +79,7 @@ void translate_img(cv::Mat& img, int dx, int dy) {
     cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
 }
 
-void random_exec(cv::Mat& img, int seed = 0) {
+void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed = 0) {
     cv::RNG rng;
     if (seed)
         rng = cv::RNG(seed);
@@ -91,8 +91,14 @@ void random_exec(cv::Mat& img, int seed = 0) {
     int percent = 30;
     cv::copyMakeBorder(img_out, img_out, percent, percent, percent, percent, cv::BORDER_CONSTANT,
                        cv::Scalar(255, 255, 255));
-    rotate_img(img, rng.uniform(-2.0, 2.0));
-    translate_img(img, rng.uniform(-5, 5), rng.uniform(-5, 5));
+    // rotate_img(img, rng.uniform(-2.0, 2.0));
+    // translate_img(img, rng.uniform(-5, 5), rng.uniform(-5, 5));
+    modification_matrix = cv::Mat::eye(3, 3, CV_32F);
+    modification_matrix *= rotate_center(rng.uniform(-2.0, 2.0), img_out.cols / 2, img_out.rows / 2);
+    modification_matrix *= translate(rng.uniform(-5, 5), rng.uniform(-5, 5));
+    modification_matrix = modification_matrix(cv::Rect(0, 0, 3, 2));
+    cv::warpAffine(img_out, img, modification_matrix, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT,
+                   cv::Scalar(255, 255, 255));
     add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
     add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));
     contrast_brightness_modifier(img, rng.uniform(-20, 20), rng.uniform(-20, 20));

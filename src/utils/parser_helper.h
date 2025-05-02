@@ -19,11 +19,6 @@
 #endif
 
 /**
- * @brief Types de parseurs disponibles pour l'analyse des marqueurs dans l'image
- */
-enum class ParserType { ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, EMPTY };
-
-/**
  * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
  *
  * @param marker_config Configuration des marqueurs utilisés

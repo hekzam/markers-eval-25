@@ -339,29 +339,6 @@ int copy_config_to_flag(const CopyMarkerConfig& copy_marker_config) {
     return flag;
 }
 
-std::string parser_type_to_string(ParserType parser_type) {
-    switch (parser_type) {
-        case ParserType::ARUCO:
-            return "ARUCO";
-        case ParserType::CIRCLE:
-            return "CIRCLE";
-        case ParserType::QRCODE:
-            return "QRCODE";
-        case ParserType::CUSTOM_MARKER:
-            return "CUSTOM_MARKER";
-        case ParserType::SHAPE:
-            return "SHAPE";
-        case ParserType::CENTER_MARKER_PARSER:
-            return "CENTER_MARKER_PARSER";
-        case ParserType::DEFAULT_PARSER:
-            return "DEFAULT_PARSER";
-        case ParserType::EMPTY:
-            return "EMPTY";
-        default:
-            return "UNKNOWN";
-    }
-}
-
 std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,
 #ifdef DEBUG
                                   cv::Mat debug_img,

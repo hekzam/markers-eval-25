@@ -114,6 +114,11 @@ struct CopyMarkerConfig {
     static int fromString(const std::string& str, CopyMarkerConfig& config);
 };
 
+static std::ostream& operator<<(std::ostream& outs, const CopyMarkerConfig& config) {
+    outs << config.toString();
+    return outs;
+}
+
 /**
  * @brief Structure contenant les paramètres de style pour la génération de copies
  */

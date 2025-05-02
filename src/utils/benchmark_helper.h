@@ -16,7 +16,8 @@
 #include <functional>
 #include <common.h>
 #include "../external-tools/create_copy.h"
-#include "../utils/cli_helper.h"
+#include "utils/cli_helper.h"
+#include "utils/csv_utils.h"
 
 /**
  * @brief Sauvegarde une image dans le répertoire de sortie
@@ -44,7 +45,7 @@ json parse_json_file(const std::string& filepath);
  */
 bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
                      const CopyMarkerConfig& marker_config,
-                     std::optional<std::reference_wrapper<std::ofstream>> benchmark_csv = std::nullopt);
+                     std::optional<Csv<std::string, float, int, CopyMarkerConfig>>& benchmark_csv);
 
 /**
  * @brief Structure contenant les informations sur les répertoires et le fichier CSV de benchmark
@@ -53,7 +54,6 @@ struct BenchmarkSetup {
     std::filesystem::path output_dir;
     std::filesystem::path subimg_output_dir;
     std::filesystem::path csv_output_dir;
-    std::ofstream benchmark_csv;
 };
 
 /**
@@ -63,7 +63,7 @@ struct BenchmarkSetup {
  * @param create_subimg_dir Indique s'il faut créer un sous-répertoire "subimg"
  * @return Structure BenchmarkSetup contenant les chemins et le flux CSV ouvert
  */
-BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir,
-                                             bool include_success_column = false, bool create_subimg_dir = false);
+BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column = false,
+                                             bool create_subimg_dir = false);
 
 #endif

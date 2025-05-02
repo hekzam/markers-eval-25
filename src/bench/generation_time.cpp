@@ -12,6 +12,7 @@
 #include "utils/benchmark_helper.h"
 #include "utils/json_helper.h"
 #include "generation_time.h"
+#include "utils/csv_utils.h"
 
 /**
  * @brief Vérifie et extrait les paramètres de configuration
@@ -57,11 +58,11 @@ void generation_benchmark(const std::unordered_map<std::string, Config>& config)
     style_params.dpi = dpi;
 
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", false);
-    std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
+    Csv<std::string, float, int, CopyMarkerConfig> benchmark_csv(
+        benchmark_setup.csv_output_dir / "benchmark_results.csv", { "File", "Time (ms)", "Success", "Config" });
 
-    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, benchmark_csv);
+    std::optional<Csv<std::string, float, int, CopyMarkerConfig>> optional_benchmark_csv =
+        std::make_optional(benchmark_csv);
 
-    if (benchmark_csv.is_open()) {
-        benchmark_csv.close();
-    }
+    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, optional_benchmark_csv);
 }

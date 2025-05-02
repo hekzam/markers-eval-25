@@ -14,6 +14,7 @@
 #include "benchmark.hpp"
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
+#include "utils/csv_utils.h"
 #include "external-tools/modifier.h"
 
 /**
@@ -99,9 +100,12 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
     style_params.dpi = dpi;
 
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true);
-    std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
+    Csv<std::string, float, int, std::string> Benchmark_csv(benchmark_setup.csv_output_dir / "benchmark_results.csv",
+                                                            { "File", "Time (ms)", "Success", "Parser" });
 
-    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config);
+    std::optional<Csv<std::string, float, int, CopyMarkerConfig>> copies_csv = std::nullopt;
+
+    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, copies_csv);
 
     json atomic_boxes_json = parse_json_file("./original_boxes.json");
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
@@ -129,7 +133,8 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
 
     for (const auto& entry : all_entries) {
         cv::Mat img = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
-        random_exec(img);
+        cv::Mat mat;
+        random_exec(img, mat);
         const cv::Point2f dst_img_size(img.cols, img.rows);
         auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
 
@@ -155,13 +160,15 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
 
             std::cout << "  Result: " << (affine_transform.has_value() ? "Success" : "Failed") << std::endl;
         } else {
-            BenchmarkGuardSuccess benchmark_guard(entry.path().filename().string(), &benchmark_csv);
+            BenchmarkGuard benchmark_guard(entry.path().filename().string());
             affine_transform = run_parser(selected_parser, img,
 #ifdef DEBUG
                                           debug_img,
 #endif
                                           meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
-            benchmark_guard.setSuccess(affine_transform.has_value());
+            float time = benchmark_guard.end();
+            Benchmark_csv.add_row({ entry.path().filename().string(), time, affine_transform.has_value(),
+                                    parser_type_to_string(selected_parser) });
         }
 
         if (!affine_transform.has_value()) {
@@ -200,7 +207,4 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
     }
     std::cout << "Benchmark completed with " << warmup_iterations << " warmup iterations and "
               << (all_entries.size() - warmup_iterations) << " measured iterations." << std::endl;
-    if (benchmark_csv.is_open()) {
-        benchmark_csv.close();
-    }
 }

@@ -56,7 +56,8 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     }
     // CAS TTES TRANSFORMATIONS FULL ALEATOIRE
     if (argc == 2) {
-        random_exec(img);
+        cv::Mat mat;
+        random_exec(img, mat);
         return;
     }
     // CAS TTES TRANSFORMATIONS SEED ALEATOIRES
@@ -72,7 +73,8 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
                     int value = std::stoi(str_seed_val);
                     std::cout << "Valeur de -seed : " << value << std::endl;
                     int seed = value;
-                    random_exec(img, seed);
+                    cv::Mat mat;
+                    random_exec(img, mat, seed);
                 } catch (const std::invalid_argument& e) {
                     std::cerr << "Erreur : valeur non numérique pour -seed : '" << str_seed_val << "'" << std::endl;
                     // usage()

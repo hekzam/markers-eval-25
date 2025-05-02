@@ -38,4 +38,32 @@ struct Parser {
                                      Metadata&, std::vector<cv::Point2f>&, int flag_barcode);
 };
 
+/**
+ * @brief Types de parseurs disponibles pour l'analyse des marqueurs dans l'image
+ */
+enum class ParserType { ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, EMPTY };
+
+static std::string parser_type_to_string(ParserType parser_type) {
+    switch (parser_type) {
+        case ParserType::ARUCO:
+            return "ARUCO";
+        case ParserType::CIRCLE:
+            return "CIRCLE";
+        case ParserType::QRCODE:
+            return "QRCODE";
+        case ParserType::CUSTOM_MARKER:
+            return "CUSTOM_MARKER";
+        case ParserType::SHAPE:
+            return "SHAPE";
+        case ParserType::CENTER_MARKER_PARSER:
+            return "CENTER_MARKER_PARSER";
+        case ParserType::DEFAULT_PARSER:
+            return "DEFAULT_PARSER";
+        case ParserType::EMPTY:
+            return "EMPTY";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 #endif
