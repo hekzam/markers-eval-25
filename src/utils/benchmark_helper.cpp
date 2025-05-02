@@ -43,10 +43,9 @@ json parse_json_file(const std::string& filepath) {
 }
 
 bool generate_single_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
-                          const std::string& copy_name,
-                          std::optional<Csv<std::string, float, int, CopyMarkerConfig>>& benchmark_csv) {
+                          const std::string& copy_name, Csv<std::string, float, int, CopyMarkerConfig>* benchmark_csv) {
     bool success = false;
-    if (benchmark_csv.has_value()) {
+    if (benchmark_csv != nullptr) {
         BenchmarkGuard benchmark_guard(copy_name);
         success = create_copy(style_params, marker_config, copy_name);
         float time = benchmark_guard.end();
@@ -66,7 +65,7 @@ bool generate_single_copy(const CopyStyleParams& style_params, const CopyMarkerC
 
 bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
                      const CopyMarkerConfig& marker_config,
-                     std::optional<Csv<std::string, float, int, CopyMarkerConfig>>& benchmark_csv) {
+                     Csv<std::string, float, int, CopyMarkerConfig>* benchmark_csv) {
 
     std::filesystem::path copies_dir = "copies";
     if (std::filesystem::exists(copies_dir)) {
@@ -90,17 +89,17 @@ bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams
         std::ostringstream copy_name;
         copy_name << "copy" << std::setw(2) << std::setfill('0') << i;
 
-        if (benchmark_csv.has_value() && is_warmup) {
+        if (benchmark_csv != nullptr && is_warmup) {
             std::cout << "Warmup iteration " << i << "/" << warmup_iterations << " generating: " << copy_name.str()
                       << std::endl;
-        } else if (benchmark_csv.has_value()) {
+        } else if (benchmark_csv != nullptr) {
             std::cout << "Benchmark iteration " << (i - warmup_iterations) << "/" << nb_copies
                       << " generating: " << copy_name.str() << std::endl;
         }
 
-        bool should_measure = benchmark_csv.has_value() && !is_warmup;
+        bool should_measure = benchmark_csv != nullptr && !is_warmup;
         if (!should_measure) {
-            benchmark_csv = std::nullopt;
+            benchmark_csv = nullptr;
         }
         bool success = generate_single_copy(style_params, marker_config, copy_name.str(), benchmark_csv);
         if (!success) {

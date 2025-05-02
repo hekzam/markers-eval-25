@@ -61,8 +61,5 @@ void generation_benchmark(const std::unordered_map<std::string, Config>& config)
     Csv<std::string, float, int, CopyMarkerConfig> benchmark_csv(
         benchmark_setup.csv_output_dir / "benchmark_results.csv", { "File", "Time (ms)", "Success", "Config" });
 
-    std::optional<Csv<std::string, float, int, CopyMarkerConfig>> optional_benchmark_csv =
-        std::make_optional(benchmark_csv);
-
-    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, optional_benchmark_csv);
+    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, &benchmark_csv);
 }

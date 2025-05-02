@@ -103,9 +103,7 @@ void parsing_benchmark(const std::unordered_map<std::string, Config>& config) {
     Csv<std::string, float, int, std::string> Benchmark_csv(benchmark_setup.csv_output_dir / "benchmark_results.csv",
                                                             { "File", "Time (ms)", "Success", "Parser" });
 
-    std::optional<Csv<std::string, float, int, CopyMarkerConfig>> copies_csv = std::nullopt;
-
-    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, copies_csv);
+    generate_copies(nb_copies, warmup_iterations, style_params, copy_marker_config, nullptr);
 
     json atomic_boxes_json = parse_json_file("./original_boxes.json");
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);

@@ -45,7 +45,7 @@ json parse_json_file(const std::string& filepath);
  */
 bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
                      const CopyMarkerConfig& marker_config,
-                     std::optional<Csv<std::string, float, int, CopyMarkerConfig>>& benchmark_csv);
+                     Csv<std::string, float, int, CopyMarkerConfig>* benchmark_csv);
 
 /**
  * @brief Structure contenant les informations sur les répertoires et le fichier CSV de benchmark
