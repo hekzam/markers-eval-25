@@ -64,18 +64,19 @@ void add_ink_stain(cv::Mat& image, cv::RNG rng, int nombreTaches, int rayonMin, 
     }
 }
 
-void rotate_img(cv::Mat& img, int deg) {
+void rotate_img(cv::Mat& img, float deg) {
     cv::Mat img_out = img.clone();
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
     identity *= rotate_center(deg, img_out.cols / 2, img_out.rows / 2);
     identity = identity(cv::Rect(0, 0, 3, 2));
-    cv::warpAffine(img_out, img, identity, img.size(), cv::INTER_LINEAR);
+    cv::warpAffine(img_out, img, identity, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT,
+                   cv::Scalar(255, 255, 255));
 }
 
 void translate_img(cv::Mat& img, int dx, int dy) {
     cv::Mat img_out = img.clone();
     cv::Mat affine = (cv::Mat_<float>(2, 3) << 1, 0, dx, 0, 1, dy);
-    cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR);
+    cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
 }
 
 void random_exec(cv::Mat& img, int seed = 0) {
@@ -85,7 +86,12 @@ void random_exec(cv::Mat& img, int seed = 0) {
     else
         rng = cv::RNG(time(0));
 
-    rotate_img(img, rng.uniform(-5, 5));
+    // expend image
+    cv::Mat img_out = img.clone();
+    int percent = 30;
+    cv::copyMakeBorder(img_out, img_out, percent, percent, percent, percent, cv::BORDER_CONSTANT,
+                       cv::Scalar(255, 255, 255));
+    rotate_img(img, rng.uniform(-2.0, 2.0));
     translate_img(img, rng.uniform(-5, 5), rng.uniform(-5, 5));
     add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
     add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));

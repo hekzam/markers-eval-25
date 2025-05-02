@@ -67,7 +67,7 @@ file(GLOB PARSER_SRC src/parser/*.cpp)
 file(GLOB BENCHMARK_SRC src/bench/*.cpp)
 
 # add debug definitions
-if(CMAKE_BUILD_TYPE MATCHES Debug)
+if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
     add_definitions(-DDEBUG)
 endif()
 

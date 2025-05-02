@@ -143,7 +143,7 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     }
     auto it = parsed_opts.find("-r=");
     if (it != parsed_opts.end()) {
-        int angle = std::stof(it->second); // conversion sans surcoût
+        float angle = std::stof(it->second); // conversion sans surcoût
         rotate_img(img, angle);
     }
     if (auto it = parsed_opts.find("-t="); it != parsed_opts.end()) {
