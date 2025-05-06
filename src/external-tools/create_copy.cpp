@@ -120,8 +120,8 @@ std::string CopyMarkerConfig::toString() const {
         return m.toString();
     };
 
-    return "(" + formatMarker(top_left) + "," + formatMarker(top_right) + "," + formatMarker(bottom_left) + "," +
-           formatMarker(bottom_right) + "," + formatMarker(header) + ")";
+    return "(" + formatMarker(top_left) + " | " + formatMarker(top_right) + " | " + formatMarker(bottom_left) + " | " +
+           formatMarker(bottom_right) + " | " + formatMarker(header) + ")";
 }
 
 int CopyMarkerConfig::fromString(const std::string& str, CopyMarkerConfig& config) {
