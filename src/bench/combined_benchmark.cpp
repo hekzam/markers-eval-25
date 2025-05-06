@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <tuple>
 #include <chrono>
+#include <random>
 
 #include <common.h>
 
@@ -224,10 +225,16 @@ void warmup_copy(int warmup_iterations, const CopyStyleParams& style_params,
 std::vector<CopyInfo> bench_copy(int nb_copies, const CopyStyleParams& style_params,
                                  const CopyMarkerConfig& copy_marker_config) {
     std::vector<CopyInfo> generated_copies;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(1000, 9999);
+
     for (int i = 1; i <= nb_copies; i++) {
         std::cout << "Generating copy " << i << "/" << nb_copies << "..." << std::endl;
 
-        std::string copy_name = "copy" + std::to_string(i);
+        int random_suffix = dist(gen);
+        std::string copy_name = "copy-" + std::to_string(i) + "-" + std::to_string(random_suffix);
         std::string filename = copy_name + ".png";
 
         auto create_copy_lambda = [&]() { create_copy(style_params, copy_marker_config, copy_name, false); };
@@ -370,11 +377,25 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
     style_params.grey_level = grey_level;
     style_params.dpi = dpi;
 
-    BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true);
+    CsvMode csv_mode = CsvMode::OVERWRITE;
+    if (config.find("csv-mode") != config.end()) {
+        std::string mode_str = std::get<std::string>(config.at("csv-mode").value);
+        if (mode_str == "append") {
+            csv_mode = CsvMode::APPEND;
+            std::cout << "CSV Mode: Appending to existing CSV file if present" << std::endl;
+        } else {
+            csv_mode = CsvMode::OVERWRITE;
+            std::cout << "CSV Mode: Overwriting existing CSV file if present" << std::endl;
+        }
+    }
+
+    BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true, csv_mode);
+
     Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double> benchmark_csv(
         benchmark_setup.csv_output_dir / "benchmark_results.csv",
         { "File", "Generation_Time_ms", "Parsing_Time_ms", "Parsing_Success", "Parser_Type", "Copy_Config",
-          "Precision_Error_px" });
+          "Precision_Error_px" },
+        csv_mode);
 
     std::cout << "ÉTAPE 1: Génération des copies..." << std::endl;
 

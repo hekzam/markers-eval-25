@@ -40,7 +40,10 @@ std::vector<std::pair<std::string, Config>> default_config = {
       { "Parser type",
         "The type of parser to use (ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, "
         "EMPTY)",
-        std::string("QRCODE") } }
+        std::string("QRCODE") } },
+    { "csv-mode",
+      { "CSV Mode", "How to handle existing CSV files: 'append' to add data or 'overwrite' to delete and recreate",
+        std::string("overwrite") } }
 };
 
 /**

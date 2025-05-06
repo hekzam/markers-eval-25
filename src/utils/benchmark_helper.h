@@ -50,10 +50,10 @@ struct BenchmarkSetup {
  * @param output_dir Répertoire de sortie pour les résultats
  * @param include_success_column Indique si la colonne "Success" doit être incluse dans l'en-tête CSV
  * @param create_subimg_dir Indique s'il faut créer un sous-répertoire "subimg"
- * @param write_header Indique si l'en-tête par défaut doit être écrit dans le fichier CSV
+ * @param csv_mode Mode de gestion des fichiers CSV (append ou overwrite)
  * @return Structure BenchmarkSetup contenant les chemins et le flux CSV ouvert
  */
 BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column = false,
-                                             bool create_subimg_dir = false);
+                                             bool create_subimg_dir = false, CsvMode csv_mode = CsvMode::OVERWRITE);
 
 #endif
