@@ -15,9 +15,8 @@
 #include <common.h>
 
 #include "utils/cli_helper.h"
-#include "bench/parsing_time.h"
-#include "bench/generation_time.h"
 #include "bench/ink_estimation.h"
+#include "bench/combined_benchmark.h"
 #include "external-tools/create_copy.h"
 
 /**
@@ -36,7 +35,8 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "unencoded-marker-size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
     { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
-    { "dpi", { "DPI", "The resolution in dots per inch", 300 } }
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
+    { "parser-type", { "Parser type", "The type of parser to use (ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, EMPTY)", std::string("QRCODE") } }
 };
 
 /**
@@ -58,9 +58,8 @@ struct BenchmarkConfig {
  * (nom complet, fonction d'exécution, configuration par défaut).
  */
 std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
-    { "parsing-time", { "Parsing time benchmark", parsing_benchmark, default_config } },
-    { "generation-time", { "Generation time benchmark", generation_benchmark, default_config } },
-    { "ink-estimation", { "Ink consumption estimation benchmark", ink_estimation_benchmark, ink_estimation_config } }
+    { "ink-estimation", { "Ink consumption estimation benchmark", ink_estimation_benchmark, ink_estimation_config } },
+    { "combined", { "Combined generation and parsing benchmark", combined_benchmark, default_config } }
 };
 
 /**
