@@ -19,6 +19,11 @@
 #include "combined_benchmark.h"
 #include <modifier.h>
 
+struct CopyInfo {
+    std::string filename;
+    double generation_time;
+};
+
 /**
  * @brief Dessine un contour autour d'une boîte
  *
@@ -104,15 +109,30 @@ std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& src_im
  * @return double Erreur moyenne en pixels
  */
 double calculate_precision_error(const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size,
-                                 const cv::Mat& transform_matrix, const cv::Mat& rectification_transform) {
+                                 const cv::Mat& transform_matrix, const cv::Mat& rectification_transform,
+                                 float margin) {
     std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(src_img_size, dst_img_size);
+
+    print_mat(transform_matrix);
+    print_mat(rectification_transform);
 
     std::vector<cv::Point2f> transformed_corner = original_corners;
     cv::transform(transformed_corner, transformed_corner, transform_matrix);
 
     cv::transform(transformed_corner, transformed_corner, rectification_transform);
 
-    // 5. Calculer la distance entre les coins après rotation et ceux attendus par le parseur
+    original_corners[0].x -= margin;
+    original_corners[0].y -= margin;
+
+    original_corners[1].x += margin;
+    original_corners[1].y -= margin;
+
+    original_corners[2].x -= margin;
+    original_corners[2].y += margin;
+
+    original_corners[3].x += margin;
+    original_corners[3].y += margin;
+
     std::vector<double> distances;
     double total_distance = 0.0;
 
@@ -135,25 +155,6 @@ double calculate_precision_error(const cv::Point2f& src_img_size, const cv::Poin
     }
 
     return -1.0; // Valeur d'erreur en cas d'absence de coins
-}
-
-/**
- * @brief Applique une rotation à l'image en utilisant la matrice de rotation calculée
- *
- * @param img Image à transformer
- * @param rotation_matrix Matrice de rotation à appliquer
- * @param margin Taille de la marge (non utilisée, conservée pour compatibilité API)
- * @return cv::Mat Image transformée avec le même ratio que l'original
- */
-cv::Mat apply_rotation_to_image(const cv::Mat& img, const cv::Mat& rotation_matrix, int margin) {
-    // Dimensions de l'image originale
-    cv::Size img_size = img.size();
-
-    // Appliquer la transformation
-    cv::Mat rotated_img;
-    cv::warpAffine(img, rotated_img, rotation_matrix, img_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(255));
-
-    return rotated_img;
 }
 
 /**
@@ -204,6 +205,160 @@ validate_parameters_combined(const std::unordered_map<std::string, Config>& conf
     }
 }
 
+void warmup_copy(int warmup_iterations, const CopyStyleParams& style_params,
+                 const CopyMarkerConfig& copy_marker_config) {
+    if (warmup_iterations > 0) {
+        std::cout << "Performing " << warmup_iterations << " warm-up iterations..." << std::endl;
+    } else {
+        std::cout << "No warm-up iterations requested." << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < warmup_iterations; i++) {
+        std::string warmup_copy_name = "warmup" + std::to_string(i + 1);
+        create_copy(style_params, copy_marker_config, warmup_copy_name, false);
+        std::cout << "  Warmup iteration " << (i + 1) << "/" << warmup_iterations << " completed" << std::endl;
+    }
+}
+
+std::vector<CopyInfo> bench_copy(int nb_copies, const CopyStyleParams& style_params,
+                                 const CopyMarkerConfig& copy_marker_config) {
+    std::vector<CopyInfo> generated_copies;
+    for (int i = 1; i <= nb_copies; i++) {
+        std::cout << "Generating copy " << i << "/" << nb_copies << "..." << std::endl;
+
+        std::string copy_name = "copy" + std::to_string(i);
+        std::string filename = copy_name + ".png";
+
+        auto create_copy_lambda = [&]() { create_copy(style_params, copy_marker_config, copy_name, false); };
+
+        double milliseconds = Benchmark::measure("  Generation time", create_copy_lambda);
+
+        generated_copies.push_back({ filename, milliseconds });
+    }
+    return generated_copies;
+}
+
+void warmup_parsing(int warmup_iterations, const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
+                    const cv::Point2f& src_img_size, ParserType selected_parser,
+                    const CopyMarkerConfig& copy_marker_config) {
+    if (warmup_iterations > 0) {
+        std::cout << "\nParsing warmup iterations..." << std::endl;
+    } else {
+        std::cout << "No warmup iterations requested." << std::endl;
+        return;
+    }
+    for (int i = 0; i < warmup_iterations; i++) {
+        std::string warmup_filename = "warmup" + std::to_string(i + 1) + ".png";
+        std::cout << "Parsing warmup copy: " << warmup_filename << "..." << std::endl;
+
+        cv::Mat img = cv::imread("./copies/" + warmup_filename, cv::IMREAD_GRAYSCALE);
+        if (!img.data) {
+            std::cerr << "Error: Could not read warmup image: " << warmup_filename << std::endl;
+            continue;
+        }
+
+        const cv::Point2f dst_img_size(img.cols, img.rows);
+        auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
+        Metadata meta = { 0, 1, "" };
+
+        std::optional<cv::Mat> transform = run_parser(selected_parser, img,
+#ifdef DEBUG
+                                                      cv::Mat(),
+#endif
+                                                      meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
+    }
+}
+
+void bench_parsing(std::vector<CopyInfo>& generated_copies,
+                   const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
+                   const cv::Point2f& src_img_size, ParserType selected_parser,
+                   const CopyMarkerConfig& copy_marker_config,
+                   const std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page,
+                   Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double>& benchmark_csv,
+                   std::string output_dir) {
+    for (const auto& copy_info : generated_copies) {
+        std::cout << "Parsing copy: " << copy_info.filename << "..." << std::endl;
+
+        cv::Mat img = cv::imread("./copies/" + copy_info.filename, cv::IMREAD_GRAYSCALE);
+        if (!img.data) {
+            std::cerr << "Error: Could not read generated image: " << copy_info.filename << std::endl;
+            benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
+                                    parser_type_to_string(selected_parser), copy_marker_config, -1.0 });
+            continue;
+        }
+
+        const cv::Point2f original_img_size(img.cols, img.rows);
+
+        cv::Mat mat;
+        random_exec(img, mat);
+
+        std::string modified_filename = "./copies/" + copy_info.filename;
+        cv::imwrite(modified_filename, img);
+        std::cout << "  Saved modified image: " << modified_filename << std::endl;
+
+#ifdef DEBUG
+        cv::Mat debug_img;
+        cv::cvtColor(img, debug_img, cv::COLOR_GRAY2BGR);
+#endif
+
+        const cv::Point2f dst_img_size(img.cols, img.rows);
+        auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
+        Metadata meta = { 0, 1, "" };
+
+        std::optional<cv::Mat> affine_transform;
+
+        auto parse_lambda = [&]() {
+            affine_transform = run_parser(selected_parser, img,
+#ifdef DEBUG
+                                          debug_img,
+#endif
+                                          meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
+        };
+
+        double parsing_milliseconds = Benchmark::measure("  Parsing time", parse_lambda);
+
+        bool parsing_success = affine_transform.has_value();
+        std::cout << "  Success: " << (parsing_success ? "Yes" : "No") << std::endl;
+
+        std::filesystem::path output_img_path_fname = std::filesystem::path(copy_info.filename);
+
+#ifdef DEBUG
+        save_debug_img(debug_img, output_dir, output_img_path_fname);
+#endif
+
+        double precision_error = -1.0; // -1.0 pour indiquer une erreur
+        if (parsing_success) {
+            auto calibrated_img_col = redress_image(img, affine_transform.value());
+
+            precision_error = calculate_precision_error(src_img_size, dst_img_size, mat, affine_transform.value(),
+                                                        MARGIN_COPY_MODIFIED);
+            std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_error << " pixels"
+                      << std::endl;
+
+            for (auto box : user_boxes_per_page[meta.page - 1]) {
+                draw_box_outline(box, calibrated_img_col, src_img_size, dst_img_size, cv::Scalar(255, 0, 255));
+            }
+
+            for (auto box : corner_markers) {
+                if (!box.has_value()) {
+                    continue;
+                }
+                auto marker = box.value();
+                draw_box_outline(marker, calibrated_img_col, src_img_size, dst_img_size, cv::Scalar(255, 0, 0));
+                draw_box_center(marker, calibrated_img_col, src_img_size, dst_img_size, cv::Scalar(0, 255, 0));
+            }
+
+            save_image(calibrated_img_col, output_dir, output_img_path_fname);
+        }
+
+        // Écrire les résultats dans le CSV
+        benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, parsing_milliseconds,
+                                parsing_success ? 1 : 0, parser_type_to_string(selected_parser), copy_marker_config,
+                                precision_error });
+    }
+}
+
 void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
     auto [warmup_iterations, nb_copies, encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi,
           copy_marker_config, selected_parser] = validate_parameters_combined(config);
@@ -215,61 +370,19 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
     style_params.grey_level = grey_level;
     style_params.dpi = dpi;
 
-    // Préparation des répertoires et du fichier CSV
-    BenchmarkSetup benchmark_setup = prepare_benchmark_directories(
-        "./output", true, true, false); // Le dernier paramètre est mis à false pour ne pas écrire l'en-tête par défaut
+    BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true);
     Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double> benchmark_csv(
         benchmark_setup.csv_output_dir / "benchmark_results.csv",
         { "File", "Generation_Time_ms", "Parsing_Time_ms", "Parsing_Success", "Parser_Type", "Copy_Config",
           "Precision_Error_px" });
 
-    // Structure pour stocker les informations de génération des copies
-    struct CopyInfo {
-        std::string filename;
-        double generation_time;
-    };
-
-    std::vector<CopyInfo> generated_copies;
-
-    // ÉTAPE 1: Générer toutes les copies et enregistrer le temps de génération
     std::cout << "ÉTAPE 1: Génération des copies..." << std::endl;
 
-    // Nettoyer le répertoire des copies avant de commencer
-    std::filesystem::path copies_dir = "./copies";
-    if (std::filesystem::exists(copies_dir)) {
-        std::cout << "Cleaning existing copies directory..." << std::endl;
-        std::filesystem::remove_all(copies_dir);
-    }
-    std::filesystem::create_directories(copies_dir);
+    warmup_copy(warmup_iterations, style_params, copy_marker_config);
 
-    // Réaliser le warmup si nécessaire
-    if (warmup_iterations > 0) {
-        std::cout << "Performing " << warmup_iterations << " warm-up iterations..." << std::endl;
-        for (int i = 0; i < warmup_iterations; i++) {
-            std::string warmup_copy_name = "warmup" + std::to_string(i + 1);
-            create_copy(style_params, copy_marker_config, warmup_copy_name, false);
-            std::cout << "  Warmup iteration " << (i + 1) << "/" << warmup_iterations << " completed" << std::endl;
-        }
-    }
+    auto generated_copies = bench_copy(nb_copies, style_params, copy_marker_config);
 
-    // Générer toutes les copies et mesurer le temps
-    for (int i = 1; i <= nb_copies; i++) {
-        std::cout << "Generating copy " << i << "/" << nb_copies << "..." << std::endl;
-
-        std::string copy_name = "copy" + std::to_string(i);
-        std::string filename = copy_name + ".png";
-
-        // Créer une lambda pour la génération de copie
-        auto create_copy_lambda = [&]() { create_copy(style_params, copy_marker_config, copy_name, false); };
-
-        // Utiliser directement Benchmark::measure qui retourne maintenant le temps mesuré
-        double milliseconds = Benchmark::measure("  Generation time", create_copy_lambda);
-
-        // Stocker les informations de la copie pour l'étape de parsing
-        generated_copies.push_back({ filename, milliseconds });
-    }
-
-    // Charger une seule fois les boîtes atomiques pour le parsing
+    /// TODO: peut-être charger un json différent par copie
     json atomic_boxes_json = parse_json_file("./original_boxes.json");
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
     std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
@@ -278,132 +391,12 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
 
     const cv::Point2f src_img_size{ 210, 297 };
 
-    // Effectuer le warmup pour le parsing si des itérations de chauffe ont été utilisées
-    if (warmup_iterations > 0) {
-        std::cout << "\nParsing warmup iterations..." << std::endl;
-        for (int i = 0; i < warmup_iterations; i++) {
-            std::string warmup_filename = "warmup" + std::to_string(i + 1) + ".png";
-            std::cout << "Parsing warmup copy: " << warmup_filename << "..." << std::endl;
+    warmup_parsing(warmup_iterations, corner_markers, src_img_size, selected_parser, copy_marker_config);
 
-            // Charger l'image de la copie de warmup
-            cv::Mat img = cv::imread("./copies/" + warmup_filename, cv::IMREAD_GRAYSCALE);
-            if (!img.data) {
-                std::cerr << "Error: Could not read warmup image: " << warmup_filename << std::endl;
-                continue;
-            }
-
-            const cv::Point2f dst_img_size(img.cols, img.rows);
-            auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
-            Metadata meta = { 0, 1, "" };
-
-            // Créer une lambda pour le parsing de warmup
-            auto warmup_parse_lambda = [&]() {
-                std::optional<cv::Mat> transform =
-                    run_parser(selected_parser, img,
-#ifdef DEBUG
-                               cv::Mat(), // Passer une image de débogage vide
-#endif
-                               meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
-            };
-
-            // Mesurer le temps mais ne pas enregistrer les résultats dans le CSV
-            Benchmark::measure("  Warmup parsing time", warmup_parse_lambda);
-        }
-    }
-
-    // ÉTAPE 2: Parser les copies générées et compléter le CSV
     std::cout << "\nÉTAPE 2: Parsing des copies générées..." << std::endl;
 
-    // Parser chaque copie générée
-    for (const auto& copy_info : generated_copies) {
-        std::cout << "Parsing copy: " << copy_info.filename << "..." << std::endl;
-
-        // Charger l'image de la copie
-        cv::Mat img = cv::imread("./copies/" + copy_info.filename, cv::IMREAD_GRAYSCALE);
-        if (!img.data) {
-            std::cerr << "Error: Could not read generated image: " << copy_info.filename << std::endl;
-            benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
-                                    parser_type_to_string(selected_parser), copy_marker_config, -1.0 });
-            continue;
-        }
-
-        cv::Mat mat;
-        random_exec(img, mat);
-
-#ifdef DEBUG
-        cv::Mat debug_img;
-        cv::cvtColor(img, debug_img, cv::COLOR_GRAY2BGR);
-#endif
-
-        // Sauvegarder l'image avec la rotation appliquée dans le dossier des copies
-        std::string rotated_filename = "./copies/" + copy_info.filename;
-        cv::imwrite(rotated_filename, img);
-        std::cout << "  Saved rotated image: " << rotated_filename << std::endl;
-
-        const cv::Point2f dst_img_size(img.cols, img.rows);
-        auto dst_corner_points = calculate_center_of_marker(corner_markers, src_img_size, dst_img_size);
-        Metadata meta = { 0, 1, "" };
-
-        // Variables pour stocker les résultats
-        std::optional<cv::Mat> affine_transform;
-        bool parsing_success = false;
-
-        // Créer une lambda pour le parsing
-        auto parse_lambda = [&]() {
-            affine_transform = run_parser(selected_parser, img,
-#ifdef DEBUG
-                                          debug_img, // Passer l'image de débogage
-#endif
-                                          meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
-        };
-
-        // Utiliser directement Benchmark::measure qui retourne maintenant le temps mesuré
-        double parsing_milliseconds = Benchmark::measure("  Parsing time", parse_lambda);
-
-        // Vérifier le succès du parsing
-        parsing_success = affine_transform.has_value();
-        std::cout << "  Success: " << (parsing_success ? "Yes" : "No") << std::endl;
-
-        std::filesystem::path output_img_path_fname = std::filesystem::path(copy_info.filename);
-
-#ifdef DEBUG
-        save_debug_img(debug_img, benchmark_setup.output_dir, output_img_path_fname);
-#endif
-
-        // Calculer l'erreur de précision
-        double precision_error = -1.0;
-        if (parsing_success) {
-            auto calibrated_img_col = redress_image(img, affine_transform.value());
-            cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
-
-            // Calculer l'erreur de précision sur l'image redressée
-            precision_error = calculate_precision_error(src_img_size, dimension, mat, affine_transform.value());
-            std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_error << " pixels"
-                      << std::endl;
-
-            // Dessiner les boîtes utilisateur
-            for (auto box : user_boxes_per_page[meta.page - 1]) {
-                draw_box_outline(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 255));
-            }
-
-            // Dessiner les marqueurs de coin
-            for (auto box : corner_markers) {
-                if (!box.has_value()) {
-                    continue;
-                }
-                auto marker = box.value();
-                draw_box_outline(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 0));
-                draw_box_center(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(0, 255, 0));
-            }
-
-            save_image(calibrated_img_col, benchmark_setup.output_dir, output_img_path_fname);
-        }
-
-        // Écrire les résultats dans le CSV
-        benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, parsing_milliseconds,
-                                parsing_success ? 1 : 0, parser_type_to_string(selected_parser), copy_marker_config,
-                                precision_error });
-    }
+    bench_parsing(generated_copies, corner_markers, src_img_size, selected_parser, copy_marker_config,
+                  user_boxes_per_page, benchmark_csv, benchmark_setup.output_dir);
 
     std::cout << "Combined benchmark completed with " << warmup_iterations << " warmup iterations and " << nb_copies
               << " copies." << std::endl;

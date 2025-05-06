@@ -54,6 +54,6 @@ struct BenchmarkSetup {
  * @return Structure BenchmarkSetup contenant les chemins et le flux CSV ouvert
  */
 BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column = false,
-                                             bool create_subimg_dir = false, bool write_header = true);
+                                             bool create_subimg_dir = false);
 
 #endif

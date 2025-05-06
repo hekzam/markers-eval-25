@@ -2,6 +2,8 @@
 #include <random>
 #include "utils/math_utils.h"
 
+#include "modifier.h"
+
 void add_salt_pepper_noise(cv::Mat& img, cv::RNG rng, float max_pepper, float max_salt) {
     int amount1 = img.rows * img.cols * max_pepper / 100; // /100 pour passer un pourcentage entier en paramètre
     int amount2 = img.rows * img.cols * max_salt / 100;
@@ -87,7 +89,7 @@ void translate_img(cv::Mat& img, int dx, int dy) {
     cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
 }
 
-void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed = 0) {
+void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     cv::RNG rng;
     if (seed)
         rng = cv::RNG(seed);
@@ -95,8 +97,9 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed = 0) {
         rng = cv::RNG(time(0));
 
     // expend image
-    int percent = 30;
-    cv::copyMakeBorder(img, img, percent, percent, percent, percent, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+    int pixel_offset = MARGIN_COPY_MODIFIED;
+    cv::copyMakeBorder(img, img, pixel_offset, pixel_offset, pixel_offset, pixel_offset, cv::BORDER_CONSTANT,
+                       cv::Scalar(255, 255, 255));
     cv::Mat img_out = img.clone();
     // rotate_img(img, rng.uniform(-2.0, 2.0));
     // translate_img(img, rng.uniform(-5, 5), rng.uniform(-5, 5));

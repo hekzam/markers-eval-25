@@ -42,21 +42,28 @@ json parse_json_file(const std::string& filepath) {
     }
 }
 
+void clean_directory(const std::string& dir) {
+    if (std::filesystem::exists(dir)) {
+        std::cout << "Cleaning existing directory: " << dir << std::endl;
+        std::filesystem::remove_all(dir);
+    }
+    std::filesystem::create_directories(dir);
+}
+
 BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column,
-                                             bool create_subimg_dir, bool write_header) {
+                                             bool create_subimg_dir) {
     BenchmarkSetup setup;
 
     setup.output_dir = std::filesystem::path{ output_dir };
-    if (std::filesystem::exists(setup.output_dir)) {
-        std::cout << "Cleaning existing output directory..." << std::endl;
-        std::filesystem::remove_all(setup.output_dir);
-    }
-    std::filesystem::create_directories(setup.output_dir);
+    clean_directory(setup.output_dir);
 
     if (create_subimg_dir) {
         setup.subimg_output_dir = create_subdir(setup.output_dir, "subimg");
     }
     setup.csv_output_dir = create_subdir(setup.output_dir, "csv");
+
+    std::filesystem::path copies_dir = "./copies";
+    clean_directory(copies_dir);
 
     return setup;
 }
