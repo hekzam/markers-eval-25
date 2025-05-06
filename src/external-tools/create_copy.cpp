@@ -45,7 +45,7 @@ std::string toString(MarkerType type) {
 
 std::string Marker::toString() const {
     if (type == MarkerType::NONE) {
-        return "";
+        return "none";
     }
 
     std::string result = ::toString(type);
@@ -112,16 +112,8 @@ Marker Marker::parseMarker(const std::string& spec) {
 }
 
 std::string CopyMarkerConfig::toString() const {
-    auto formatMarker = [](const Marker& m) -> std::string {
-        if (m.type == MarkerType::NONE) {
-            return "none";
-        }
-
-        return m.toString();
-    };
-
-    return "(" + formatMarker(top_left) + " | " + formatMarker(top_right) + " | " + formatMarker(bottom_left) + " | " +
-           formatMarker(bottom_right) + " | " + formatMarker(header) + ")";
+    return "(" + top_left.toString() + "," + top_right.toString() + "," + bottom_left.toString() + "," +
+           bottom_right.toString() + "," + header.toString() + ")";
 }
 
 int CopyMarkerConfig::fromString(const std::string& str, CopyMarkerConfig& config) {
