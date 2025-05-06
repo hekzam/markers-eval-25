@@ -17,6 +17,7 @@
 #include "utils/draw_helper.h"
 #include "benchmark.hpp"
 #include "combined_benchmark.h"
+#include <modifier.h>
 
 /**
  * @brief Dessine un contour autour d'une boîte
@@ -68,50 +69,34 @@ double euclidean_distance(const cv::Point2f& p1, const cv::Point2f& p2) {
 
 /**
  * @brief Calcule les coordonnées des coins théoriques d'une page A4
- * 
+ *
  * @param src_img_size Dimensions théoriques de l'image source (210x297 mm)
  * @param dst_img_size Dimensions de l'image cible en pixels
- * @return std::vector<cv::Point2f> Les quatre coins de la page dans l'ordre: haut-gauche, haut-droit, bas-gauche, bas-droit
+ * @return std::vector<cv::Point2f> Les quatre coins de la page dans l'ordre: haut-gauche, haut-droit, bas-gauche,
+ * bas-droit
  */
-std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
+std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& src_img_size,
+                                                       const cv::Point2f& dst_img_size) {
     // Les coordonnées théoriques des coins d'une page A4 en mm (0,0 est en haut à gauche)
     std::vector<cv::Point2f> theoretical_corners = {
-        {0, 0},                         // Haut-gauche
-        {src_img_size.x, 0},            // Haut-droit
-        {0, src_img_size.y},            // Bas-gauche
-        {src_img_size.x, src_img_size.y} // Bas-droit
+        { 0, 0 },                          // Haut-gauche
+        { src_img_size.x, 0 },             // Haut-droit
+        { 0, src_img_size.y },             // Bas-gauche
+        { src_img_size.x, src_img_size.y } // Bas-droit
     };
-    
+
     // Mettre à l'échelle les coordonnées pour correspondre à l'image cible en pixels
     std::vector<cv::Point2f> scaled_corners;
     for (const auto& corner : theoretical_corners) {
         scaled_corners.push_back(coord_scale(corner, src_img_size, dst_img_size));
     }
-    
+
     return scaled_corners;
 }
 
 /**
- * @brief Calcule la matrice de rotation pour une image
- *
- * @param img_size Dimensions de l'image à transformer
- * @param angle_percent Pourcentage de rotation (1% = rotation légère)
- * @return cv::Mat Matrice de transformation
- */
-cv::Mat apply_rotation_transform(const cv::Size& img_size, double angle_percent) {
-    // Convertir le pourcentage en angle (1% = environ 3.6 degrés)
-    double angle = angle_percent * 3.6;
-
-    // Obtenir la matrice de rotation pour le centre de l'image
-    cv::Point2f center(img_size.width / 2.0f, img_size.height / 2.0f);
-    cv::Mat rotation_matrix = cv::getRotationMatrix2D(center, angle, 1.0);
-
-    return rotation_matrix;
-}
-
-/**
  * @brief Calcule l'erreur moyenne de précision entre les coins originaux et les coins calibrés
- * 
+ *
  * @param src_img_size Dimensions théoriques de l'image source (210x297 mm)
  * @param dst_img_size Dimensions de l'image calibrée en pixels
  * @param rotation_angle_percent Pourcentage de rotation appliqué à l'image
@@ -119,47 +104,36 @@ cv::Mat apply_rotation_transform(const cv::Size& img_size, double angle_percent)
  * @return double Erreur moyenne en pixels
  */
 double calculate_precision_error(const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size,
-                               double rotation_angle_percent, const cv::Mat& affine_transform) {
-    // 1. Calculer les coordonnées théoriques des quatre coins
+                                 const cv::Mat& transform_matrix, const cv::Mat& rectification_transform) {
     std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(src_img_size, dst_img_size);
-    
-    // 2. Utiliser la même fonction apply_rotation_transform pour générer la matrice de rotation
-    cv::Size img_size(dst_img_size.x, dst_img_size.y);
-    auto rotation_matrix = apply_rotation_transform(img_size, rotation_angle_percent);
-    
-    // 3. Appliquer la rotation directement aux coins originaux
-    std::vector<cv::Point2f> rotated_corners = original_corners;
-    cv::transform(rotated_corners, rotated_corners, rotation_matrix);
-    
-    // 4. Appliquer la transformation affine inverse aux coins originaux
-    cv::Mat inverse_affine;
-    cv::invertAffineTransform(affine_transform, inverse_affine);
-    
-    std::vector<cv::Point2f> expected_corners = original_corners;
-    cv::transform(expected_corners, expected_corners, inverse_affine);
-    
+
+    std::vector<cv::Point2f> transformed_corner = original_corners;
+    cv::transform(transformed_corner, transformed_corner, transform_matrix);
+
+    cv::transform(transformed_corner, transformed_corner, rectification_transform);
+
     // 5. Calculer la distance entre les coins après rotation et ceux attendus par le parseur
     std::vector<double> distances;
     double total_distance = 0.0;
-    
+
     for (size_t i = 0; i < 4; i++) {
-        double distance = euclidean_distance(rotated_corners[i], expected_corners[i]);
-        
-        std::cout << "  Corner " << i << " - Rotated: (" << rotated_corners[i].x << ", " << rotated_corners[i].y 
-                  << "), Parser expected: (" << expected_corners[i].x << ", " << expected_corners[i].y 
+        double distance = euclidean_distance(original_corners[i], transformed_corner[i]);
+
+        std::cout << "  Corner " << i << " - Original: (" << original_corners[i].x << ", " << original_corners[i].y
+                  << "), after Transformation: (" << transformed_corner[i].x << ", " << transformed_corner[i].y
                   << "), Precision error: " << distance << " pixels" << std::endl;
-        
+
         total_distance += distance;
         distances.push_back(distance);
     }
-    
+
     // Calculer l'erreur moyenne
     if (!distances.empty()) {
         double avg_error = total_distance / distances.size();
         std::cout << "  Average precision error: " << avg_error << " pixels" << std::endl;
         return avg_error;
     }
-    
+
     return -1.0; // Valeur d'erreur en cas d'absence de coins
 }
 
@@ -177,8 +151,7 @@ cv::Mat apply_rotation_to_image(const cv::Mat& img, const cv::Mat& rotation_matr
 
     // Appliquer la transformation
     cv::Mat rotated_img;
-    cv::warpAffine(img, rotated_img, rotation_matrix, img_size, cv::INTER_LINEAR,
-                   cv::BORDER_CONSTANT, cv::Scalar(255));
+    cv::warpAffine(img, rotated_img, rotation_matrix, img_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(255));
 
     return rotated_img;
 }
@@ -245,11 +218,10 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
     // Préparation des répertoires et du fichier CSV
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories(
         "./output", true, true, false); // Le dernier paramètre est mis à false pour ne pas écrire l'en-tête par défaut
-    std::ofstream& benchmark_csv = benchmark_setup.benchmark_csv;
-
-    // Ajouter l'en-tête du CSV avec les colonnes demandées
-    benchmark_csv << "File,Generation_Time_ms,Parsing_Time_ms,Parsing_Success,Parser_Type,Precision_Error_px"
-                  << std::endl;
+    Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double> benchmark_csv(
+        benchmark_setup.csv_output_dir / "benchmark_results.csv",
+        { "File", "Generation_Time_ms", "Parsing_Time_ms", "Parsing_Success", "Parser_Type", "Copy_Config",
+          "Precision_Error_px" });
 
     // Structure pour stocker les informations de génération des copies
     struct CopyInfo {
@@ -327,7 +299,11 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
             // Créer une lambda pour le parsing de warmup
             auto warmup_parse_lambda = [&]() {
                 std::optional<cv::Mat> transform =
-                    run_parser(selected_parser, img, meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
+                    run_parser(selected_parser, img,
+#ifdef DEBUG
+                               cv::Mat(), // Passer une image de débogage vide
+#endif
+                               meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
             };
 
             // Mesurer le temps mais ne pas enregistrer les résultats dans le CSV
@@ -346,14 +322,18 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
         cv::Mat img = cv::imread("./copies/" + copy_info.filename, cv::IMREAD_GRAYSCALE);
         if (!img.data) {
             std::cerr << "Error: Could not read generated image: " << copy_info.filename << std::endl;
-            benchmark_csv << copy_info.filename << "," << copy_info.generation_time << ",0,0" << std::endl;
+            benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
+                                    parser_type_to_string(selected_parser), copy_marker_config, -1.0 });
             continue;
         }
 
-        // Appliquer une rotation de 1% à l'image avant parsing
-        std::cout << "  Applying 1% rotation transformation before parsing..." << std::endl;
-        auto rotation_matrix = apply_rotation_transform(img.size(), 0);
-        img = apply_rotation_to_image(img, rotation_matrix, 0);  // Paramètre margin mis à 0
+        cv::Mat mat;
+        random_exec(img, mat);
+
+#ifdef DEBUG
+        cv::Mat debug_img;
+        cv::cvtColor(img, debug_img, cv::COLOR_GRAY2BGR);
+#endif
 
         // Sauvegarder l'image avec la rotation appliquée dans le dossier des copies
         std::string rotated_filename = "./copies/" + copy_info.filename;
@@ -370,8 +350,11 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
 
         // Créer une lambda pour le parsing
         auto parse_lambda = [&]() {
-            affine_transform =
-                run_parser(selected_parser, img, meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
+            affine_transform = run_parser(selected_parser, img,
+#ifdef DEBUG
+                                          debug_img, // Passer l'image de débogage
+#endif
+                                          meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
         };
 
         // Utiliser directement Benchmark::measure qui retourne maintenant le temps mesuré
@@ -381,51 +364,47 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
         parsing_success = affine_transform.has_value();
         std::cout << "  Success: " << (parsing_success ? "Yes" : "No") << std::endl;
 
+        std::filesystem::path output_img_path_fname = std::filesystem::path(copy_info.filename);
+
+#ifdef DEBUG
+        save_debug_img(debug_img, benchmark_setup.output_dir, output_img_path_fname);
+#endif
+
         // Calculer l'erreur de précision
         double precision_error = -1.0;
         if (parsing_success) {
-            // Si le parsing a réussi, sauvegarder l'image redressée avec les marqueurs
-            if (parsing_success) {
-                auto calibrated_img_col = redress_image(img, affine_transform.value());
-                cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
+            auto calibrated_img_col = redress_image(img, affine_transform.value());
+            cv::Point2f dimension(calibrated_img_col.cols, calibrated_img_col.rows);
 
-                // Calculer l'erreur de précision sur l'image redressée
-                precision_error = calculate_precision_error(src_img_size, dimension, 0, affine_transform.value());
-                std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_error << " pixels" << std::endl;
+            // Calculer l'erreur de précision sur l'image redressée
+            precision_error = calculate_precision_error(src_img_size, dimension, mat, affine_transform.value());
+            std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_error << " pixels"
+                      << std::endl;
 
-                // Dessiner les boîtes utilisateur
-                for (auto box : user_boxes_per_page[meta.page - 1]) {
-                    draw_box_outline(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 255));
-                }
-
-                // Dessiner les marqueurs de coin
-                for (auto box : corner_markers) {
-                    if (!box.has_value()) {
-                        continue;
-                    }
-                    auto marker = box.value();
-                    draw_box_outline(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 0));
-                    draw_box_center(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(0, 255, 0));
-                }
-
-                // Sauvegarder l'image redressée
-                std::filesystem::path output_img_path_fname = std::filesystem::path(copy_info.filename);
-                // Ne pas ajouter l'extension .png car le fichier a déjà une extension
-                save_image(calibrated_img_col, benchmark_setup.output_dir, output_img_path_fname);
+            // Dessiner les boîtes utilisateur
+            for (auto box : user_boxes_per_page[meta.page - 1]) {
+                draw_box_outline(box, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 255));
             }
+
+            // Dessiner les marqueurs de coin
+            for (auto box : corner_markers) {
+                if (!box.has_value()) {
+                    continue;
+                }
+                auto marker = box.value();
+                draw_box_outline(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(255, 0, 0));
+                draw_box_center(marker, calibrated_img_col, src_img_size, dimension, cv::Scalar(0, 255, 0));
+            }
+
+            save_image(calibrated_img_col, benchmark_setup.output_dir, output_img_path_fname);
         }
 
         // Écrire les résultats dans le CSV
-        benchmark_csv << copy_info.filename << "," << copy_info.generation_time << "," << parsing_milliseconds << ","
-                      << (parsing_success ? "1" : "0") << "," << parser_type_to_string(selected_parser) << ","
-                      << precision_error << std::endl;
+        benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, parsing_milliseconds,
+                                parsing_success ? 1 : 0, parser_type_to_string(selected_parser), copy_marker_config,
+                                precision_error });
     }
 
     std::cout << "Combined benchmark completed with " << warmup_iterations << " warmup iterations and " << nb_copies
               << " copies." << std::endl;
-
-    // Fermer le fichier CSV
-    if (benchmark_csv.is_open()) {
-        benchmark_csv.close();
-    }
 }

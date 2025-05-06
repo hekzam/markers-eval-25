@@ -36,7 +36,11 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },
     { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
     { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
-    { "parser-type", { "Parser type", "The type of parser to use (ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, EMPTY)", std::string("QRCODE") } }
+    { "parser-type",
+      { "Parser type",
+        "The type of parser to use (ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, "
+        "EMPTY)",
+        std::string("QRCODE") } }
 };
 
 /**
@@ -92,6 +96,10 @@ int main(int argc, char* argv[]) {
             std::string arg = argv[i];
             if (arg == "--benchmark" && i + 1 < argc) {
                 benchmark_name = argv[i + 1];
+                if (benchmark_map.count(benchmark_name) == 0) {
+                    std::cerr << "Unknown benchmark: " << benchmark_name << std::endl;
+                    return 1;
+                }
                 benchmark_arg_index = i;
                 break;
             }
