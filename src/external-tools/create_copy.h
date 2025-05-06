@@ -114,7 +114,7 @@ struct CopyMarkerConfig {
     static int fromString(const std::string& str, CopyMarkerConfig& config);
 };
 
-static std::ostream& operator<<(std::ostream& outs, const CopyMarkerConfig& config) {
+inline std::ostream& operator<<(std::ostream& outs, const CopyMarkerConfig& config) {
     outs << config.toString();
     return outs;
 }
