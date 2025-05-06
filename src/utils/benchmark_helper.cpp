@@ -11,6 +11,7 @@
 #include "../external-tools/create_copy.h"
 #include "../utils/cli_helper.h"
 #include "benchmark.hpp"
+#include "csv_utils.h"
 
 std::filesystem::path create_subdir(const std::filesystem::path& base_dir, const std::string& subdir_name) {
     std::filesystem::path subdir_path = base_dir / subdir_name;
@@ -56,16 +57,6 @@ BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool
         setup.subimg_output_dir = create_subdir(setup.output_dir, "subimg");
     }
     setup.csv_output_dir = create_subdir(setup.output_dir, "csv");
-
-    std::filesystem::path benchmark_csv_path = setup.csv_output_dir / "benchmark_results.csv";
-    setup.benchmark_csv.open(benchmark_csv_path);
-    if (setup.benchmark_csv.is_open() && write_header) {
-        if (include_success_column) {
-            setup.benchmark_csv << "File,Time(ms),Success" << std::endl;
-        } else {
-            setup.benchmark_csv << "File,Time(ms)" << std::endl;
-        }
-    }
 
     return setup;
 }

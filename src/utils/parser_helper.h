@@ -19,13 +19,8 @@
 #endif
 
 /**
- * @brief Types de parseurs disponibles pour l'analyse des marqueurs dans l'image
- */
-enum class ParserType { ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, EMPTY };
-
-/**
  * @brief Convertit un type de parseur (ParserType) en chaîne de caractères
- * 
+ *
  * @param parser_type Type de parseur à convertir
  * @return std::string Chaîne de caractères représentant le type de parseur
  */
@@ -33,7 +28,7 @@ std::string parser_type_to_string(ParserType parser_type);
 
 /**
  * @brief Convertit une chaîne de caractères en type de parseur (ParserType)
- * 
+ *
  * @param parser_type_str Chaîne de caractères représentant le type de parseur
  * @return ParserType Le type de parseur correspondant, ou ParserType::QRCODE par défaut
  */

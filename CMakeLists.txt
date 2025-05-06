@@ -48,11 +48,13 @@ set(SRC_BENCH
     src/benchmark.cpp
     src/utils/benchmark_helper.cpp
     src/external-tools/create_copy.cpp
+    src/external-tools/modifier.cpp
 )
 
 set(SRC_MODIFIEUR
     src/modifier.cpp
     src/utils/math_utils.cpp
+    src/external-tools/modifier.cpp
 )
 
 set(SRC_TYPST_INTERFACE
@@ -69,7 +71,7 @@ set(BENCHMARK_SRC
 )
 
 # add debug definitions
-if(CMAKE_BUILD_TYPE MATCHES Debug)
+if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
     add_definitions(-DDEBUG)
 endif()
 

@@ -291,27 +291,27 @@ std::string parser_type_to_string(ParserType parser_type) {
 
 /**
  * @brief Convertit une chaîne de caractères en type de parseur (ParserType)
- * 
+ *
  * @param parser_type_str Chaîne de caractères représentant le type de parseur
  * @return ParserType Le type de parseur correspondant, ou ParserType::QRCODE par défaut
  */
 ParserType string_to_parser_type(const std::string& parser_type_str) {
     static const std::unordered_map<std::string, ParserType> parser_type_map = {
-        {"ARUCO", ParserType::ARUCO},
-        {"CIRCLE", ParserType::CIRCLE},
-        {"QRCODE", ParserType::QRCODE},
-        {"CUSTOM_MARKER", ParserType::CUSTOM_MARKER},
-        {"SHAPE", ParserType::SHAPE},
-        {"CENTER_MARKER_PARSER", ParserType::CENTER_MARKER_PARSER},
-        {"DEFAULT_PARSER", ParserType::DEFAULT_PARSER},
-        {"EMPTY", ParserType::EMPTY}
+        { "ARUCO", ParserType::ARUCO },
+        { "CIRCLE", ParserType::CIRCLE },
+        { "QRCODE", ParserType::QRCODE },
+        { "CUSTOM_MARKER", ParserType::CUSTOM_MARKER },
+        { "SHAPE", ParserType::SHAPE },
+        { "CENTER_MARKER_PARSER", ParserType::CENTER_MARKER_PARSER },
+        { "DEFAULT_PARSER", ParserType::DEFAULT_PARSER },
+        { "EMPTY", ParserType::EMPTY }
     };
-    
+
     auto it = parser_type_map.find(parser_type_str);
     if (it != parser_type_map.end()) {
         return it->second;
     }
-    
+
     return ParserType::QRCODE; // Valeur par défaut
 }
 

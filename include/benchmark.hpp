@@ -5,6 +5,8 @@
 #include <functional>
 #include <iomanip>
 #include <fstream>
+#include "common.h"
+#include "parser_helper.h"
 
 /**
  * @brief Classe utilitaire pour mesurer le temps d'exécution des fonctions
