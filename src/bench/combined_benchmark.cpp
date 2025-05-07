@@ -284,7 +284,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
                    const cv::Point2f& src_img_size, ParserType selected_parser,
                    const CopyMarkerConfig& copy_marker_config,
                    const std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page,
-                   Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double, double, double, double,
+                   Csv<std::string, double, double, int, std::string, CopyMarkerConfig, int, double, double, double, double,
                        double>& benchmark_csv,
                    std::string output_dir) {
     std::random_device rd;
@@ -297,8 +297,8 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
         if (!img.data) {
             std::cerr << "Error: Could not read generated image: " << copy_info.filename << std::endl;
             benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
-                                    parser_type_to_string(selected_parser), copy_marker_config, -1.0, -1.0, -1.0, -1.0,
-                                    -1.0 });
+                                    parser_type_to_string(selected_parser), copy_marker_config, -1,
+                                    -1.0, -1.0, -1.0, -1.0, -1.0 });
             continue;
         }
 
@@ -370,7 +370,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
         // Écrire les résultats dans le CSV
         benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, parsing_milliseconds,
                                 parsing_success ? 1 : 0, parser_type_to_string(selected_parser), copy_marker_config,
-                                precision_errors.back(), precision_errors[0], precision_errors[1], precision_errors[2],
+                                unique_seed, precision_errors.back(), precision_errors[0], precision_errors[1], precision_errors[2],
                                 precision_errors[3] });
     }
 }
@@ -400,10 +400,10 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
 
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true, csv_mode);
 
-    Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double, double, double, double, double>
+    Csv<std::string, double, double, int, std::string, CopyMarkerConfig, int, double, double, double, double, double>
         benchmark_csv(benchmark_setup.csv_output_dir / "benchmark_results.csv",
                       { "File", "Generation_Time_ms", "Parsing_Time_ms", "Parsing_Success", "Parser_Type",
-                        "Copy_Config", "Precision_Error_Avg_px", "Precision_Error_TopLeft_px",
+                        "Copy_Config", "Seed", "Precision_Error_Avg_px", "Precision_Error_TopLeft_px",
                         "Precision_Error_TopRight_px", "Precision_Error_BottomLeft_px",
                         "Precision_Error_BottomRight_px" },
                       csv_mode);

@@ -93,8 +93,10 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     cv::RNG rng;
     if (seed)
         rng = cv::RNG(seed);
-    else
-        rng = cv::RNG(time(0));
+    else {
+        seed = static_cast<int>(time(0));
+        rng = cv::RNG(seed);
+    }
 
     // expend image
     int pixel_offset = MARGIN_COPY_MODIFIED;
