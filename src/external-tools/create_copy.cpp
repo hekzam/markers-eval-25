@@ -193,11 +193,11 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
         return false;
     }
 
-    int query2_result = system(query_page.c_str());
-    if (query2_result != 0) {
-        std::cerr << "Error during query page command" << std::endl;
-        return false;
-    }
+    // int query2_result = system(query_page.c_str());
+    // if (query2_result != 0) {
+    //     std::cerr << "Error during query page command" << std::endl;
+    //     return false;
+    // }
 
     std::cout << "Copy generation completed successfully" << std::endl;
     return true;
