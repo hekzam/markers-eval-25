@@ -85,7 +85,12 @@ std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
         return {};
     }
 
-    meta = parse_metadata(corner_barcodes[BOTTOM_RIGHT]->content);
+    for (int i = 0; i < 4; ++i) {
+        if (corner_barcodes[i] != nullptr) {
+            meta = parse_metadata(corner_barcodes[i]->content);
+            break;
+        }
+    }
 
     auto affine_transform = get_affine_transform(found_corner_mask, dst_corner_points, corner_points);
     return affine_transform;
