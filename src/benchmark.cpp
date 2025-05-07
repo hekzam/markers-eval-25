@@ -11,6 +11,8 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #include <common.h>
 
@@ -70,6 +72,124 @@ std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
 };
 
 /**
+ * @brief Exécute une série de benchmarks définis dans un fichier texte
+ *
+ * @param batch_file Chemin vers le fichier contenant les commandes de benchmark
+ * @return int Code de retour (0 en cas de succès, nombre d'erreurs sinon)
+ */
+int run_batch_benchmarks(const std::string& batch_file) {
+    std::ifstream file(batch_file);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open batch file: " << batch_file << std::endl;
+        return 1;
+    }
+
+    std::string line;
+    int line_number = 0;
+    int error_count = 0;
+
+    std::cout << "\n=== Starting Batch Execution from " << batch_file << " ===\n";
+
+    while (std::getline(file, line)) {
+        line_number++;
+
+        // Skip empty lines and comments
+        if (line.empty() || line[0] == '#' || line[0] == '/') {
+            continue;
+        }
+
+        std::cout << "\n=== Executing batch command [" << line_number << "]: " << line << " ===\n";
+
+        // Parse the command line into arguments
+        std::vector<std::string> args;
+        std::istringstream iss(line);
+        std::string arg;
+
+        // Premier mot est le nom du benchmark
+        std::string batch_benchmark_name;
+        if (!(iss >> batch_benchmark_name)) {
+            std::cerr << "Invalid format in batch command line " << line_number << ": empty line" << std::endl;
+            error_count++;
+            continue;
+        }
+
+        // Ajouter --benchmark et le nom du benchmark en tête des arguments
+        args.push_back("--benchmark");
+        args.push_back(batch_benchmark_name);
+        
+        // Récupérer le reste des arguments
+        while (iss >> arg) {
+            args.push_back(arg);
+        }
+
+        // Convert to argc/argv style
+        int batch_argc = args.size() + 1;
+        std::vector<char*> batch_argv;
+
+        // First arg should be program name
+        batch_argv.push_back(const_cast<char*>("benchmark"));
+
+        // Add all other args
+        for (auto& a : args) {
+            batch_argv.push_back(const_cast<char*>(a.c_str()));
+        }
+
+        if (benchmark_map.count(batch_benchmark_name) == 0) {
+            std::cerr << "Unknown benchmark in batch command: " << batch_benchmark_name << std::endl;
+            error_count++;
+            continue;
+        }
+
+        try {
+            // Process arguments like in main()
+            auto& selected_default_config = benchmark_map[batch_benchmark_name].default_config;
+            
+            // Filtrer les arguments pour supprimer --benchmark et le nom du benchmark
+            std::vector<char*> filtered_argv;
+            filtered_argv.push_back(batch_argv[0]);  // Le nom du programme
+            
+            // Parcourir tous les arguments sauf --benchmark et le nom du benchmark
+            for (int i = 3; i < batch_argc; i++) {
+                filtered_argv.push_back(batch_argv[i]);
+            }
+            
+            int filtered_argc = filtered_argv.size();
+            
+            auto opt_config = get_config(filtered_argc, filtered_argv.data(), selected_default_config);
+
+            if (!opt_config.has_value()) {
+                std::cerr << "Invalid configuration in batch command line " << line_number << std::endl;
+                error_count++;
+                continue;
+            }
+
+            auto config = opt_config.value();
+
+            // Fill in missing config with defaults
+            for (const auto& [key, value] : selected_default_config) {
+                if (config.find(key) == config.end()) {
+                    config[key] = value;
+                }
+            }
+
+            std::cout << "Running " << benchmark_map[batch_benchmark_name].name << " (" << batch_benchmark_name << ")"
+                      << std::endl;
+
+            benchmark_map[batch_benchmark_name].run(config);
+        } catch (const std::exception& e) {
+            std::cerr << "Error in batch command line " << line_number << ": " << e.what() << std::endl;
+            error_count++;
+        }
+    }
+
+    std::cout << "\n=== Batch Execution Complete ===\n";
+    std::cout << "Total lines processed: " << line_number << std::endl;
+    std::cout << "Errors encountered: " << error_count << std::endl;
+
+    return error_count;
+}
+
+/**
  * @brief Point d'entrée principal du programme de benchmark
  *
  * Cette fonction affiche la bannière du programme, charge la configuration
@@ -84,15 +204,17 @@ std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
  * @return int Code de retour (0 en cas de succès, 1 en cas d'erreur)
  */
 int main(int argc, char* argv[]) {
-    std::cout << "\n=== Command Line Arguments ===\n";
-    std::cout << "Total arguments: " << argc << std::endl;
-    for (int i = 0; i < argc; i++) {
-        std::cout << "Argument " << i << ": " << argv[i] << std::endl;
-    }
-    std::cout << "===========================\n\n";
-
     std::string benchmark_name = "ink-estimation";
     int benchmark_arg_index = -1;
+
+    std::string batch_file;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--batch-file" && i + 1 < argc) {
+            batch_file = argv[i + 1];
+            return run_batch_benchmarks(batch_file);
+        }
+    }
 
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {

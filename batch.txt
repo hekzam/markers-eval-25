@@ -1,0 +1,2 @@
+combined --nb-copies 5 --warmup-iterations 1 --csv-mode append --parser-type CIRCLE
+combined --nb-copies 2 --warmup-iterations 1 --csv-mode append
