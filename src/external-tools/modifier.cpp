@@ -91,7 +91,7 @@ void translate_img(cv::Mat& img, int dx, int dy) {
 
 /**
  * @brief Applique une compression JPEG à une image avec un niveau de qualité spécifié
- * 
+ *
  * @param img Image à compresser
  * @param quality Qualité de la compression (0-100, où 0 est la plus mauvaise qualité et 100 la meilleure)
  */
@@ -100,10 +100,10 @@ void apply_jpeg_compression(cv::Mat& img, int quality) {
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
     compression_params.push_back(quality);
-    
+
     // Encoder l'image en JPEG dans un buffer mémoire
     cv::imencode(".jpg", img, buffer, compression_params);
-    
+
     // Décoder le buffer JPEG en cv::Mat
     img = cv::imdecode(buffer, cv::IMREAD_UNCHANGED);
 }
@@ -128,7 +128,39 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
         gray_img = img.clone();
     }
     
-    int effect_type = rng.uniform(0, 4); // 4 types d'effets différents
+    // Appliquer systématiquement l'effet de tramage/dithering
+    {
+        // Effet de tramage/dithering (pattern artificiels)
+        cv::Mat pattern(8, 8, CV_8UC1);
+        for (int y = 0; y < pattern.rows; y++) {
+            for (int x = 0; x < pattern.cols; x++) {
+                // Créer un motif de tramage Floyd-Steinberg simplifié
+                pattern.at<uchar>(y, x) = ((x ^ y) & 1) ? 10 : -10;
+            }
+        }
+        
+        // Appliquer le motif à l'image avec l'intensité donnée
+        for (int y = 0; y < img.rows; y++) {
+            for (int x = 0; x < img.cols; x++) {
+                int pattern_val = pattern.at<uchar>(y % pattern.rows, x % pattern.cols);
+                int adjustment = pattern_val * intensity_factor * 0.2f; // Réduire légèrement l'intensité pour le dithering systématique
+                
+                if (isColor) {
+                    cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
+                    pixel[0] = cv::saturate_cast<uchar>(pixel[0] + adjustment);
+                    pixel[1] = cv::saturate_cast<uchar>(pixel[1] + adjustment);
+                    pixel[2] = cv::saturate_cast<uchar>(pixel[2] + adjustment);
+                    img.at<cv::Vec3b>(y, x) = pixel;
+                } else {
+                    uchar pixel = img.at<uchar>(y, x);
+                    img.at<uchar>(y, x) = cv::saturate_cast<uchar>(pixel + adjustment);
+                }
+            }
+        }
+    }
+    
+    // En plus du tramage, appliquer un effet aléatoire supplémentaire
+    int effect_type = rng.uniform(0, 3); // Maintenant seulement 3 types d'effets différents (sans le dithering)
     
     switch(effect_type) {
         case 0: {
@@ -187,36 +219,6 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
             }
             break;
         }
-        case 3: {
-            // Effet 4: Effet de tramage/dithering (pattern artificiels)
-            cv::Mat pattern(8, 8, CV_8UC1);
-            for (int y = 0; y < pattern.rows; y++) {
-                for (int x = 0; x < pattern.cols; x++) {
-                    // Créer un motif de tramage Floyd-Steinberg simplifié
-                    pattern.at<uchar>(y, x) = ((x ^ y) & 1) ? 10 : -10;
-                }
-            }
-            
-            // Appliquer le motif à l'image avec l'intensité donnée
-            for (int y = 0; y < img.rows; y++) {
-                for (int x = 0; x < img.cols; x++) {
-                    int pattern_val = pattern.at<uchar>(y % pattern.rows, x % pattern.cols);
-                    int adjustment = pattern_val * intensity_factor;
-                    
-                    if (isColor) {
-                        cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
-                        pixel[0] = cv::saturate_cast<uchar>(pixel[0] + adjustment);
-                        pixel[1] = cv::saturate_cast<uchar>(pixel[1] + adjustment);
-                        pixel[2] = cv::saturate_cast<uchar>(pixel[2] + adjustment);
-                        img.at<cv::Vec3b>(y, x) = pixel;
-                    } else {
-                        uchar pixel = img.at<uchar>(y, x);
-                        img.at<uchar>(y, x) = cv::saturate_cast<uchar>(pixel + adjustment);
-                    }
-                }
-            }
-            break;
-        }
     }
 }
 
@@ -234,10 +236,10 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     cv::copyMakeBorder(img, img, pixel_offset, pixel_offset, pixel_offset, pixel_offset, cv::BORDER_CONSTANT,
                        cv::Scalar(255, 255, 255));
     cv::Mat img_out = img.clone();
-    
+
     // Déterminer si l'image doit être complètement retournée (rotation à 180 degrés)
     bool flip_image = rng.uniform(0, 10) < 2; // ~20% de chance de retourner l'image
-    
+
     // Calculer l'angle de rotation
     float rotation_angle;
     if (flip_image) {
@@ -255,15 +257,15 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     modification_matrix = modification_matrix(cv::Rect(0, 0, 3, 2));
     cv::warpAffine(img_out, img, modification_matrix, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT,
                    cv::Scalar(255, 255, 255));
-    
+
     add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
     add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));
-    contrast_brightness_modifier(img, rng.uniform(-20, 20), rng.uniform(-20, 20));
+    // contrast_brightness_modifier(img, rng.uniform(-20, 20), rng.uniform(-20, 20));
     add_ink_stain(img, rng, rng.uniform(0, 8), rng.uniform(4, 8), rng.uniform(9, 35));
-    
+
     // Simuler des effets d'impression avec une intensité aléatoire
-    simulate_printer_effects(img, rng, rng.uniform(50, 60));
-    
-    // Ajouter une compression JPEG avec une qualité aléatoire entre 50 et 70
-    apply_jpeg_compression(img, rng.uniform(40, 60));
+    simulate_printer_effects(img, rng, rng.uniform(60, 70));
+
+    // Ajouter une compression JPEG
+    apply_jpeg_compression(img, rng.uniform(45, 55));
 }
