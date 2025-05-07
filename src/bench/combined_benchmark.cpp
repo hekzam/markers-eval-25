@@ -166,7 +166,7 @@ std::vector<double> calculate_precision_error(const cv::Point2f& src_img_size, c
  * @return Tuple contenant les paramètres validés
  * @throws std::invalid_argument Si un paramètre requis est manquant ou invalide
  */
-static std::tuple<int, int, int, int, int, int, int, CopyMarkerConfig, ParserType>
+static std::tuple<int, int, int, int, int, int, int, CopyMarkerConfig, ParserType, int>
 validate_parameters_combined(const std::unordered_map<std::string, Config>& config) {
     try {
         int warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
@@ -176,6 +176,7 @@ validate_parameters_combined(const std::unordered_map<std::string, Config>& conf
         int header_marker_size = std::get<int>(config.at("header-marker-size").value);
         int grey_level = std::get<int>(config.at("grey-level").value);
         int dpi = std::get<int>(config.at("dpi").value);
+        int master_seed = std::get<int>(config.at("seed").value);
         auto marker_config = std::get<std::string>(config.at("marker-config").value);
 
         CopyMarkerConfig copy_marker_config;
@@ -200,7 +201,7 @@ validate_parameters_combined(const std::unordered_map<std::string, Config>& conf
         }
 
         return { warmup_iterations, nb_copies, encoded_marker_size, unencoded_marker_size, header_marker_size,
-                 grey_level,        dpi,       copy_marker_config,  selected_parser };
+                 grey_level,        dpi,       copy_marker_config,  selected_parser, master_seed };
     } catch (const std::out_of_range& e) {
         throw std::invalid_argument("Missing required parameter in configuration");
     } catch (const std::bad_variant_access& e) {
@@ -286,7 +287,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
                    const std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page,
                    Csv<std::string, double, double, int, std::string, CopyMarkerConfig, int, double, double, double, double,
                        double>& benchmark_csv,
-                   std::string output_dir) {
+                   std::string output_dir, std::mt19937& master_gen) {
     std::random_device rd;
     std::mt19937 gen(rd());
 
@@ -305,7 +306,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
         const cv::Point2f original_img_size(img.cols, img.rows);
 
         cv::Mat mat;
-        int unique_seed = gen();
+        int unique_seed = master_gen();
         random_exec(img, mat, unique_seed);
 
         std::string modified_filename = "./copies/" + copy_info.filename;
@@ -377,7 +378,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
 
 void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
     auto [warmup_iterations, nb_copies, encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi,
-          copy_marker_config, selected_parser] = validate_parameters_combined(config);
+          copy_marker_config, selected_parser, master_seed] = validate_parameters_combined(config);
 
     CopyStyleParams style_params;
     style_params.encoded_marker_size = encoded_marker_size;
@@ -427,8 +428,19 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
 
     std::cout << "\nÉTAPE 2: Parsing des copies générées..." << std::endl;
 
+    // Créer un générateur avec le seed maître pour générer les seeds des copies
+    std::mt19937 master_gen;
+    if (master_seed != 0) {
+        std::cout << "Using master seed: " << master_seed << std::endl;
+        master_gen.seed(master_seed);
+    } else {
+        std::random_device rd;
+        master_gen.seed(rd());
+        std::cout << "No master seed provided, using random initialization" << std::endl;
+    }
+
     bench_parsing(generated_copies, corner_markers, src_img_size, selected_parser, copy_marker_config,
-                  user_boxes_per_page, benchmark_csv, benchmark_setup.output_dir);
+                  user_boxes_per_page, benchmark_csv, benchmark_setup.output_dir, master_gen);
 
     std::cout << "Combined benchmark completed with " << warmup_iterations << " warmup iterations and " << nb_copies
               << " copies." << std::endl;

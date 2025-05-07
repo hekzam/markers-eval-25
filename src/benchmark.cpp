@@ -45,7 +45,10 @@ std::vector<std::pair<std::string, Config>> default_config = {
         std::string("QRCODE") } },
     { "csv-mode",
       { "CSV Mode", "How to handle existing CSV files: 'append' to add data or 'overwrite' to delete and recreate",
-        std::string("overwrite") } }
+        std::string("overwrite") } },
+    { "seed",
+      { "Random seed", "Seed for the random number generator (0 means use a time-based random seed)",
+        0 } }
 };
 
 /**

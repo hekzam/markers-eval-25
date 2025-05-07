@@ -1,1 +1,2 @@
-combined --nb-copies 20 --warmup-iterations 1
+combined --nb-copies 5 --warmup-iterations 1 --seed 42
+combined --nb-copies 5 --warmup-iterations 1 --seed 42 --csv-mode append

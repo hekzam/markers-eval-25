@@ -26,5 +26,4 @@
  * @param config Un dictionnaire contenant les paramètres de configuration du benchmark.
  */
 void combined_benchmark(const std::unordered_map<std::string, Config>& config);
-
 #endif // COMBINED_BENCHMARK_H
