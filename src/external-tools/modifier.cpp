@@ -234,14 +234,28 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     cv::copyMakeBorder(img, img, pixel_offset, pixel_offset, pixel_offset, pixel_offset, cv::BORDER_CONSTANT,
                        cv::Scalar(255, 255, 255));
     cv::Mat img_out = img.clone();
-    // rotate_img(img, rng.uniform(-2.0, 2.0));
-    // translate_img(img, rng.uniform(-5, 5), rng.uniform(-5, 5));
+    
+    // Déterminer si l'image doit être complètement retournée (rotation à 180 degrés)
+    bool flip_image = rng.uniform(0, 10) < 2; // ~20% de chance de retourner l'image
+    
+    // Calculer l'angle de rotation
+    float rotation_angle;
+    if (flip_image) {
+        // Rotation à 180 degrés avec une légère variation de ±3 degrés
+        rotation_angle = 180.0f + rng.uniform(-2.0f, 2.0f);
+    } else {
+        // Légère rotation comme avant
+        rotation_angle = rng.uniform(-2.0f, 2.0f);
+    }
+
+    // Appliquer la rotation
     modification_matrix = cv::Mat::eye(3, 3, CV_32F);
-    modification_matrix *= rotate_center(rng.uniform(-2.0, 2.0), img_out.cols / 2, img_out.rows / 2);
+    modification_matrix *= rotate_center(rotation_angle, img_out.cols / 2, img_out.rows / 2);
     modification_matrix *= translate(rng.uniform(-5, 5), rng.uniform(-5, 5));
     modification_matrix = modification_matrix(cv::Rect(0, 0, 3, 2));
     cv::warpAffine(img_out, img, modification_matrix, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT,
                    cv::Scalar(255, 255, 255));
+    
     add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
     add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));
     contrast_brightness_modifier(img, rng.uniform(-20, 20), rng.uniform(-20, 20));
@@ -251,5 +265,5 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     simulate_printer_effects(img, rng, rng.uniform(50, 60));
     
     // Ajouter une compression JPEG avec une qualité aléatoire entre 50 et 70
-    apply_jpeg_compression(img, rng.uniform(50, 70));
+    apply_jpeg_compression(img, rng.uniform(40, 60));
 }
