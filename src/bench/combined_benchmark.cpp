@@ -108,11 +108,12 @@ std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& src_im
  * @param transform_matrix Matrice de transformation appliquée à l'image
  * @param rectification_transform Matrice de transformation affine du parser
  * @param margin Marge d'erreur en pixels
- * @return std::vector<double> Erreurs de précision pour chaque coin (haut-gauche, haut-droit, bas-gauche, bas-droit) et la moyenne en dernière position
+ * @return std::vector<double> Erreurs de précision pour chaque coin (haut-gauche, haut-droit, bas-gauche, bas-droit) et
+ * la moyenne en dernière position
  */
 std::vector<double> calculate_precision_error(const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size,
-                               const cv::Mat& transform_matrix, const cv::Mat& rectification_transform,
-                               float margin) {
+                                              const cv::Mat& transform_matrix, const cv::Mat& rectification_transform,
+                                              float margin) {
     std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(src_img_size, dst_img_size);
 
     print_mat(transform_matrix);
@@ -156,7 +157,7 @@ std::vector<double> calculate_precision_error(const cv::Point2f& src_img_size, c
         return distances;
     }
 
-    return {-1.0, -1.0, -1.0, -1.0, -1.0};
+    return { -1.0, -1.0, -1.0, -1.0, -1.0 };
 }
 
 /**
@@ -283,8 +284,12 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
                    const cv::Point2f& src_img_size, ParserType selected_parser,
                    const CopyMarkerConfig& copy_marker_config,
                    const std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page,
-                   Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double, double, double, double, double>& benchmark_csv,
+                   Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double, double, double, double,
+                       double>& benchmark_csv,
                    std::string output_dir) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
     for (const auto& copy_info : generated_copies) {
         std::cout << "Parsing copy: " << copy_info.filename << "..." << std::endl;
 
@@ -292,14 +297,16 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
         if (!img.data) {
             std::cerr << "Error: Could not read generated image: " << copy_info.filename << std::endl;
             benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
-                                    parser_type_to_string(selected_parser), copy_marker_config, -1.0, -1.0, -1.0, -1.0, -1.0 });
+                                    parser_type_to_string(selected_parser), copy_marker_config, -1.0, -1.0, -1.0, -1.0,
+                                    -1.0 });
             continue;
         }
 
         const cv::Point2f original_img_size(img.cols, img.rows);
 
         cv::Mat mat;
-        random_exec(img, mat);
+        int unique_seed = gen();
+        random_exec(img, mat, unique_seed);
 
         std::string modified_filename = "./copies/" + copy_info.filename;
         cv::imwrite(modified_filename, img);
@@ -340,9 +347,9 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
             auto calibrated_img_col = redress_image(img, affine_transform.value());
 
             precision_errors = calculate_precision_error(src_img_size, dst_img_size, mat, affine_transform.value(),
-                                                        MARGIN_COPY_MODIFIED);
-            std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_errors.back() << " pixels"
-                      << std::endl;
+                                                         MARGIN_COPY_MODIFIED);
+            std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_errors.back()
+                      << " pixels" << std::endl;
 
             for (auto box : user_boxes_per_page[meta.page - 1]) {
                 draw_box_outline(box, calibrated_img_col, src_img_size, dst_img_size, cv::Scalar(255, 0, 255));
@@ -363,7 +370,8 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
         // Écrire les résultats dans le CSV
         benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, parsing_milliseconds,
                                 parsing_success ? 1 : 0, parser_type_to_string(selected_parser), copy_marker_config,
-                                precision_errors.back(), precision_errors[0], precision_errors[1], precision_errors[2], precision_errors[3] });
+                                precision_errors.back(), precision_errors[0], precision_errors[1], precision_errors[2],
+                                precision_errors[3] });
     }
 }
 
@@ -392,12 +400,13 @@ void combined_benchmark(const std::unordered_map<std::string, Config>& config) {
 
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true, csv_mode);
 
-    Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double, double, double, double, double> benchmark_csv(
-        benchmark_setup.csv_output_dir / "benchmark_results.csv",
-        { "File", "Generation_Time_ms", "Parsing_Time_ms", "Parsing_Success", "Parser_Type", "Copy_Config",
-          "Precision_Error_Avg_px", "Precision_Error_TopLeft_px", "Precision_Error_TopRight_px", 
-          "Precision_Error_BottomLeft_px", "Precision_Error_BottomRight_px" },
-        csv_mode);
+    Csv<std::string, double, double, int, std::string, CopyMarkerConfig, double, double, double, double, double>
+        benchmark_csv(benchmark_setup.csv_output_dir / "benchmark_results.csv",
+                      { "File", "Generation_Time_ms", "Parsing_Time_ms", "Parsing_Success", "Parser_Type",
+                        "Copy_Config", "Precision_Error_Avg_px", "Precision_Error_TopLeft_px",
+                        "Precision_Error_TopRight_px", "Precision_Error_BottomLeft_px",
+                        "Precision_Error_BottomRight_px" },
+                      csv_mode);
 
     std::cout << "ÉTAPE 1: Génération des copies..." << std::endl;
 

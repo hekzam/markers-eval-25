@@ -1,2 +1,2 @@
 combined --nb-copies 5 --warmup-iterations 1 --csv-mode append --parser-type CIRCLE
-combined --nb-copies 2 --warmup-iterations 1 --csv-mode append
+combined --nb-copies 4 --warmup-iterations 1 --csv-mode append --dpi 150
