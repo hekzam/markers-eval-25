@@ -1,1 +1,1 @@
-combined --nb-copies 10 --warmup-iterations 1 --seed 43 --parser-type CIRCLE --marker-config (circle,circle,circle,qrcode:encoded,none) --unencoded-marker-size 5 --encoded-marker-size 15
+combined --nb-copies 10 --warmup-iterations 1 --seed 43 --parser-type SHAPE --marker-config (square,square,square,qrcode:encoded,none) --unencoded-marker-size 5 --encoded-marker-size 15

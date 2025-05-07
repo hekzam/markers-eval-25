@@ -143,7 +143,7 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
         for (int y = 0; y < img.rows; y++) {
             for (int x = 0; x < img.cols; x++) {
                 int pattern_val = pattern.at<uchar>(y % pattern.rows, x % pattern.cols);
-                int adjustment = pattern_val * intensity_factor * 0.2f; // Réduire légèrement l'intensité pour le dithering systématique
+                int adjustment = pattern_val * intensity_factor * 0.5f; // Réduire légèrement l'intensité pour le dithering systématique
                 
                 if (isColor) {
                     cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
@@ -194,15 +194,15 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
         }
         case 1: {
             // Effet 2: Variations de densité d'encre (impression non uniforme)
-            cv::Mat noise(img.size(), CV_32FC(img.channels()));
-            cv::randn(noise, 1.0, 0.2 * intensity_factor);
+            // cv::Mat noise(img.size(), CV_32FC(img.channels()));
+            // cv::randn(noise, 1.0, 0.2 * intensity_factor);
             
-            cv::Mat img_float;
-            img.convertTo(img_float, CV_32F);
+            // cv::Mat img_float;
+            // img.convertTo(img_float, CV_32F);
             
             // Multiplier l'image par le bruit pour créer des variations de densité
-            cv::multiply(img_float, noise, img_float);
-            img_float.convertTo(img, img.type());
+            // cv::multiply(img_float, noise, img_float);
+            // img_float.convertTo(img, img.type());
             break;
         }
         case 2: {
@@ -259,9 +259,9 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
                    cv::Scalar(255, 255, 255));
 
     add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
-    add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));
+    // add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));
     // contrast_brightness_modifier(img, rng.uniform(-20, 20), rng.uniform(-20, 20));
-    add_ink_stain(img, rng, rng.uniform(0, 8), rng.uniform(4, 8), rng.uniform(9, 35));
+    // add_ink_stain(img, rng, rng.uniform(0, 8), rng.uniform(4, 8), rng.uniform(9, 35));
 
     // Simuler des effets d'impression avec une intensité aléatoire
     simulate_printer_effects(img, rng, rng.uniform(60, 70));
