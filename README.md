@@ -139,7 +139,7 @@ Exécutez simplement la commande en spécifiant au minimum le type de benchmark 
 
 Le script vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
 
-> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `ink-estimation`.
+> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `config-analysis`.
 
 #### Types de benchmark disponibles
 
@@ -159,12 +159,12 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
    ./run_benchmark.sh --benchmark generation-time
    ```
 
-3. **ink-estimation** : Analyse la consommation d'encre pour chaque type de marqueur et fournit :
+3. **config-analysis** : Analyse la consommation d'encre pour chaque type de marqueur et fournit :
    - La surface totale couverte en cm²
    - Le pourcentage de couverture d'encre
    - Le volume d'encre estimé en millilitres
    ```sh
-   ./run_benchmark.sh --benchmark ink-estimation
+   ./run_benchmark.sh --benchmark config-analysis
    ```
 
 ### Options communes

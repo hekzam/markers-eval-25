@@ -66,8 +66,8 @@ file(GLOB UTILS_SRC src/utils/*.cpp)
 file(GLOB PARSER_SRC src/parser/*.cpp)
 # Remplacer le GLOB par une liste explicite des fichiers existants
 set(BENCHMARK_SRC 
-    src/bench/combined_benchmark.cpp
-    src/bench/ink_estimation.cpp
+    src/bench/gen_parse.cpp
+    src/bench/config_analysis.cpp
 )
 
 # add debug definitions

@@ -1,5 +1,5 @@
-#ifndef COMBINED_BENCHMARK_H
-#define COMBINED_BENCHMARK_H
+#ifndef GEN_PARSE_H
+#define GEN_PARSE_H
 
 #include <unordered_map>
 #include <string>
@@ -7,7 +7,7 @@
 #include <utility>
 
 /**
- * @file combined_benchmark.h
+ * @file gen_parse.h
  * @brief Module pour l'évaluation combinée des performances de génération et de parsing des copies.
  *
  * Ce fichier contient les déclarations des fonctions utilisées pour évaluer les performances
@@ -25,5 +25,5 @@
  *
  * @param config Un dictionnaire contenant les paramètres de configuration du benchmark.
  */
-void combined_benchmark(const std::unordered_map<std::string, Config>& config);
-#endif // COMBINED_BENCHMARK_H
+void gen_parse(const std::unordered_map<std::string, Config>& config);
+#endif // GEN_PARSE_H

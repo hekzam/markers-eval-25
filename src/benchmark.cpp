@@ -17,8 +17,8 @@
 #include <common.h>
 
 #include "utils/cli_helper.h"
-#include "bench/ink_estimation.h"
-#include "bench/combined_benchmark.h"
+#include "bench/config_analysis.h"
+#include "bench/gen_parse.h"
 #include "external-tools/create_copy.h"
 
 /**
@@ -33,22 +33,42 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "marker-config",
       { "Marker configuration", "The configuration of the markers to use",
         "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
-    { "encoded-marker-size", { "Encoded marker size", "The size of the encoded markers", 13 } },
-    { "unencoded-marker-size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
-    { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },
-    { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
-    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
     { "parser-type",
       { "Parser type",
         "The type of parser to use (ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, "
         "EMPTY)",
         std::string("QRCODE") } },
+    { "encoded-marker-size", { "Encoded marker size", "The size of the encoded markers", 13 } },
+    { "unencoded-marker-size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
+    { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },
+    { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
+    { "seed", { "Random seed", "Seed for the random number generator (0 means use a time-based random seed)", 0 } },
     { "csv-mode",
       { "CSV Mode", "How to handle existing CSV files: 'append' to add data or 'overwrite' to delete and recreate",
         std::string("overwrite") } },
-    { "seed",
-      { "Random seed", "Seed for the random number generator (0 means use a time-based random seed)",
-        0 } }
+    { "csv-filename",
+      { "CSV Filename", "Name of the CSV file for benchmark results", std::string("benchmark_results.csv") } },
+};
+
+/**
+ * @brief Configuration par défaut pour le benchmark d'estimation d'encre
+ */
+std::vector<std::pair<std::string, Config>> config_analysis_config = {
+    { "marker-config",
+      { "Marker configuration", "The configuration of the markers to use",
+        "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
+    { "encoded-marker-size", { "Encoded marker size", "The size of the encoded markers", 13 } },
+    { "unencoded-marker-size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
+    { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },
+    { "grey-level", { "Grey level", "The grey level of the markers", 0 } },
+    { "dpi", { "DPI", "The resolution in dots per inch", 300 } },
+    { "calibration-factor", { "Calibration factor", "Factor for ink consumption calculation (ml/cm²)", 1 } },
+    { "csv-mode",
+      { "CSV Mode", "How to handle existing CSV files: 'append' to add data or 'overwrite' to delete and recreate",
+        std::string("overwrite") } },
+    { "csv-filename",
+      { "CSV Filename", "Name of the CSV file for benchmark results", std::string("benchmark_results.csv") } },
 };
 
 /**
@@ -70,8 +90,8 @@ struct BenchmarkConfig {
  * (nom complet, fonction d'exécution, configuration par défaut).
  */
 std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
-    { "ink-estimation", { "Ink consumption estimation benchmark", ink_estimation_benchmark, ink_estimation_config } },
-    { "combined", { "Combined generation and parsing benchmark", combined_benchmark, default_config } }
+    { "config-analysis", { "Ink consumption and total area benchmark", config_analysis_benchmark, config_analysis_config } },
+    { "gen-parse", { "Generation and parsing benchmark", gen_parse, default_config } }
 };
 
 /**
@@ -119,7 +139,7 @@ int run_batch_benchmarks(const std::string& batch_file) {
         // Ajouter --benchmark et le nom du benchmark en tête des arguments
         args.push_back("--benchmark");
         args.push_back(batch_benchmark_name);
-        
+
         // Récupérer le reste des arguments
         while (iss >> arg) {
             args.push_back(arg);
@@ -146,18 +166,18 @@ int run_batch_benchmarks(const std::string& batch_file) {
         try {
             // Process arguments like in main()
             auto& selected_default_config = benchmark_map[batch_benchmark_name].default_config;
-            
+
             // Filtrer les arguments pour supprimer --benchmark et le nom du benchmark
             std::vector<char*> filtered_argv;
-            filtered_argv.push_back(batch_argv[0]);  // Le nom du programme
-            
+            filtered_argv.push_back(batch_argv[0]); // Le nom du programme
+
             // Parcourir tous les arguments sauf --benchmark et le nom du benchmark
             for (int i = 3; i < batch_argc; i++) {
                 filtered_argv.push_back(batch_argv[i]);
             }
-            
+
             int filtered_argc = filtered_argv.size();
-            
+
             auto opt_config = get_config(filtered_argc, filtered_argv.data(), selected_default_config);
 
             if (!opt_config.has_value()) {
@@ -207,7 +227,7 @@ int run_batch_benchmarks(const std::string& batch_file) {
  * @return int Code de retour (0 en cas de succès, 1 en cas d'erreur)
  */
 int main(int argc, char* argv[]) {
-    std::string benchmark_name = "ink-estimation";
+    std::string benchmark_name = "config-analysis";
     int benchmark_arg_index = -1;
 
     std::string batch_file;

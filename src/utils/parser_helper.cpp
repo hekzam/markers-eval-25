@@ -177,8 +177,9 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
         }
     }
 
-    if (sum_mask(corner_mask) < 3)
-        throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
+    /// TODO: Adapter le code pour gérer les marqueurs de coin manquants
+    // if (sum_mask(corner_mask) < 3)
+    //     throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
 }
 
 /**
