@@ -454,6 +454,191 @@ analyser_impact_config_parseur <- function(donnees, nom_parseur) {
   return(stats_config)
 }
 
+# Fonction pour analyser les tendances générales du temps de parsing
+analyser_tendances_temps_parsing <- function(donnees_completes) {
+  cat("\n========== ANALYSE DES TENDANCES GÉNÉRALES DE PARSING ==========\n")
+  
+  # S'assurer que le dossier existe
+  dir_create("analysis_results/informations_generales", recurse = TRUE)
+  
+  # Vérifier si la colonne Parsing_Time_ms existe
+  if (!("Parsing_Time_ms" %in% colnames(donnees_completes))) {
+    cat("Avertissement : Le fichier CSV ne contient pas la colonne 'Parsing_Time_ms'. Analyse des tendances de parsing ignorée.\n")
+    return(NULL)
+  }
+  
+  # Nettoyer et préparer les données
+  # Vérifier les valeurs manquantes ou NA dans Parsing_Time_ms
+  nb_na <- sum(is.na(donnees_completes$Parsing_Time_ms))
+  if (nb_na > 0) {
+    cat("Attention:", nb_na, "valeurs manquantes dans Parsing_Time_ms\n")
+  }
+  
+  # Filtrer les lignes avec des valeurs valides pour Parsing_Time_ms
+  donnees_valides <- donnees_completes[!is.na(donnees_completes$Parsing_Time_ms), ]
+  
+  # Vérifier s'il reste des données après filtrage
+  if (nrow(donnees_valides) == 0) {
+    cat("Erreur : Aucune donnée valide pour l'analyse des tendances de parsing\n")
+    return(NULL)
+  }
+  
+  # Créer un index séquentiel basé sur l'ordre dans le fichier CSV
+  donnees_valides$Index_Sequence <- 1:nrow(donnees_valides)
+  
+  # Afficher quelques informations pour le débogage
+  cat("Nombre de lignes avec données valides de parsing:", nrow(donnees_valides), "\n")
+  cat("Plage de temps de parsing:", min(donnees_valides$Parsing_Time_ms, na.rm = TRUE), 
+      "à", max(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  
+  # Définir un thème pour le graphique
+  mon_theme <- theme_minimal() +
+    theme(
+      text = element_text(color = "darkblue"),
+      axis.text = element_text(color = "darkblue"),
+      axis.title = element_text(color = "darkblue", face = "bold"),
+      plot.title = element_text(color = "darkblue", face = "bold", size = 14),
+      plot.subtitle = element_text(color = "darkblue"),
+      legend.text = element_text(color = "darkblue"),
+      legend.title = element_text(color = "darkblue", face = "bold")
+    )
+  
+  # Graphique d'évolution du temps de parsing selon l'index séquentiel
+  p1 <- ggplot(donnees_valides, aes(x = Index_Sequence, y = Parsing_Time_ms)) +
+    geom_point(color = "darkred", alpha = 0.7) +
+    geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
+    labs(title = "Évolution du temps de parsing",
+         subtitle = paste("Tendance générale pour", nrow(donnees_valides), "copies (tous parseurs confondus)"),
+         x = "Index séquentiel (ordre dans le fichier CSV)",
+         y = "Temps de parsing (ms)") +
+    expand_limits(y = 0) +
+    mon_theme
+  
+  # Enregistrer le graphique
+  ggsave("analysis_results/informations_generales/evolution_temps_parsing.png", p1, width = 10, height = 6, bg = "white")
+  
+  if (interactive()) {
+    print(p1)
+  }
+  
+  # Statistiques générales sur le temps de parsing
+  stats_file <- "analysis_results/informations_generales/statistiques_parsing_general.txt"
+  sink(stats_file)
+  cat("STATISTIQUES GÉNÉRALES SUR LES TEMPS DE PARSING:\n\n")
+  cat("Nombre total de copies analysées:", nrow(donnees_valides), "\n")
+  cat("Temps moyen de parsing:", mean(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps médian de parsing:", median(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Écart-type du temps de parsing:", sd(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de parsing minimum:", min(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de parsing maximum:", max(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  
+  # Statistiques par type de parseur si disponible
+  if ("Parser_Type" %in% colnames(donnees_valides)) {
+    cat("\nRépartition par type de parseur:\n")
+    stats_parseur <- donnees_valides %>%
+      group_by(Parser_Type) %>%
+      summarise(
+        Nombre = n(),
+        Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
+        Temps_Median = median(Parsing_Time_ms, na.rm = TRUE),
+        Ecart_Type = sd(Parsing_Time_ms, na.rm = TRUE),
+        Minimum = min(Parsing_Time_ms, na.rm = TRUE),
+        Maximum = max(Parsing_Time_ms, na.rm = TRUE)
+      )
+    print(stats_parseur)
+  }
+  sink()
+  
+  cat("Analyse des tendances générales de parsing terminée. Les résultats sont disponibles dans le dossier 'analysis_results/informations_generales'.\n")
+  
+  return(TRUE)
+}
+
+
+# Fonction pour analyser les tendances générales
+analyser_tendances_generales <- function(donnees_completes) {
+  cat("\n========== ANALYSE DES TENDANCES GÉNÉRALES ==========\n")
+  
+  # Créer un dossier pour les informations générales
+  dir_create("analysis_results/informations_generales", recurse = TRUE)
+  
+  # Vérifier si la colonne Generation_Time_ms existe
+  if (!("Generation_Time_ms" %in% colnames(donnees_completes))) {
+    cat("Avertissement : Le fichier CSV ne contient pas la colonne 'Generation_Time_ms'. Analyse des tendances de génération ignorée.\n")
+    return(NULL)
+  }
+  
+  # Nettoyer et préparer les données
+  # Vérifier les valeurs manquantes ou NA dans Generation_Time_ms
+  nb_na <- sum(is.na(donnees_completes$Generation_Time_ms))
+  if (nb_na > 0) {
+    cat("Attention:", nb_na, "valeurs manquantes dans Generation_Time_ms\n")
+  }
+  
+  # Filtrer les lignes avec des valeurs valides pour Generation_Time_ms
+  donnees_valides <- donnees_completes[!is.na(donnees_completes$Generation_Time_ms), ]
+  
+  # Vérifier s'il reste des données après filtrage
+  if (nrow(donnees_valides) == 0) {
+    cat("Erreur : Aucune donnée valide pour l'analyse des tendances générales\n")
+    return(NULL)
+  }
+  
+  # Créer un index séquentiel basé sur l'ordre dans le fichier CSV
+  donnees_valides$Index_Sequence <- 1:nrow(donnees_valides)
+  
+  # Afficher quelques informations pour le débogage
+  cat("Nombre de lignes avec données valides:", nrow(donnees_valides), "\n")
+  cat("Plage de temps de génération:", min(donnees_valides$Generation_Time_ms, na.rm = TRUE), 
+      "à", max(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  
+  # Définir un thème pour le graphique
+  mon_theme <- theme_minimal() +
+    theme(
+      text = element_text(color = "darkblue"),
+      axis.text = element_text(color = "darkblue"),
+      axis.title = element_text(color = "darkblue", face = "bold"),
+      plot.title = element_text(color = "darkblue", face = "bold", size = 14),
+      plot.subtitle = element_text(color = "darkblue"),
+      legend.text = element_text(color = "darkblue"),
+      legend.title = element_text(color = "darkblue", face = "bold")
+    )
+  
+  # Graphique d'évolution du temps de génération selon l'index séquentiel
+  p1 <- ggplot(donnees_valides, aes(x = Index_Sequence, y = Generation_Time_ms)) +
+    geom_point(color = "darkgreen", alpha = 0.7) +
+    geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
+    labs(title = "Évolution du temps de génération",
+         subtitle = paste("Tendance générale pour", nrow(donnees_valides), "copies"),
+         x = "Index séquentiel (ordre dans le fichier CSV)",
+         y = "Temps de génération (ms)") +
+    expand_limits(y = 0) +
+    mon_theme
+  
+  # Enregistrer le graphique
+  ggsave("analysis_results/informations_generales/evolution_temps_generation.png", p1, width = 10, height = 6, bg = "white")
+  
+  if (interactive()) {
+    print(p1)
+  }
+  
+  # Statistiques générales sur le temps de génération
+  stats_file <- "analysis_results/informations_generales/statistiques_generales.txt"
+  sink(stats_file)
+  cat("STATISTIQUES GÉNÉRALES SUR LES TEMPS DE GÉNÉRATION:\n\n")
+  cat("Nombre total de copies analysées:", nrow(donnees_valides), "\n")
+  cat("Temps moyen de génération:", mean(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps médian de génération:", median(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Écart-type du temps de génération:", sd(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de génération minimum:", min(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de génération maximum:", max(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  sink()
+  
+  cat("Analyse des tendances générales terminée. Les résultats sont disponibles dans le dossier 'analysis_results/informations_generales'.\n")
+  
+  return(TRUE)
+}
+
 # Fonction principale pour analyser tous les parseurs
 analyser_tous_parseurs <- function(chemin_csv) {
   # Vérifier si le fichier existe
@@ -471,6 +656,8 @@ analyser_tous_parseurs <- function(chemin_csv) {
   
   # Créer les dossiers nécessaires
   creer_dossiers()
+  analyser_tendances_generales(donnees_completes)
+  analyser_tendances_temps_parsing(donnees_completes)
   
   cat("\n========== ANALYSE PAR PARSEUR ==========\n\n")
   
