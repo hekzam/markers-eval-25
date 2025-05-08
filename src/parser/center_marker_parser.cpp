@@ -25,12 +25,15 @@ static bool discriminate(cv::Rect rect) {
     return rect.width > MIN_SIZE && rect.height > MIN_SIZE && rect.width < MAX_SIZE && rect.height < MAX_SIZE;
 }
 
-static std::vector<cv::Point2f> detect_shape(cv::Mat img) {
-    std::vector<cv::Point2f> detected_shapes;
+static std::vector<std::pair<cv::Point2f, cv::Rect>> detect_shape(const cv::Mat& img, const cv::Point2i& offset) {
+    std::vector<std::pair<cv::Point2f, cv::Rect>> detected_shapes;
+
+    cv::Mat canny_img;
+    cv::Canny(img, canny_img, 100, 100, 3);
 
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy; // unused; but could be used in drawContours
-    cv::findContours(img, contours, hierarchy, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(canny_img, contours, hierarchy, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE, offset);
 
     for (const auto& contour : contours) {
         if (contour.size() < 5)
@@ -42,7 +45,7 @@ static std::vector<cv::Point2f> detect_shape(cv::Mat img) {
             continue;
 
         auto center = center_of_rec(rect);
-        detected_shapes.push_back({ center.x, center.y });
+        detected_shapes.push_back({ { center.x, center.y }, rect });
     }
 
     return detected_shapes;
@@ -71,7 +74,7 @@ static float distance(cv::Point2f a, cv::Point2f b) {
     return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
 }
 
-#define DISTANCE_THRESHOLD 200
+#define DISTANCE_THRESHOLD 250
 
 std::vector<cv::Point2f> find_closest_point_corner(const std::vector<cv::Point2f>& detected_shapes,
                                                    const cv::Size& img_size, int& flag) {
@@ -144,7 +147,12 @@ std::optional<cv::Mat> center_marker_parser(const cv::Mat& img,
 
     meta = parse_metadata(corner_barcode.content);
 
-    auto detected_shapes = detect_shape(img);
+    // auto detected_shapes = detect_shape(img, { 0, 0 });
+    auto detected_shapes = smaller_parse(img,
+#ifdef DEBUG
+                                         debug_img,
+#endif
+                                         detect_shape);
     if (detected_shapes.empty()) {
         printf("no circle found\n");
         return {};
@@ -152,13 +160,19 @@ std::optional<cv::Mat> center_marker_parser(const cv::Mat& img,
 
 #ifdef DEBUG
     for (const auto& c : detected_shapes) {
-        cv::circle(debug_img, c, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
+        cv::rectangle(debug_img, c.second, cv::Scalar(0, 255, 0), 1);
+        cv::circle(debug_img, c.first, 3, cv::Scalar(0, 0, 255), -1);
     }
 #endif
 
+    std::vector<cv::Point2f> shaped_points;
+    for (const auto& shape : detected_shapes) {
+        shaped_points.push_back(shape.first);
+    }
+
     int flag = 0;
 
-    auto corner_points = find_closest_point_corner(detected_shapes, img.size(), flag);
+    auto corner_points = find_closest_point_corner(shaped_points, img.size(), flag);
 
 #ifdef DEBUG
     for (int i = 0; i < 4; ++i) {

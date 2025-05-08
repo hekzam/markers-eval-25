@@ -48,11 +48,13 @@ set(SRC_BENCH
     src/benchmark.cpp
     src/utils/benchmark_helper.cpp
     src/external-tools/create_copy.cpp
+    src/external-tools/modifier.cpp
 )
 
 set(SRC_MODIFIEUR
     src/modifier.cpp
     src/utils/math_utils.cpp
+    src/external-tools/modifier.cpp
 )
 
 set(SRC_TYPST_INTERFACE
@@ -62,10 +64,14 @@ set(SRC_TYPST_INTERFACE
 
 file(GLOB UTILS_SRC src/utils/*.cpp)
 file(GLOB PARSER_SRC src/parser/*.cpp)
-file(GLOB BENCHMARK_SRC src/bench/*.cpp)
+# Remplacer le GLOB par une liste explicite des fichiers existants
+set(BENCHMARK_SRC 
+    src/bench/gen_parse.cpp
+    src/bench/config_analysis.cpp
+)
 
 # add debug definitions
-if(CMAKE_BUILD_TYPE MATCHES Debug)
+if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
     add_definitions(-DDEBUG)
 endif()
 

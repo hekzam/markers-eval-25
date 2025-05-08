@@ -101,20 +101,18 @@ int found_other_point(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>
 
     bool find_a_corner = false;
 
-    if (right_corner_points.size() > 0 && std::get<0>(right_corner_points[0]) < 0.1f) {
+    if (right_corner_points.size() > 0 && std::get<0>(right_corner_points[0]) < 0.1f &&
+        std::get<2>(right_corner_points[0]) < 0) {
         corner_points[TOP_RIGHT] = std::get<1>(right_corner_points[0]);
         found_mask |= (1 << TOP_RIGHT);
         find_a_corner = true;
     }
 
-    if (right_corner_points.size() > 1 && std::get<0>(right_corner_points[1]) < 0.1f) {
+    if (right_corner_points.size() > 1 && std::get<0>(right_corner_points[1]) < 0.1f &&
+        std::get<2>(right_corner_points[1]) > 0) {
         corner_points[BOTTOM_LEFT] = std::get<1>(right_corner_points[1]);
         found_mask |= (1 << BOTTOM_LEFT);
         find_a_corner = true;
-    }
-
-    if (right_corner_points.size() > 0 && std::get<2>(right_corner_points[0]) > 0) {
-        std::swap(corner_points[TOP_RIGHT], corner_points[BOTTOM_LEFT]);
     }
 
     if (!find_a_corner) {
@@ -197,32 +195,32 @@ void print_mat(cv::Mat mat) {
 
 double percentage_to_offset(int depth, double percentage) {
     double max_value;
-    
-    if (depth == CV_8U) {
-        max_value = 255.0;
-    } else if (depth== CV_16U) {
-        max_value = 65535.0;
-    } else if (depth == CV_32F) {
-        max_value = 1.0;  // Si normalisé entre 0 et 1
-    } else {
-        CV_Error(cv::Error::StsBadArg, "Unsupported image type");
-    }
-    
-    return (percentage / 100.0) * max_value;
-}
 
-double percentage_to_dispersion(int depth, double percentage) {
-    double max_value;
-    
     if (depth == CV_8U) {
         max_value = 255.0;
     } else if (depth == CV_16U) {
         max_value = 65535.0;
     } else if (depth == CV_32F) {
-        max_value = 1.0;  // Si l'image est normalisée entre 0 et 1
+        max_value = 1.0; // Si normalisé entre 0 et 1
+    } else {
+        CV_Error(cv::Error::StsBadArg, "Unsupported image type");
+    }
+
+    return (percentage / 100.0) * max_value;
+}
+
+double percentage_to_dispersion(int depth, double percentage) {
+    double max_value;
+
+    if (depth == CV_8U) {
+        max_value = 255.0;
+    } else if (depth == CV_16U) {
+        max_value = 65535.0;
+    } else if (depth == CV_32F) {
+        max_value = 1.0; // Si l'image est normalisée entre 0 et 1
     } else {
         CV_Error(cv::Error::StsBadArg, "Type d'image non supporté");
     }
-    
+
     return (percentage / 100.0) * max_value;
 }

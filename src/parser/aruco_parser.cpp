@@ -46,7 +46,7 @@ int identify_corner_aruco(std::vector<std::pair<int, std::vector<cv::Point2f>>>&
     return found_mask;
 }
 
-std::vector<std::pair<int, std::vector<cv::Point2f>>> identify_aruco(const cv::Mat& img) {
+std::vector<std::pair<int, std::vector<cv::Point2f>>> identify_aruco(const cv::Mat& img, const cv::Point2i& offset) {
     std::vector<int> markerIds;
     std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
 
@@ -56,7 +56,6 @@ std::vector<std::pair<int, std::vector<cv::Point2f>>> identify_aruco(const cv::M
     cv::aruco::ArucoDetector detector(dictionary, detectorParams);
     detector.detectMarkers(img, markerCorners, markerIds, rejectedCandidates);
 #else
-
     cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
     cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_1000);
     cv::aruco::detectMarkers(img, dictionary, markerCorners, markerIds, parameters, rejectedCandidates);
@@ -65,6 +64,10 @@ std::vector<std::pair<int, std::vector<cv::Point2f>>> identify_aruco(const cv::M
     std::vector<std::pair<int, std::vector<cv::Point2f>>> barcodes;
     for (int i = 0; i < markerIds.size(); i++) {
         auto markerCorner = markerCorners[i];
+        for (auto& point : markerCorner) {
+            point.x += offset.x;
+            point.y += offset.y;
+        }
         std::vector<cv::Point> raster_box;
         for (const auto& point : markerCorner) {
             raster_box.push_back(cv::Point(point.x, point.y));
@@ -101,7 +104,11 @@ std::optional<cv::Mat> aruco_parser(const cv::Mat& img,
     }
 
     // auto marker_aruco = identify_aruco(img);
-    auto marker_aruco = smaller_parse(img, identify_aruco);
+    auto marker_aruco = smaller_parse(img,
+#ifdef DEBUG
+                                      debug_img,
+#endif
+                                      identify_aruco);
 
     auto corner_barcode = corner_barcode_opt.value();
 
