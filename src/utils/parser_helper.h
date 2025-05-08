@@ -139,27 +139,61 @@ int copy_config_to_flag(const CopyMarkerConfig& copy_marker_config);
 std::optional<DetectedBarcode> select_bottom_right_corner(const std::vector<DetectedBarcode>& barcodes);
 
 template <typename T>
-std::vector<T> smaller_parse(const cv::Mat& img, std::vector<T> (*parse_func)(const cv::Mat&), float size = 0.2) {
+std::vector<T> smaller_parse(const cv::Mat& img,
+#ifdef DEBUG
+                             cv::Mat debug_img,
+#endif
+                             std::vector<T> (*parse_func)(const cv::Mat&, const cv::Point2i&), float size = 0.2) {
     std::vector<T> parsed_data;
 
     // top-left corner
     cv::Mat img_tl = img(cv::Rect(0, 0, img.cols * size, img.rows * size));
-    auto parsed_tl = parse_func(img_tl);
+#ifdef DEBUG
+    cv::polylines(debug_img,
+                  std::vector<cv::Point2i>{
+                      { 0, 0 }, { img.cols * size, 0 }, { img.cols * size, img.rows * size }, { 0, img.rows * size } },
+                  true, cv::Scalar(255, 0, 0), 2);
+#endif
+    auto parsed_tl = parse_func(img_tl, { 0, 0 });
     parsed_data.insert(parsed_data.end(), parsed_tl.begin(), parsed_tl.end());
 
     // top-right corner
     cv::Mat img_tr = img(cv::Rect(img.cols * (1 - size), 0, img.cols * size, img.rows * size));
-    auto parsed_tr = parse_func(img_tr);
+#ifdef DEBUG
+    cv::polylines(debug_img,
+                  std::vector<cv::Point2i>{ { img.cols * (1 - size), 0 },
+                                            { img.cols, 0 },
+                                            { img.cols, img.rows * size },
+                                            { img.cols * (1 - size), img.rows * size } },
+                  true, cv::Scalar(255, 0, 0), 2);
+#endif
+    auto parsed_tr = parse_func(img_tr, { img.cols * (1 - size), 0 });
     parsed_data.insert(parsed_data.end(), parsed_tr.begin(), parsed_tr.end());
 
     // bottom-left corner
     cv::Mat img_bl = img(cv::Rect(0, img.rows * (1 - size), img.cols * size, img.rows * size));
-    auto parsed_bl = parse_func(img_bl);
+#ifdef DEBUG
+    cv::polylines(debug_img,
+                  std::vector<cv::Point2i>{ { 0, img.rows * (1 - size) },
+                                            { img.cols * size, img.rows * (1 - size) },
+                                            { img.cols * size, img.rows },
+                                            { 0, img.rows } },
+                  true, cv::Scalar(255, 0, 0), 2);
+#endif
+    auto parsed_bl = parse_func(img_bl, { 0, img.rows * (1 - size) });
     parsed_data.insert(parsed_data.end(), parsed_bl.begin(), parsed_bl.end());
 
     // bottom-right corner
     cv::Mat img_br = img(cv::Rect(img.cols * (1 - size), img.rows * (1 - size), img.cols * size, img.rows * size));
-    auto parsed_br = parse_func(img_br);
+#ifdef DEBUG
+    cv::polylines(debug_img,
+                  std::vector<cv::Point2i>{ { img.cols * (1 - size), img.rows * (1 - size) },
+                                            { img.cols, img.rows * (1 - size) },
+                                            { img.cols, img.rows },
+                                            { img.cols * (1 - size), img.rows } },
+                  true, cv::Scalar(255, 0, 0), 2);
+#endif
+    auto parsed_br = parse_func(img_br, { img.cols * (1 - size), img.rows * (1 - size) });
     parsed_data.insert(parsed_data.end(), parsed_br.begin(), parsed_br.end());
 
     return parsed_data;

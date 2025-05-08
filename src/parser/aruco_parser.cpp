@@ -46,7 +46,7 @@ int identify_corner_aruco(std::vector<std::pair<int, std::vector<cv::Point2f>>>&
     return found_mask;
 }
 
-std::vector<std::pair<int, std::vector<cv::Point2f>>> identify_aruco(const cv::Mat& img) {
+std::vector<std::pair<int, std::vector<cv::Point2f>>> identify_aruco(const cv::Mat& img, const cv::Point2i& offset) {
     std::vector<int> markerIds;
     std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
 
@@ -101,7 +101,11 @@ std::optional<cv::Mat> aruco_parser(const cv::Mat& img,
     }
 
     // auto marker_aruco = identify_aruco(img);
-    auto marker_aruco = smaller_parse(img, identify_aruco);
+    auto marker_aruco = smaller_parse(img,
+#ifdef DEBUG
+                                      debug_img,
+#endif
+                                      identify_aruco);
 
     auto corner_barcode = corner_barcode_opt.value();
 

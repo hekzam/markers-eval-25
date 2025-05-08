@@ -9,8 +9,8 @@
 
 #include "qrcode_parser.h"
 
-int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, const std::string& content_hash,
-                             std::vector<cv::Point2f>& corner_points, std::vector<DetectedBarcode*>& corner_barcodes) {
+int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, std::vector<cv::Point2f>& corner_points,
+                             std::vector<DetectedBarcode*>& corner_barcodes) {
     corner_points.resize(4);
     corner_barcodes.resize(4);
     int found_mask = 0x00;
@@ -68,8 +68,6 @@ std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
                                      cv::Mat debug_img,
 #endif
                                      Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
-    std::string expected_content_hash = "qhj6DlP5gJ+1A2nFXk8IOq+/TvXtHjlldVhwtM/NIP4=";
-
     auto barcodes = identify_barcodes(img, (ZXing::BarcodeFormat) flag_barcode);
     // auto barcodes = smaller_parse(img, get_barcodes);
 #ifdef DEBUG
@@ -78,7 +76,7 @@ std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
 
     std::vector<cv::Point2f> corner_points;
     std::vector<DetectedBarcode*> corner_barcodes;
-    int found_corner_mask = identify_corner_barcodes(barcodes, expected_content_hash, corner_points, corner_barcodes);
+    int found_corner_mask = identify_corner_barcodes(barcodes, corner_points, corner_barcodes);
 
     if (nb_corner_found(found_corner_mask) < 3) {
         printf("need at least 3 corner barcodes\n");
@@ -86,7 +84,7 @@ std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
     }
 
     for (int i = 0; i < 4; ++i) {
-        if (corner_barcodes[i] != nullptr) {
+        if (corner_barcodes[i] != nullptr && corner_barcodes[i]->content.size() > 5) {
             meta = parse_metadata(corner_barcodes[i]->content);
             break;
         }
