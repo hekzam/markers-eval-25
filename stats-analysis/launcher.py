@@ -53,7 +53,7 @@ def lancer_script_r(script_path, csv_path):
 def main():
     # Créer un analyseur d'arguments
     parser = argparse.ArgumentParser(description="Lance l'analyse R sur le fichier CSV.")
-    parser.add_argument("--csv", help="Spécifier un fichier CSV alternatif", default="csv_by_parser.csv")
+    parser.add_argument("--csv", help="Spécifier un fichier CSV alternatif", default="../output/csv/test1.csv")
     args = parser.parse_args()
     
     # Fichier CSV principal
