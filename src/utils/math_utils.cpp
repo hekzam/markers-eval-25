@@ -1,6 +1,9 @@
 #include <vector>
 #include <tuple>
 #include <iostream>
+#include <algorithm>
+#include <type_traits> 
+#include <cmath>  
 
 #include <common.h>
 #include "parser_helper.h"
@@ -226,3 +229,4 @@ double percentage_to_dispersion(int depth, double percentage) {
 
     return (percentage / 100.0) * max_value;
 }
+
