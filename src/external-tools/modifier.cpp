@@ -2,30 +2,9 @@
 #include <random>
 #include <iostream>
 #include "utils/math_utils.h"
+#include "modifier_constants.h"
+#include "modifier.h"
 
-// Ranges for uniform sampling
-#define MIN_ROTATE    -2.0f
-#define MAX_ROTATE     2.0f
-#define MIN_TRANS     -5
-#define MAX_TRANS      5
-#define MIN_SALT       0.01f
-#define MAX_SALT       0.13f
-#define MIN_PEPPER     0.01f
-#define MAX_PEPPER     0.13f
-#define MIN_OFFSET     1.0f
-#define MAX_OFFSET     5.0f
-#define MIN_DISP       1.0f
-#define MAX_DISP       5.0f
-#define MIN_CONTRAST  -20
-#define MAX_CONTRAST   20
-#define MIN_BRIGHT    -20
-#define MAX_BRIGHT     20
-#define MIN_NB_SPOT     0
-#define MAX_NB_SPOT     8
-#define MIN_RMIN        4
-#define MAX_RMIN        8
-#define MIN_RMAX        9
-#define MAX_RMAX       35
 
 void add_salt_pepper_noise(cv::Mat& img, cv::RNG rng, float max_pepper, float max_salt) {
     int amount1 = img.rows * img.cols * max_pepper / 100; // /100 pour passer un pourcentage entier en paramètre
@@ -113,30 +92,26 @@ void translate_img(cv::Mat& img, int dx, int dy) {
 }
 
 void distorsion_coef_exec(cv::Mat& img, cv::Mat& modification_matrix, float coef){
-    // double result = normalize_range<double, double>(coef, 0.0, 1.0, -2.0, 2.0);
     int percent = 30;
-    float neg=1*coef;
+    float neg_value=1*coef;
     if(time(0)%2==0){
-        neg=-neg;
+        neg_value=-neg_value;
     }
     cv::RNG rng = cv::RNG(time(0));
     cv::copyMakeBorder(img, img, percent, percent, percent, percent, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
     cv::Mat img_out = img.clone();
-    // rotate_img(img, rng.uniform(-2.0, 2.0));
-    // translate_img(img, rng.uniform(-5, 5), rng.uniform(-5, 5));
     modification_matrix = cv::Mat::eye(3, 3, CV_32F);
-    modification_matrix *= rotate_center(neg*80, img_out.cols / 2, img_out.rows / 2);
-    modification_matrix *= translate(neg*50, neg*50);
+    modification_matrix *= rotate_center(neg_value*70, img_out.cols / 2, img_out.rows / 2);
+    modification_matrix *= translate(neg_value*50, neg_value*50);
     modification_matrix = modification_matrix(cv::Rect(0, 0, 3, 2));
     cv::warpAffine(img_out, img, modification_matrix, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
     add_salt_pepper_noise(img, rng, coef*50, coef*50);
-    std::cout<<coef*MAX_PEPPER<<std::endl;
     add_gaussian_noise(img, rng, coef*50, coef*50);
-    contrast_brightness_modifier(img, neg*100, neg*100);
-    //add_ink_stain(img, rng, coef*MAX_NB_SPOT, rng.uniform(4, 8), rng.uniform(9, 35));
+    contrast_brightness_modifier(img, neg_value*100, neg_value*100);
+    add_ink_stain(img, rng, coef*MAX_NB_SPOT, rng.uniform(4, 8), rng.uniform(9, 35));
 }
 
-void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed = 0) {
+void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     cv::RNG rng;
     if (seed)
         rng = cv::RNG(seed);
