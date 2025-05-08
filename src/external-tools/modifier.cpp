@@ -160,38 +160,38 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
     }
     
     // En plus du tramage, appliquer un effet aléatoire supplémentaire
-    int effect_type = rng.uniform(0, 3); // Maintenant seulement 3 types d'effets différents (sans le dithering)
+    int effect_type = rng.uniform(1, 3); // Maintenant seulement 3 types d'effets différents (sans le dithering)
     
     switch(effect_type) {
-        case 0: {
-            // Effet 1: Stries horizontales (similaires aux imprimantes jet d'encre)
-            int num_stripes = rng.uniform(3, 15);
-            int stripe_height = img.rows / num_stripes;
+        // case 0: {
+        //     // Effet 1: Stries horizontales (similaires aux imprimantes jet d'encre)
+        //     int num_stripes = rng.uniform(3, 15);
+        //     int stripe_height = img.rows / num_stripes;
             
-            for (int i = 0; i < num_stripes; i++) {
-                int y_start = i * stripe_height;
-                int y_end = std::min(y_start + stripe_height, img.rows);
+        //     for (int i = 0; i < num_stripes; i++) {
+        //         int y_start = i * stripe_height;
+        //         int y_end = std::min(y_start + stripe_height, img.rows);
                 
-                // Intensité variable par bande
-                float stripe_factor = 1.0f - rng.uniform(0.0f, 0.3f * intensity_factor);
+        //         // Intensité variable par bande
+        //         float stripe_factor = 1.0f - rng.uniform(0.0f, 0.3f * intensity_factor);
                 
-                for (int y = y_start; y < y_end; y++) {
-                    for (int x = 0; x < img.cols; x++) {
-                        if (isColor) {
-                            cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
-                            pixel[0] = cv::saturate_cast<uchar>(pixel[0] * stripe_factor);
-                            pixel[1] = cv::saturate_cast<uchar>(pixel[1] * stripe_factor);
-                            pixel[2] = cv::saturate_cast<uchar>(pixel[2] * stripe_factor);
-                            img.at<cv::Vec3b>(y, x) = pixel;
-                        } else {
-                            uchar pixel = img.at<uchar>(y, x);
-                            img.at<uchar>(y, x) = cv::saturate_cast<uchar>(pixel * stripe_factor);
-                        }
-                    }
-                }
-            }
-            break;
-        }
+        //         for (int y = y_start; y < y_end; y++) {
+        //             for (int x = 0; x < img.cols; x++) {
+        //                 if (isColor) {
+        //                     cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
+        //                     pixel[0] = cv::saturate_cast<uchar>(pixel[0] * stripe_factor);
+        //                     pixel[1] = cv::saturate_cast<uchar>(pixel[1] * stripe_factor);
+        //                     pixel[2] = cv::saturate_cast<uchar>(pixel[2] * stripe_factor);
+        //                     img.at<cv::Vec3b>(y, x) = pixel;
+        //                 } else {
+        //                     uchar pixel = img.at<uchar>(y, x);
+        //                     img.at<uchar>(y, x) = cv::saturate_cast<uchar>(pixel * stripe_factor);
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     break;
+        // }
         case 1: {
             // Effet 2: Variations de densité d'encre (impression non uniforme)
             // cv::Mat noise(img.size(), CV_32FC(img.channels()));
@@ -258,7 +258,7 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     cv::warpAffine(img_out, img, modification_matrix, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT,
                    cv::Scalar(255, 255, 255));
 
-    add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
+    // add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
     // add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));
     // contrast_brightness_modifier(img, rng.uniform(-20, 20), rng.uniform(-20, 20));
     // add_ink_stain(img, rng, rng.uniform(0, 8), rng.uniform(4, 8), rng.uniform(9, 35));
