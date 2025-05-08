@@ -80,7 +80,7 @@ std::optional<cv::Mat> shape_parser(const cv::Mat& img,
 
     meta = parse_metadata(corner_barcode.content);
 
-    // auto detected_shapes = detect_shape(img);
+    // auto detected_shapes = detect_shape(img, { 0, 0 });
     auto detected_shapes = smaller_parse(img,
 #ifdef DEBUG
                                          debug_img,

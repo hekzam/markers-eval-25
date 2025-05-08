@@ -23,7 +23,7 @@
  * @return Tuple contenant les paramètres validés
  * @throws std::invalid_argument Si un paramètre requis est manquant ou invalide
  */
-static std::tuple<int, int, int, int, int, CopyMarkerConfig, double>
+static std::tuple<int, int, int, int, int, CopyMarkerConfig, double, CsvMode, std::string>
 validate_parameters(const std::unordered_map<std::string, Config>& config) {
     try {
         int encoded_marker_size = std::get<int>(config.at("encoded-marker-size").value);
@@ -44,11 +44,31 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
             calibration_factor = cal_factor_int / 1000.0;
             std::cout << "Using calibration factor: " << calibration_factor << " ml/cm²" << std::endl;
         } else {
-            std::cout << "No calibration factor provided, using default: " << calibration_factor << " ml/cm²" << std::endl;
+            std::cout << "No calibration factor provided, using default: " << calibration_factor << " ml/cm²"
+                      << std::endl;
         }
 
-        return { encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi,
-                 copy_marker_config,  calibration_factor };
+        // Configuration du CSV
+        CsvMode csv_mode = CsvMode::OVERWRITE;
+        if (config.find("csv-mode") != config.end()) {
+            std::string mode_str = std::get<std::string>(config.at("csv-mode").value);
+            if (mode_str == "append") {
+                csv_mode = CsvMode::APPEND;
+                std::cout << "CSV Mode: Appending to existing CSV file if present" << std::endl;
+            } else {
+                csv_mode = CsvMode::OVERWRITE;
+                std::cout << "CSV Mode: Overwriting existing CSV file if present" << std::endl;
+            }
+        }
+
+        std::string csv_filename = "ink_estimation_results.csv";
+        if (config.find("csv-filename") != config.end()) {
+            csv_filename = std::get<std::string>(config.at("csv-filename").value);
+            std::cout << "CSV Filename: " << csv_filename << std::endl;
+        }
+
+        return { encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level,  dpi,
+                 copy_marker_config,  calibration_factor,    csv_mode,           csv_filename };
     } catch (const std::out_of_range& e) {
         throw std::invalid_argument("Missing required parameter in configuration");
     } catch (const std::bad_variant_access& e) {
@@ -157,7 +177,7 @@ analyze_corner_markers_area(const std::vector<std::optional<std::shared_ptr<Atom
  */
 void config_analysis_benchmark(const std::unordered_map<std::string, Config>& config) {
     auto [encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi, copy_marker_config,
-          calibration_factor] = validate_parameters(config);
+          calibration_factor, csv_mode, csv_filename] = validate_parameters(config);
 
     CopyStyleParams style_params;
     style_params.encoded_marker_size = encoded_marker_size;
@@ -166,25 +186,6 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
     style_params.grey_level = grey_level;
     style_params.dpi = dpi;
     style_params.generating_content = false;
-
-    // Configuration du CSV
-    CsvMode csv_mode = CsvMode::OVERWRITE;
-    if (config.find("csv-mode") != config.end()) {
-        std::string mode_str = std::get<std::string>(config.at("csv-mode").value);
-        if (mode_str == "append") {
-            csv_mode = CsvMode::APPEND;
-            std::cout << "CSV Mode: Appending to existing CSV file if present" << std::endl;
-        } else {
-            csv_mode = CsvMode::OVERWRITE;
-            std::cout << "CSV Mode: Overwriting existing CSV file if present" << std::endl;
-        }
-    }
-
-    std::string csv_filename = "ink_estimation_results.csv";
-    if (config.find("csv-filename") != config.end()) {
-        csv_filename = std::get<std::string>(config.at("csv-filename").value);
-        std::cout << "CSV Filename: " << csv_filename << std::endl;
-    }
 
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", false, false, csv_mode);
 
@@ -195,14 +196,14 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
 
     std::filesystem::path dir_path{ "./copies" };
     std::filesystem::remove_all(dir_path);
-    
+
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(1000, 9999);
     int random_suffix = dist(gen);
-    
+
     std::string copy_name = "copy-" + std::to_string(random_suffix);
-    
+
     create_copy(style_params, copy_marker_config, copy_name);
 
     std::filesystem::path image_path;

@@ -166,7 +166,7 @@ std::vector<double> calculate_precision_error(const cv::Point2f& src_img_size, c
  * @return Tuple contenant les paramètres validés
  * @throws std::invalid_argument Si un paramètre requis est manquant ou invalide
  */
-static std::tuple<int, int, int, int, int, int, int, CopyMarkerConfig, ParserType, int>
+static std::tuple<int, int, int, int, int, int, int, CopyMarkerConfig, ParserType, int, CsvMode, std::string>
 validate_parameters(const std::unordered_map<std::string, Config>& config) {
     try {
         int warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
@@ -200,8 +200,27 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
             std::cout << "Note: No parser type specified, using default QRCODE parser." << std::endl;
         }
 
-        return { warmup_iterations, nb_copies, encoded_marker_size, unencoded_marker_size, header_marker_size,
-                 grey_level,        dpi,       copy_marker_config,  selected_parser,       master_seed };
+        CsvMode csv_mode = CsvMode::OVERWRITE;
+        if (config.find("csv-mode") != config.end()) {
+            std::string mode_str = std::get<std::string>(config.at("csv-mode").value);
+            if (mode_str == "append") {
+                csv_mode = CsvMode::APPEND;
+                std::cout << "CSV Mode: Appending to existing CSV file if present" << std::endl;
+            } else {
+                csv_mode = CsvMode::OVERWRITE;
+                std::cout << "CSV Mode: Overwriting existing CSV file if present" << std::endl;
+            }
+        }
+
+        std::string csv_filename = "benchmark_results.csv";
+        if (config.find("csv-filename") != config.end()) {
+            csv_filename = std::get<std::string>(config.at("csv-filename").value);
+            std::cout << "CSV Filename: " << csv_filename << std::endl;
+        }
+
+        return { warmup_iterations, nb_copies,   encoded_marker_size, unencoded_marker_size, header_marker_size,
+                 grey_level,        dpi,         copy_marker_config,  selected_parser,       master_seed,
+                 csv_mode,          csv_filename };
     } catch (const std::out_of_range& e) {
         throw std::invalid_argument("Missing required parameter in configuration");
     } catch (const std::bad_variant_access& e) {
@@ -335,6 +354,8 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
         double parsing_milliseconds = Benchmark::measure("  Parsing time", parse_lambda);
 
         bool parsing_success = affine_transform.has_value();
+        parsing_success = parsing_success && meta.id == 0;
+        parsing_success = parsing_success && meta.page > 0;
         std::cout << "  Success: " << (parsing_success ? "Yes" : "No") << std::endl;
 
         std::filesystem::path output_img_path_fname = std::filesystem::path(copy_info.filename);
@@ -378,7 +399,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
 
 void gen_parse(const std::unordered_map<std::string, Config>& config) {
     auto [warmup_iterations, nb_copies, encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi,
-          copy_marker_config, selected_parser, master_seed] = validate_parameters(config);
+          copy_marker_config, selected_parser, master_seed, csv_mode, csv_filename] = validate_parameters(config);
 
     CopyStyleParams style_params;
     style_params.encoded_marker_size = encoded_marker_size;
@@ -386,24 +407,6 @@ void gen_parse(const std::unordered_map<std::string, Config>& config) {
     style_params.header_marker_size = header_marker_size;
     style_params.grey_level = grey_level;
     style_params.dpi = dpi;
-
-    CsvMode csv_mode = CsvMode::OVERWRITE;
-    if (config.find("csv-mode") != config.end()) {
-        std::string mode_str = std::get<std::string>(config.at("csv-mode").value);
-        if (mode_str == "append") {
-            csv_mode = CsvMode::APPEND;
-            std::cout << "CSV Mode: Appending to existing CSV file if present" << std::endl;
-        } else {
-            csv_mode = CsvMode::OVERWRITE;
-            std::cout << "CSV Mode: Overwriting existing CSV file if present" << std::endl;
-        }
-    }
-
-    std::string csv_filename = "benchmark_results.csv";
-    if (config.find("csv-filename") != config.end()) {
-        csv_filename = std::get<std::string>(config.at("csv-filename").value);
-        std::cout << "CSV Filename: " << csv_filename << std::endl;
-    }
 
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true, csv_mode);
 
