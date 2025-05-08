@@ -1,3 +1,3 @@
 gen-parse --nb-copies 5 --warmup-iterations 1 --seed 43 --parser-type CENTER_MARKER_PARSER --marker-config (qrcode,qrcode,qrcode,qrcode,pdf417:encoded) --unencoded-marker-size 14 --encoded-marker-size 15 --dpi 300 --header-marker-size 15 --csv-filename test1.csv --csv-mode append
 config-analysis --marker-config (none,none,none,qrcode:encoded,none) --csv-filename config-analysis.csv --csv-mode append --dpi 50
-config-analysis --marker-config (none,none,none,circle,none) --csv-filename config-analysis.csv --csv-mode append --dpi 50
+config-analysis --marker-config (none,none,none,circle,none) --csv-filename config-analysis.csv --dpi 50
