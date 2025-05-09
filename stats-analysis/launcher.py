@@ -3,6 +3,7 @@ import subprocess
 import os
 import sys
 import argparse
+from pathlib import Path
 
 def lancer_script_r(script_path, csv_path):
     """
@@ -64,12 +65,15 @@ def main():
         print(f"[ERREUR] Le fichier CSV principal '{csv_principal}' est introuvable.")
         return
     
+    # Répertoire de ce script
+    script_dir = Path(__file__).parent.resolve()
+
     # Script principal à lancer
     script_principal = "intra_parser_analysis.r"
     
     # Exécuter le script principal
     print("\nLANCEMENT DE L'ANALYSE")
-    success = lancer_script_r(script_principal, csv_principal)
+    success = lancer_script_r(script_dir / script_principal, csv_principal)
     
     if success:
         print("\nL'analyse a été complétée avec succès!")

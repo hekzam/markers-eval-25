@@ -1,38 +1,115 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=23.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = nixpkgs.legacyPackages.${system};
       in rec {
         packages = rec {
+
           parser = pkgs.stdenv.mkDerivation {
             pname = "hekzam-parser";
-            version = if (self ? rev) then self.shortRev else "dirty";
-            src = pkgs.lib.sourceByRegex ./. [
-              "^meson\.build"
-              "^src"
-              "^src/.*\.hpp"
-              "^src/.*\.cpp"
+            version = if (self ? rev) then self.shortRev else self.dirtyShortRev;
+
+            # src = pkgs.lib.sourceByRegex ./. [
+            #   "^(src|include)"
+            #   "^(src|include)/.*\.(h|hpp)"
+            #   "^(src|include)/.*\.(c|cpp)"
+            #   "^(typst).*"
+            #   "^.*\.sh"
+            #   "^CMakeLists\.txt"
+            # ];
+            src = ./.;
+            
+            nativeBuildInputs = with pkgs; [
+              # cmake
+              ninja
+              pkg-config
+              meson
             ];
+
             buildInputs = with pkgs; [
               opencv
               zxing-cpp
               nlohmann_json
+              typst
+              (lib.getDev zbar)
             ];
-            nativeBuildInputs = with pkgs; [
-              meson
-              ninja
-              pkg-config
-            ];
+
+            # cmakeFlags = [
+            #   "-G Ninja"
+            #   "-DCMAKE_BUILD_TYPE=Release"
+            #   "-DENABLE_ZBAR=ON"
+            # ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp -r ./benchmarker $out/bin/benchmark
+              cp -r ./typst_interface $out/bin/typst_interface
+              cp -r ./modifier $out/bin/modifier
+              cp -r ./parser $out/bin/parser
+
+              # cp -r ./* $out/bin
+              if [ -f $out/bin/benchmarker ]; then
+                mv $out/bin/benchmarker $out/bin/benchmark
+              fi
+            '';
           };
+
+          analysis = pkgs.stdenv.mkDerivation {
+            pname = "hekzam-analysis";
+            version = if (self ? rev) then self.shortRev else self.dirtyShortRev;
+
+            src = ./stats-analysis;
+            
+            buildInputs = with pkgs; [
+              python3
+              R
+              rPackages.ggplot2
+              rPackages.dplyr
+              rPackages.tidyr
+              rPackages.fs
+            ];
+
+            installPhase = ''
+              mkdir -p $out/bin
+              cp -r ./benchmarker $out/bin/benchmark
+              cp -r ./typst_interface $out/bin/typst_interface
+              cp -r ./modifier $out/bin/modifier
+              cp -r ./parser $out/bin/parser
+
+              # cp -r ./* $out/bin
+              if [ -f $out/bin/benchmarker ]; then
+                mv $out/bin/benchmarker $out/bin/benchmark
+              fi
+            '';
+          };
+
           default = parser;
         };
-        devShells = {};
+
+        devShells = {
+          default = packages.parser.overrideAttrs (oldAttrs: {
+            nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
+              pkgs.gdb
+              pkgs.llvmPackages_latest.clang-tools
+              pkgs.fish
+              pkgs.tokei
+            ];
+          });
+          test = pkgs.mkShell {
+            packages = [
+              packages.parser
+             ];   
+          };
+          stats-analysis = pkgs.callPackage ./stats-analysis/shell.nix {
+            inherit pkgs;
+          };
+        };
       }
     );
 }

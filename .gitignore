@@ -47,3 +47,4 @@ test.cpp
 app
 stats-analysis/*.txt
 stats-analysis/analysis_results
+result
