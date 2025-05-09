@@ -58,7 +58,7 @@ bool parse_numeric_arg(int argc, char const* argv[], const std::string& prefix, 
                 } else if constexpr (std::is_same<T, float>::value) {
                     value = std::stof(str_val);
                 } else {
-                    static_assert(!sizeof(T), "Type non supporté");
+                    static_assert(!sizeof(T), "Type non supporté"); 
                 }
                 return true;
             } catch (const std::invalid_argument&) {
