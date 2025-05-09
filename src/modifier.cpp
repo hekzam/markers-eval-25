@@ -8,7 +8,14 @@
 #include "external-tools/modifier.h"
 
 
-
+/**
+ * @brief Ajout de bruit poivre et sel
+ *
+ * @param img Image à modifier                                                                                  //TODO
+ * @param max_pepper Pourcentage maximum de poivre
+ * @param bright bright = 0 : Neutre; bright > 0 : Éclaircit; bright < 0 : Assombrit
+ *
+ */
 std::optional<std::tuple<int, int>> parse_2(const std::string& value) {
     auto comma = value.find(',');
     if (comma == std::string::npos)
@@ -20,8 +27,6 @@ std::optional<std::tuple<int, int>> parse_2(const std::string& value) {
         return std::make_tuple(salt, pepper);
     } catch (...) { return std::nullopt; }
 }
-
-/*****************************************************************************************************************************************************************/
 
 std::optional<std::tuple<int, int, int>> parse_3(const std::string& s) {
     // On cherche deux virgules
@@ -39,8 +44,6 @@ std::optional<std::tuple<int, int, int>> parse_3(const std::string& s) {
         return std::make_tuple(nb_spot, min_radius, max_radius);
     } catch (...) { return std::nullopt; }
 }
-
-/*****************************************************************************************************************************************************************/
 
 template<typename T>
 bool parse_numeric_arg(int argc, char const* argv[], const std::string& prefix, T& value) {
@@ -73,8 +76,6 @@ bool parse_numeric_arg(int argc, char const* argv[], const std::string& prefix, 
     return false;
 }
 
-/*****************************************************************************************************************************************************************/
-
 void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     // juste sous votre prototype de gestion_arg()
     static const std::vector<std::string> poss_opt = { "-s=", "-g=", "-cb=", "-sp=", "-r=", "-t=", "-nb=" };
@@ -90,18 +91,22 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     }
 
     // CAS TTES TRANSFORMATIONS SEED ALEATOIRES
+
+    bool has_seed = false;                      //sert a rien                                     
     int seed_value = 0;
     if (parse_numeric_arg(argc, argv, "-seed=", seed_value)) {
         std::cout << "Valeur de -seed : " << seed_value << std::endl;
         random_exec(img, mat, seed_value);
+        has_seed = true;
         return;
     }
 
-    // CAS TTES TRANSFORMATIONS AVEC COEF
+    bool has_coef = false;          //sert a rien
     float coef_value = 0.0f;
     if (parse_numeric_arg(argc, argv, "-coef=", coef_value)) {
         std::cout << "Valeur de -coef : " << coef_value << std::endl;
         distorsion_coef_exec(img, mat, coef_value);
+        has_coef = true;
         return;
     }
     // CAS UNE OU PLUSIEURS TRANSFORMATIONS AVEC PARAM
@@ -123,6 +128,7 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     if (auto it = parsed_opts.find("-sp="); it != parsed_opts.end()) {
         if (auto res = parse_2
         (it->second)) {
+            // Structured binding pour décomposer le tuple
             auto [salt, pepper] = *res;
             add_salt_pepper_noise(img, rng, pepper, salt);
         } else {
@@ -133,6 +139,7 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     if (auto it = parsed_opts.find("-g="); it != parsed_opts.end()) {
         if (auto res = parse_2
         (it->second)) {
+            // Structured binding pour décomposer le tuple
             auto [offset, dispersion] = *res;
             add_gaussian_noise(img, rng, offset, dispersion);
         } else {
@@ -143,6 +150,7 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     if (auto it = parsed_opts.find("-cb="); it != parsed_opts.end()) {
         if (auto res = parse_2
         (it->second)) {
+            // Structured binding pour décomposer le tuple
             auto [contrast, bright] = *res;
             contrast_brightness_modifier(img, contrast, bright);
         } else {
@@ -152,8 +160,9 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     }
     if (auto it = parsed_opts.find("-s="); it != parsed_opts.end()) {
         if (auto res = parse_3(it->second)) {
+            // Structured binding pour décomposer le tuple
             auto [nb_spot, min_radius, max_radius] = *res;
-            add_spot(img, rng, nb_spot, min_radius, max_radius);
+            add_ink_stain(img, rng, nb_spot, min_radius, max_radius);
         } else {
             std::cerr << "Erreur dans le format de -s= (attendu: nb spot, min radius, max radius)\n";
             exit(1);
@@ -161,12 +170,13 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     }
     auto it = parsed_opts.find("-r=");
     if (it != parsed_opts.end()) {
-        int angle = std::stof(it->second);
+        int angle = std::stof(it->second); // conversion sans surcoût
         rotate_img(img, angle);
     }
     if (auto it = parsed_opts.find("-t="); it != parsed_opts.end()) {
         if (auto res = parse_2
         (it->second)) {
+            // Structured binding pour décomposer le tuple
             auto [dx, dy] = *res;
             std::cout << dx << "  " << dy << std::endl;
             translate_img(img, dx, dy);
@@ -175,49 +185,21 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
             exit(1);
         }
     }
+
+    // si seed not in params
 }
-
-/*****************************************************************************************************************************************************************/
-
-
-void usage(const char* progName) {
-    std::cerr << "Usage : " << progName << " <img_in> [options]\n"
-                 "\n"
-                 "Sans option :\n"
-                 "  Applique toutes les transformations avec des paramètres aléatoires (seed = horloge système).\n"
-                 "\n"
-                 "Options individuelles (appliquées uniquement si spécifiées) :\n"
-                 "  -r=<angle>         Rotation de l'image en degrés (sens trigonométrique).\n"
-                 "  -t=<dx,dy>         Translation : dx pixels horizontal, dy pixels vertical.\n"
-                 "  -sp=<salt,pep>     Bruit sel et poivre (pourcentages).\n"
-                 "  -g=<offset,disp>   Bruit gaussien (offset %, dispersion %).\n"
-                 "  -cb=<c,b>          Contraste (c) et luminosité (b).\n"
-                 "  -s=<n,rmin,rmax>   Ajout de n taches de rayon aléatoire entre rmin et rmax.\n"
-                 "\n"
-                 "Options globales (remplacent le mode individuel) :\n"
-                 "  -seed=<x>          Toutes les transformations avec la graine x pour le RNG.\n"
-                 "  -coef=<x>          Toutes les transformations avec un coefficient d'intensité x (0.0–1.0).\n"
-                 "\n"
-                 "Exemples :\n"
-                 "  " << progName << " img.png\n"
-                 "  " << progName << " img.png -r=15 -cb=120,10\n"
-                 "  " << progName << " img.png -seed=42\n"
-                 "  " << progName << " img.png -coef=0.5\n";
-    std::exit(1);
-}
-
-/*****************************************************************************************************************************************************************/
 
 int main(int argc, char const* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <img_in>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <image_max_pepperth>" << std::endl;
         return 1;
     }
-    std::string img_in = argv[1];
-    cv::Mat img = cv::imread(img_in);
+    std::string image_max_pepperth = argv[1];
+    cv::Mat img = cv::imread(image_max_pepperth);
     cv::Mat calibrated_img = img.clone();
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
     gestion_arg(img, argc, argv);
+
     cv::imwrite("calibrated_img.png", img);
     return 0;
 }
