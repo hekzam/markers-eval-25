@@ -60,20 +60,21 @@ def main():
     # Fichier CSV principal
     csv_principal = args.csv
     
-    # Vérifier si le fichier CSV existe
-    if not os.path.exists(csv_principal):
-        print(f"[ERREUR] Le fichier CSV principal '{csv_principal}' est introuvable.")
-        return
-    
     # Répertoire de ce script
     script_dir = Path(__file__).parent.resolve()
+    
+    # Vérifier si le fichier CSV existe
+    if not os.path.exists(script_dir / csv_principal):
+        print(f"[ERREUR] Le fichier CSV principal '{script_dir / csv_principal}' est introuvable.")
+        return
+    
 
     # Script principal à lancer
     script_principal = "intra_parser_analysis.r"
     
     # Exécuter le script principal
     print("\nLANCEMENT DE L'ANALYSE")
-    success = lancer_script_r(script_dir / script_principal, csv_principal)
+    success = lancer_script_r(script_dir / script_principal, script_dir / csv_principal)
     
     if success:
         print("\nL'analyse a été complétée avec succès!")

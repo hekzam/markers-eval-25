@@ -1,1 +1,1 @@
-gen-parse --nb-copies 20 --warmup-iterations 1 --seed 41 --parser-type CIRCLE --marker-config (circle,circle,circle,qrcode:encoded,none) --unencoded-marker-size 8 --encoded-marker-size 20 --dpi 250 --csv-filename test1.csv
+gen-parse --nb-copies 100 --warmup-iterations 1 --seed 41 --parser-type CIRCLE --marker-config (circle,circle,circle,qrcode:encoded,none) --unencoded-marker-size 8 --encoded-marker-size 20 --dpi 250 --csv-filename test1.csv

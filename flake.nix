@@ -2,15 +2,17 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
+
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils,flake-compat }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
       in rec {
         packages = rec {
-
+          nixpkgs = pkgs;
           parser = pkgs.stdenv.mkDerivation {
             pname = "hekzam-parser";
             version = if (self ? rev) then self.shortRev else self.dirtyShortRev;
@@ -36,8 +38,11 @@
               opencv
               zxing-cpp
               nlohmann_json
-              typst
               (lib.getDev zbar)
+            ];
+
+            propagatedBuildInputs = with pkgs; [
+              typst
             ];
 
             # cmakeFlags = [
@@ -97,8 +102,6 @@
             nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
               pkgs.gdb
               pkgs.llvmPackages_latest.clang-tools
-              pkgs.fish
-              pkgs.tokei
             ];
           });
           test = pkgs.mkShell {
