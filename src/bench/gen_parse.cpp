@@ -108,21 +108,21 @@ std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, c
     std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(dst_img_size);
 
     std::vector<cv::Point2f> transformed_corner = original_corners;
+    for (auto& corner : transformed_corner) {
+        // Ajuster les coordonnées pour compenser la marge
+        if (corner.x < dst_img_size.x / 2)
+            corner.x += margin;
+        else
+            corner.x -= margin;
+
+        if (corner.y < dst_img_size.y / 2)
+            corner.y += margin;
+        else
+            corner.y -= margin;
+    }
     cv::transform(transformed_corner, transformed_corner, transform_matrix);
 
     cv::transform(transformed_corner, transformed_corner, rectification_transform);
-
-    transformed_corner[0].x += margin;
-    transformed_corner[0].y += margin;
-
-    transformed_corner[1].x -= margin;
-    transformed_corner[1].y += margin;
-
-    transformed_corner[2].x += margin;
-    transformed_corner[2].y -= margin;
-
-    transformed_corner[3].x -= margin;
-    transformed_corner[3].y -= margin;
 
     std::vector<double> distances;
     double total_distance = 0.0;
@@ -132,7 +132,9 @@ std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, c
 
         std::cout << "  Corner " << i << " - Original: (" << original_corners[i].x << ", " << original_corners[i].y
                   << "), after Transformation: (" << transformed_corner[i].x << ", " << transformed_corner[i].y
-                  << "), Precision error: " << distance << " pixels" << std::endl;
+                  << "), Difference x: " << transformed_corner[i].x - original_corners[i].x
+                  << ", Difference y: " << transformed_corner[i].y - original_corners[i].y << ", Distance: " << distance
+                  << " pixels" << std::endl;
 
         total_distance += distance;
         distances.push_back(distance);
