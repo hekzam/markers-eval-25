@@ -3,6 +3,7 @@ import subprocess
 import os
 import sys
 import argparse
+from pathlib import Path
 
 def lancer_script_r(script_path, csv_path):
     """
@@ -71,10 +72,13 @@ def main():
     
     # Fichier CSV 
     csv_principal = args.csv
+
+    # Répertoire de ce script
+    script_dir = Path(__file__).parent.resolve()
     
     # Vérifier si le fichier CSV existe
-    if not os.path.exists(csv_principal):
-        print(f"[ERREUR] Le fichier CSV principal '{csv_principal}' est introuvable.")
+    if not os.path.exists(script_dir / csv_principal):
+        print(f"[ERREUR] Le fichier CSV principal '{script_dir / csv_principal}' est introuvable.")
         return
     
     # Mode d'exécution
@@ -87,7 +91,7 @@ def main():
         
         # Exécuter le script spécifié
         print(f"\nLANCEMENT DE L'ANALYSE ({args.script})")
-        success = lancer_script_r(script_principal, csv_principal)
+        success = lancer_script_r(script_dir / script_principal, script_dir / csv_principal)
         
         if success:
             print("\nL'analyse a été complétée avec succès!")
@@ -100,7 +104,7 @@ def main():
             
             if choix == "1":
                 script_principal = "intra_parser_analysis.r"
-                success = lancer_script_r(script_principal, csv_principal)
+                success = lancer_script_r(script_dir / script_principal, script_dir / csv_principal)
                 
                 if success:
                     print("\nL'analyse intra a été complétée avec succès!")
@@ -109,7 +113,7 @@ def main():
                 
             elif choix == "2":
                 script_principal = "inter_parser_analysis.r"
-                success = lancer_script_r(script_principal, csv_principal)
+                success = lancer_script_r(script_dir / script_principal, script_dir / csv_principal)
                 
                 if success:
                     print("\nL'analyse inter a été complétée avec succès!")
