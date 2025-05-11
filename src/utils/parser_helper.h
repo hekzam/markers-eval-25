@@ -17,6 +17,7 @@
 #else
 #include <ZXing/ReadBarcode.h>
 #endif
+#include <common.h>
 
 /**
  * @brief Convertit un type de parseur (ParserType) en chaîne de caractères
@@ -151,7 +152,7 @@ std::vector<T> smaller_parse(const cv::Mat& img,
 #ifdef DEBUG
     cv::polylines(debug_img,
                   std::vector<cv::Point2i>{
-                      { 0, 0 }, { img.cols * size, 0 }, { img.cols * size, img.rows * size }, { 0, img.rows * size } },
+                      { 0, 0 }, { (int) (img.cols * size), 0 }, { (int) (img.cols * size), (int) (img.rows * size) }, { 0, (int) (img.rows * size) } },
                   true, cv::Scalar(255, 0, 0), 2);
 #endif
     auto parsed_tl = parse_func(img_tl, { 0, 0 });
@@ -161,39 +162,39 @@ std::vector<T> smaller_parse(const cv::Mat& img,
     cv::Mat img_tr = img(cv::Rect(img.cols * (1 - size), 0, img.cols * size, img.rows * size));
 #ifdef DEBUG
     cv::polylines(debug_img,
-                  std::vector<cv::Point2i>{ { img.cols * (1 - size), 0 },
+                  std::vector<cv::Point2i>{ { (int) (img.cols * (1 - size)), 0 },
                                             { img.cols, 0 },
-                                            { img.cols, img.rows * size },
-                                            { img.cols * (1 - size), img.rows * size } },
+                                            { img.cols, (int) (img.rows * size) },
+                                            { (int) (img.cols * (1 - size)), (int) (img.rows * size) } },
                   true, cv::Scalar(255, 0, 0), 2);
 #endif
-    auto parsed_tr = parse_func(img_tr, { img.cols * (1 - size), 0 });
+    auto parsed_tr = parse_func(img_tr, { (int) (img.cols * (1 - size)), 0 });
     parsed_data.insert(parsed_data.end(), parsed_tr.begin(), parsed_tr.end());
 
     // bottom-left corner
     cv::Mat img_bl = img(cv::Rect(0, img.rows * (1 - size), img.cols * size, img.rows * size));
 #ifdef DEBUG
     cv::polylines(debug_img,
-                  std::vector<cv::Point2i>{ { 0, img.rows * (1 - size) },
-                                            { img.cols * size, img.rows * (1 - size) },
-                                            { img.cols * size, img.rows },
+                  std::vector<cv::Point2i>{ { 0, (int) (img.rows * (1 - size)) },
+                                            { (int) (img.cols * size), (int) (img.rows * (1 - size)) },
+                                            { (int) (img.cols * size), (int) (img.rows) },
                                             { 0, img.rows } },
                   true, cv::Scalar(255, 0, 0), 2);
 #endif
-    auto parsed_bl = parse_func(img_bl, { 0, img.rows * (1 - size) });
+    auto parsed_bl = parse_func(img_bl, { 0, (int) (img.rows * (1 - size)) });
     parsed_data.insert(parsed_data.end(), parsed_bl.begin(), parsed_bl.end());
 
     // bottom-right corner
     cv::Mat img_br = img(cv::Rect(img.cols * (1 - size), img.rows * (1 - size), img.cols * size, img.rows * size));
 #ifdef DEBUG
     cv::polylines(debug_img,
-                  std::vector<cv::Point2i>{ { img.cols * (1 - size), img.rows * (1 - size) },
-                                            { img.cols, img.rows * (1 - size) },
+                  std::vector<cv::Point2i>{ { (int) (img.cols * (1 - size)), (int) (img.rows * (1 - size)) },
+                                            { img.cols, (int) (img.rows * (1 - size)) },
                                             { img.cols, img.rows },
-                                            { img.cols * (1 - size), img.rows } },
+                                            { (int) (img.cols * (1 - size)), img.rows } },
                   true, cv::Scalar(255, 0, 0), 2);
 #endif
-    auto parsed_br = parse_func(img_br, { img.cols * (1 - size), img.rows * (1 - size) });
+    auto parsed_br = parse_func(img_br, { (int) (img.cols * (1 - size)), (int) (img.rows * (1 - size)) });
     parsed_data.insert(parsed_data.end(), parsed_br.begin(), parsed_br.end());
 
     return parsed_data;
