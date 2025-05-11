@@ -80,7 +80,7 @@ def main():
     if not os.path.exists(script_dir / csv_principal):
         print(f"[ERREUR] Le fichier CSV principal '{script_dir / csv_principal}' est introuvable.")
         return
-    
+   
     # Mode d'exécution
     if args.mode == "direct" and args.script:
         # Exécution directe si le script est spécifié
