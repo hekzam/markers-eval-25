@@ -89,6 +89,30 @@ cv::Mat rotate_center(float angle, float cx, float cy);
 void print_mat(cv::Mat mat);
 double percentage_to_offset(int depth, double percentage);
 double percentage_to_dispersion(int depth, double percentage);
+template<typename In, typename Out>
+Out normalize_range(In v, In in_min, In in_max, Out out_min, Out out_max)
+{
+    // Calcul du ratio (en double pour conserver précision)
+    double ratio = 0.0;
+    if (in_max != in_min) {
+        ratio = static_cast<double>(v - in_min)
+              / static_cast<double>(in_max - in_min);
+    }
+    // Clamp dans [0,1]
+    ratio = std::clamp(ratio, 0.0, 1.0);
+
+    // Passage dans la nouvelle échelle
+    double mapped = static_cast<double>(out_min)
+                  + ratio * (static_cast<double>(out_max) - static_cast<double>(out_min));
+
+    // Si sortie entière, on arrondit
+    if constexpr (std::is_integral_v<Out>) {
+        return static_cast<Out>(std::round(mapped));
+    } else {
+        return static_cast<Out>(mapped);
+    }
+}
+
 
 #endif
 

@@ -81,23 +81,15 @@ double euclidean_distance(const cv::Point2f& p1, const cv::Point2f& p2) {
  * @return std::vector<cv::Point2f> Les quatre coins de la page dans l'ordre: haut-gauche, haut-droit, bas-gauche,
  * bas-droit
  */
-std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& src_img_size,
-                                                       const cv::Point2f& dst_img_size) {
+std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& dst_img_size) {
     // Les coordonnées théoriques des coins d'une page A4 en mm (0,0 est en haut à gauche)
     std::vector<cv::Point2f> theoretical_corners = {
         { 0, 0 },                          // Haut-gauche
-        { src_img_size.x, 0 },             // Haut-droit
-        { 0, src_img_size.y },             // Bas-gauche
-        { src_img_size.x, src_img_size.y } // Bas-droit
+        { dst_img_size.x, 0 },             // Haut-droit
+        { 0, dst_img_size.y },             // Bas-gauche
+        { dst_img_size.x, dst_img_size.y } // Bas-droit
     };
-
-    // Mettre à l'échelle les coordonnées pour correspondre à l'image cible en pixels
-    std::vector<cv::Point2f> scaled_corners;
-    for (const auto& corner : theoretical_corners) {
-        scaled_corners.push_back(coord_scale(corner, src_img_size, dst_img_size));
-    }
-
-    return scaled_corners;
+    return theoretical_corners;
 }
 
 /**
@@ -111,30 +103,26 @@ std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& src_im
  * @return std::vector<double> Erreurs de précision pour chaque coin (haut-gauche, haut-droit, bas-gauche, bas-droit) et
  * la moyenne en dernière position
  */
-std::vector<double> calculate_precision_error(const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size,
-                                              const cv::Mat& transform_matrix, const cv::Mat& rectification_transform,
-                                              float margin) {
-    std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(src_img_size, dst_img_size);
-
-    print_mat(transform_matrix);
-    print_mat(rectification_transform);
+std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, const cv::Mat& transform_matrix,
+                                              const cv::Mat& rectification_transform, float margin) {
+    std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(dst_img_size);
 
     std::vector<cv::Point2f> transformed_corner = original_corners;
     cv::transform(transformed_corner, transformed_corner, transform_matrix);
 
     cv::transform(transformed_corner, transformed_corner, rectification_transform);
 
-    original_corners[0].x -= margin;
-    original_corners[0].y -= margin;
+    transformed_corner[0].x += margin;
+    transformed_corner[0].y += margin;
 
-    original_corners[1].x += margin;
-    original_corners[1].y -= margin;
+    transformed_corner[1].x -= margin;
+    transformed_corner[1].y += margin;
 
-    original_corners[2].x -= margin;
-    original_corners[2].y += margin;
+    transformed_corner[2].x += margin;
+    transformed_corner[2].y -= margin;
 
-    original_corners[3].x += margin;
-    original_corners[3].y += margin;
+    transformed_corner[3].x -= margin;
+    transformed_corner[3].y -= margin;
 
     std::vector<double> distances;
     double total_distance = 0.0;
@@ -368,8 +356,8 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
         if (parsing_success) {
             auto calibrated_img_col = redress_image(img, affine_transform.value());
 
-            precision_errors = calculate_precision_error(src_img_size, dst_img_size, mat, affine_transform.value(),
-                                                         MARGIN_COPY_MODIFIED);
+            precision_errors =
+                calculate_precision_error(dst_img_size, mat, affine_transform.value(), MARGIN_COPY_MODIFIED);
             std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_errors.back()
                       << " pixels" << std::endl;
 

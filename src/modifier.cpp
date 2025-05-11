@@ -7,8 +7,6 @@
 #include "utils/math_utils.h"
 #include "external-tools/modifier.h"
 
-#define MIN_ROTATE -5
-#define MAX_ROTATE 5
 
 /**
  * @brief Ajout de bruit poivre et sel
@@ -18,7 +16,7 @@
  * @param bright bright = 0 : Neutre; bright > 0 : Éclaircit; bright < 0 : Assombrit
  *
  */
-std::optional<std::tuple<int, int>> parse_sp(const std::string& value) {
+std::optional<std::tuple<int, int>> parse_2(const std::string& value) {
     auto comma = value.find(',');
     if (comma == std::string::npos)
         return std::nullopt;
@@ -47,6 +45,37 @@ std::optional<std::tuple<int, int, int>> parse_3(const std::string& s) {
     } catch (...) { return std::nullopt; }
 }
 
+template<typename T>
+bool parse_numeric_arg(int argc, char const* argv[], const std::string& prefix, T& value) {
+    for (int i = 2; i < argc; ++i) {
+        std::string arg(argv[i]);
+        if (arg.rfind(prefix, 0) == 0) {
+            std::string str_val = arg.substr(prefix.size());
+            if (str_val.empty()) {
+                std::cerr << "Erreur : la valeur de " << prefix << " est vide." << std::endl;
+                return false;
+            }
+            try {
+                if constexpr (std::is_same<T, int>::value) {
+                    value = std::stoi(str_val);
+                } else if constexpr (std::is_same<T, float>::value) {
+                    value = std::stof(str_val);
+                } else {
+                    static_assert(!sizeof(T), "Type non supporté");
+                }
+                return true;
+            } catch (const std::invalid_argument&) {
+                std::cerr << "Erreur : valeur non numérique pour " << prefix << " : '" << str_val << "'" << std::endl;
+                return false;
+            } catch (const std::out_of_range&) {
+                std::cerr << "Erreur : valeur hors limites pour " << prefix << " : '" << str_val << "'" << std::endl;
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
 void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     // juste sous votre prototype de gestion_arg()
     static const std::vector<std::string> poss_opt = { "-s=", "-g=", "-cb=", "-sp=", "-r=", "-t=", "-nb=" };
@@ -54,36 +83,31 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
         std::cerr << "call -> usage() -> exit()" << std::endl;
         exit(1);
     }
+    cv::Mat mat;
     // CAS TTES TRANSFORMATIONS FULL ALEATOIRE
     if (argc == 2) {
-        cv::Mat mat;
         random_exec(img, mat);
         return;
     }
+
     // CAS TTES TRANSFORMATIONS SEED ALEATOIRES
-    for (int i = 2; i < argc; i++) {
-        std::string arg(argv[i]);
-        size_t pos = arg.find("-seed=");
-        if (pos != std::string::npos) {
-            std::string str_seed_val = arg.substr(pos + 6);
-            if (str_seed_val.empty()) {
-                std::cerr << "Erreur : la valeur de -seed= est vide." << std::endl;
-            } else {
-                try {
-                    int value = std::stoi(str_seed_val);
-                    std::cout << "Valeur de -seed : " << value << std::endl;
-                    int seed = value;
-                    cv::Mat mat;
-                    random_exec(img, mat, seed);
-                } catch (const std::invalid_argument& e) {
-                    std::cerr << "Erreur : valeur non numérique pour -seed : '" << str_seed_val << "'" << std::endl;
-                    // usage()
-                } catch (const std::out_of_range& e) {
-                    std::cerr << "Erreur : valeur trop grande pour -seed : '" << str_seed_val << "'" << std::endl;
-                    // usage()
-                }
-            }
-        }
+
+    bool has_seed = false;                      //sert a rien                                     
+    int seed_value = 0;
+    if (parse_numeric_arg(argc, argv, "-seed=", seed_value)) {
+        std::cout << "Valeur de -seed : " << seed_value << std::endl;
+        random_exec(img, mat, seed_value);
+        has_seed = true;
+        return;
+    }
+
+    bool has_coef = false;          //sert a rien
+    float coef_value = 0.0f;
+    if (parse_numeric_arg(argc, argv, "-coef=", coef_value)) {
+        std::cout << "Valeur de -coef : " << coef_value << std::endl;
+        distorsion_coef_exec(img, mat, coef_value);
+        has_coef = true;
+        return;
     }
     // CAS UNE OU PLUSIEURS TRANSFORMATIONS AVEC PARAM
     cv::RNG rng(time(0));
@@ -101,9 +125,9 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
             }
         }
     }
-
     if (auto it = parsed_opts.find("-sp="); it != parsed_opts.end()) {
-        if (auto res = parse_sp(it->second)) {
+        if (auto res = parse_2
+        (it->second)) {
             // Structured binding pour décomposer le tuple
             auto [salt, pepper] = *res;
             add_salt_pepper_noise(img, rng, pepper, salt);
@@ -113,7 +137,8 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
         }
     }
     if (auto it = parsed_opts.find("-g="); it != parsed_opts.end()) {
-        if (auto res = parse_sp(it->second)) {
+        if (auto res = parse_2
+        (it->second)) {
             // Structured binding pour décomposer le tuple
             auto [offset, dispersion] = *res;
             add_gaussian_noise(img, rng, offset, dispersion);
@@ -123,7 +148,8 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
         }
     }
     if (auto it = parsed_opts.find("-cb="); it != parsed_opts.end()) {
-        if (auto res = parse_sp(it->second)) {
+        if (auto res = parse_2
+        (it->second)) {
             // Structured binding pour décomposer le tuple
             auto [contrast, bright] = *res;
             contrast_brightness_modifier(img, contrast, bright);
@@ -132,7 +158,6 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
             exit(1);
         }
     }
-
     if (auto it = parsed_opts.find("-s="); it != parsed_opts.end()) {
         if (auto res = parse_3(it->second)) {
             // Structured binding pour décomposer le tuple
@@ -145,11 +170,12 @@ void gestion_arg(cv::Mat& img, int argc, char const* argv[]) {
     }
     auto it = parsed_opts.find("-r=");
     if (it != parsed_opts.end()) {
-        float angle = std::stof(it->second); // conversion sans surcoût
+        int angle = std::stof(it->second); // conversion sans surcoût
         rotate_img(img, angle);
     }
     if (auto it = parsed_opts.find("-t="); it != parsed_opts.end()) {
-        if (auto res = parse_sp(it->second)) {
+        if (auto res = parse_2
+        (it->second)) {
             // Structured binding pour décomposer le tuple
             auto [dx, dy] = *res;
             std::cout << dx << "  " << dy << std::endl;
@@ -172,19 +198,6 @@ int main(int argc, char const* argv[]) {
     cv::Mat img = cv::imread(image_max_pepperth);
     cv::Mat calibrated_img = img.clone();
     cv::Mat identity = cv::Mat::eye(3, 3, CV_32F);
-    //  identity *= rotate_center(5, img.cols / 2, img.rows / 2);
-    // print_mat(identity);
-    // identity *= translate(3, 0);
-    // print_mat(identity);
-    // identity = identity(cv::Rect(0, 0, 3, 2));
-    // print_mat(identity);
-    // noisy_img = img.clone();
-    // add_ink_stain(noisy_img);  // Ajoute le bruit
-    // contrast_brightness_modifier(noisy_img,60, 40);                          //SEG_FAULT
-    // add_gaussian_noise(noisy_img, 20, 20);
-    // add_salt_pepper_noise(noisy_img, 1, 10);
-    // cv::warpAffine(noisy_img, calibrated_img, identity, noisy_img.size(), cv::INTER_LINEAR);
-
     gestion_arg(img, argc, argv);
 
     cv::imwrite("calibrated_img.png", img);
