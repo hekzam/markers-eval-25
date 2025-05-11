@@ -4,6 +4,7 @@
 #include <variant>
 #include <numeric>
 #include <tuple>
+#include <random>
 
 #include <common.h>
 
@@ -11,6 +12,8 @@
 #include "utils/cli_helper.h"
 #include "utils/json_helper.h"
 #include "utils/parser_helper.h"
+#include "utils/benchmark_helper.h"
+#include "utils/csv_utils.h"
 
 #define INCH 2.54
 
@@ -20,7 +23,7 @@
  * @return Tuple contenant les paramètres validés
  * @throws std::invalid_argument Si un paramètre requis est manquant ou invalide
  */
-static std::tuple<int, int, int, int, int, CopyMarkerConfig, double>
+static std::tuple<int, int, int, int, int, CopyMarkerConfig, double, CsvMode, std::string>
 validate_parameters(const std::unordered_map<std::string, Config>& config) {
     try {
         int encoded_marker_size = std::get<int>(config.at("encoded-marker-size").value);
@@ -35,11 +38,37 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
             throw std::invalid_argument("Invalid marker configuration: " + marker_config);
         }
 
-        // Valeur empirique pour le facteur de calibration
         double calibration_factor = 0.001;
+        if (config.find("calibration-factor") != config.end()) {
+            int cal_factor_int = std::get<int>(config.at("calibration-factor").value);
+            calibration_factor = cal_factor_int / 1000.0;
+            std::cout << "Using calibration factor: " << calibration_factor << " ml/cm²" << std::endl;
+        } else {
+            std::cout << "No calibration factor provided, using default: " << calibration_factor << " ml/cm²"
+                      << std::endl;
+        }
 
-        return { encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi,
-                 copy_marker_config,  calibration_factor };
+        // Configuration du CSV
+        CsvMode csv_mode = CsvMode::OVERWRITE;
+        if (config.find("csv-mode") != config.end()) {
+            std::string mode_str = std::get<std::string>(config.at("csv-mode").value);
+            if (mode_str == "append") {
+                csv_mode = CsvMode::APPEND;
+                std::cout << "CSV Mode: Appending to existing CSV file if present" << std::endl;
+            } else {
+                csv_mode = CsvMode::OVERWRITE;
+                std::cout << "CSV Mode: Overwriting existing CSV file if present" << std::endl;
+            }
+        }
+
+        std::string csv_filename = "ink_estimation_results.csv";
+        if (config.find("csv-filename") != config.end()) {
+            csv_filename = std::get<std::string>(config.at("csv-filename").value);
+            std::cout << "CSV Filename: " << csv_filename << std::endl;
+        }
+
+        return { encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level,  dpi,
+                 copy_marker_config,  calibration_factor,    csv_mode,           csv_filename };
     } catch (const std::out_of_range& e) {
         throw std::invalid_argument("Missing required parameter in configuration");
     } catch (const std::bad_variant_access& e) {
@@ -52,8 +81,9 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
  * @param image_path Chemin vers l'image à analyser
  * @param dpi Résolution de l'image en points par pouce
  * @param calibration_factor Facteur de calibration pour le calcul du volume d'encre
+ * @return double Volume d'encre estimé en ml
  */
-static void analyze_ink_consumption(const std::filesystem::path& image_path, int dpi, double calibration_factor) {
+static double analyze_ink_consumption(const std::filesystem::path& image_path, int dpi, double calibration_factor) {
     cv::Mat img;
     img = cv::imread(image_path.string(), cv::IMREAD_GRAYSCALE);
     if (img.empty()) {
@@ -90,6 +120,8 @@ static void analyze_ink_consumption(const std::filesystem::path& image_path, int
     std::cout << "\n=== Ink Consumption Analysis Results ===" << std::endl;
     std::cout << "Estimated ink volume: " << ink_volume_ml << " ml" << std::endl;
     std::cout << "Calibration factor: " << calibration_factor << " ml/cm² at 100% coverage" << std::endl;
+
+    return ink_volume_ml;
 }
 
 /**
@@ -143,9 +175,9 @@ analyze_corner_markers_area(const std::vector<std::optional<std::shared_ptr<Atom
 /**
  * @brief Benchmark d'estimation de consommation d'encre pour une seule image
  */
-void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& config) {
+void config_analysis_benchmark(const std::unordered_map<std::string, Config>& config) {
     auto [encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi, copy_marker_config,
-          calibration_factor] = validate_parameters(config);
+          calibration_factor, csv_mode, csv_filename] = validate_parameters(config);
 
     CopyStyleParams style_params;
     style_params.encoded_marker_size = encoded_marker_size;
@@ -155,9 +187,24 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
     style_params.dpi = dpi;
     style_params.generating_content = false;
 
+    BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", false, false, csv_mode);
+
+    Csv<std::string, CopyMarkerConfig, int, double, double, double> ink_estimation_csv(
+        benchmark_setup.csv_output_dir / csv_filename,
+        { "File", "Copy_Config", "DPI", "Ink_Consumption_ml", "Calibration_Factor", "Total_Markers_Area_cm2" },
+        csv_mode);
+
     std::filesystem::path dir_path{ "./copies" };
     std::filesystem::remove_all(dir_path);
-    create_copy(style_params, copy_marker_config);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(1000, 9999);
+    int random_suffix = dist(gen);
+
+    std::string copy_name = "copy-" + std::to_string(random_suffix);
+
+    create_copy(style_params, copy_marker_config, copy_name);
 
     std::filesystem::path image_path;
     bool found_image = false;
@@ -176,7 +223,8 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
         throw std::runtime_error("No image file found in directory: ./copies");
     }
 
-    analyze_ink_consumption(image_path, dpi, calibration_factor);
+    // Analyse de la consommation d'encre
+    double ink_volume_ml = analyze_ink_consumption(image_path, dpi, calibration_factor);
 
     std::ifstream atomic_boxes_file("./original_boxes.json");
     if (!atomic_boxes_file.is_open()) {
@@ -196,4 +244,11 @@ void ink_estimation_benchmark(const std::unordered_map<std::string, Config>& con
     differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
     double total_corner_markers_area_cm2 = analyze_corner_markers_area(corner_markers);
+
+    // Ajout des résultats au CSV
+    ink_estimation_csv.add_row(std::make_tuple(image_path.filename().string(), copy_marker_config, dpi, ink_volume_ml,
+                                               calibration_factor, total_corner_markers_area_cm2));
+
+    std::cout << "\nInk estimation benchmark completed successfully." << std::endl;
+    std::cout << "Results saved to: " << (benchmark_setup.csv_output_dir / csv_filename).string() << std::endl;
 }

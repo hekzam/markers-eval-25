@@ -6,13 +6,13 @@
  */
 #let parse-marker-types(types-str) = {
   let clean = types-str.trim().slice(1, -1)
-  let parts = clean.split(",").map((x)=>{x.trim()})
+  let parts = clean.split(",").map(x => { x.trim() })
   (
     top-left: parts.at(0, default: "none"),
     top-right: parts.at(1, default: "none"),
     bottom-left: parts.at(2, default: "none"),
     bottom-right: parts.at(3, default: "none"),
-    header: parts.at(4, default: "none")
+    header: parts.at(4, default: "none"),
   )
 }
 
@@ -22,7 +22,7 @@
   header_marker_size: float(sys.inputs.at("header-marker-size", default: "7")) * 1mm,
   stroke_width: float(sys.inputs.at("stroke-width", default: "2")) * 1mm,
   marker_margin: float(sys.inputs.at("marker-margin", default: "3")) * 1mm,
-  grey_level: int(sys.inputs.at("grey-level", default: "0"))
+  grey_level: int(sys.inputs.at("grey-level", default: "0")),
 )
 
 // Paramètres de génération
@@ -34,10 +34,10 @@
 #let marker-config = parse-marker-types(marker-types)
 
 #gen-copies(
-  "Le pire examen de tous les temps !", 
-  nb-copies, 
+  "Le pire examen de tous les temps !",
+  nb-copies,
   duplex-printing,
   marker-config,
   style-params,
-  should-generate-content
+  should-generate-content,
 )

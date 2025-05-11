@@ -17,79 +17,6 @@
 #include "shape_parser.h"
 #include "cli_helper.h"
 
-/**
- * @brief Sélectionne le type de parseur approprié en fonction de la configuration de marqueur choisie
- *
- * @param marker_config Configuration des marqueurs utilisés
- * @return ParserType Le type de parseur à utiliser
- */
-ParserType select_parser_for_marker_config(const CopyMarkerConfig& marker_config) {
-    int qrcode_count = 0;
-    int circle_count = 0;
-    int aruco_count = 0;
-    int shape_count = 0;
-    int empty_count = 0;
-
-    const Marker* corners[] = { &marker_config.top_left, &marker_config.top_right, &marker_config.bottom_left,
-                                &marker_config.bottom_right };
-
-    for (const Marker* marker : corners) {
-        switch (marker->type) {
-            case MarkerType::QR_CODE:
-            case MarkerType::MICRO_QR_CODE:
-            case MarkerType::DATAMATRIX:
-            case MarkerType::AZTEC:
-            case MarkerType::PDF417:
-            case MarkerType::RMQR:
-            case MarkerType::BARCODE:
-                qrcode_count++;
-                break;
-
-            case MarkerType::CIRCLE:
-                circle_count++;
-                break;
-
-            case MarkerType::ARUCO:
-                aruco_count++;
-                break;
-
-            case MarkerType::SQUARE:
-            case MarkerType::QR_EYE:
-            case MarkerType::CROSS:
-                shape_count++;
-                break;
-
-            case MarkerType::NONE:
-                empty_count++;
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    if (qrcode_count > 0) {
-        return ParserType::QRCODE;
-    } else if (circle_count > 0 &&
-               (marker_config.header.type == MarkerType::QR_CODE ||
-                marker_config.header.type == MarkerType::MICRO_QR_CODE ||
-                marker_config.header.type == MarkerType::DATAMATRIX || marker_config.header.type == MarkerType::AZTEC ||
-                marker_config.header.type == MarkerType::PDF417 || marker_config.header.type == MarkerType::RMQR ||
-                marker_config.header.type == MarkerType::BARCODE)) {
-        return ParserType::CENTER_MARKER_PARSER;
-    } else if (circle_count > 0) {
-        return ParserType::CIRCLE;
-    } else if (aruco_count > 0) {
-        return ParserType::ARUCO;
-    } else if (shape_count > 0) {
-        return ParserType::SHAPE;
-    } else if (empty_count == 4) {
-        return ParserType::EMPTY;
-    }
-
-    return ParserType::DEFAULT_PARSER;
-}
-
 /// TODO: Corentin je te laisse le soin de t'en occuper stp
 std::unordered_map<ParserType, Parser> parsers = {
     { ParserType::DEFAULT_PARSER, { default_parser } },
@@ -250,8 +177,9 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
         }
     }
 
-    if (sum_mask(corner_mask) < 3)
-        throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
+    /// TODO: Adapter le code pour gérer les marqueurs de coin manquants
+    // if (sum_mask(corner_mask) < 3)
+    //     throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
 }
 
 /**
@@ -337,6 +265,55 @@ int copy_config_to_flag(const CopyMarkerConfig& copy_marker_config) {
             flag |= (int) ZXing::BarcodeFormat::Code128;
     }
     return flag;
+}
+
+std::string parser_type_to_string(ParserType parser_type) {
+    switch (parser_type) {
+        case ParserType::ARUCO:
+            return "ARUCO";
+        case ParserType::CIRCLE:
+            return "CIRCLE";
+        case ParserType::QRCODE:
+            return "QRCODE";
+        case ParserType::CUSTOM_MARKER:
+            return "CUSTOM_MARKER";
+        case ParserType::SHAPE:
+            return "SHAPE";
+        case ParserType::CENTER_MARKER_PARSER:
+            return "CENTER_MARKER_PARSER";
+        case ParserType::DEFAULT_PARSER:
+            return "DEFAULT_PARSER";
+        case ParserType::EMPTY:
+            return "EMPTY";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+/**
+ * @brief Convertit une chaîne de caractères en type de parseur (ParserType)
+ *
+ * @param parser_type_str Chaîne de caractères représentant le type de parseur
+ * @return ParserType Le type de parseur correspondant, ou ParserType::QRCODE par défaut
+ */
+ParserType string_to_parser_type(const std::string& parser_type_str) {
+    static const std::unordered_map<std::string, ParserType> parser_type_map = {
+        { "ARUCO", ParserType::ARUCO },
+        { "CIRCLE", ParserType::CIRCLE },
+        { "QRCODE", ParserType::QRCODE },
+        { "CUSTOM_MARKER", ParserType::CUSTOM_MARKER },
+        { "SHAPE", ParserType::SHAPE },
+        { "CENTER_MARKER_PARSER", ParserType::CENTER_MARKER_PARSER },
+        { "DEFAULT_PARSER", ParserType::DEFAULT_PARSER },
+        { "EMPTY", ParserType::EMPTY }
+    };
+
+    auto it = parser_type_map.find(parser_type_str);
+    if (it != parser_type_map.end()) {
+        return it->second;
+    }
+
+    return ParserType::QRCODE; // Valeur par défaut
 }
 
 std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,

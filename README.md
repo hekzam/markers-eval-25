@@ -112,6 +112,8 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 
 ## 📊 Exécution du benchmark
 
+Le projet inclut plusieurs outils de benchmark pour évaluer différents aspects des marqueurs, comme leur consommation d'encre, leur facilité de détection, et leurs performances globales.
+
 ### Exécution des benchmarks
 
 Vous disposez de deux méthodes pour exécuter les benchmarks :
@@ -126,7 +128,7 @@ Spécifiez directement tous les paramètres dans votre commande :
 
 Exemple :
 ```sh
-./run_benchmark.sh --benchmark parsing-time --input-dir ./copies --dpi 600
+./run_benchmark.sh --benchmark gen-parse --nb-copies 5 --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" --parser-type QRCODE
 ```
 
 #### 2. Mode interactif
@@ -139,49 +141,114 @@ Exécutez simplement la commande en spécifiant au minimum le type de benchmark 
 
 Le script vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
 
-> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `ink-estimation`.
+> **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `config-analysis`.
+
+#### 3. Mode batch
+
+Vous pouvez également exécuter une série de benchmarks depuis un fichier texte contenant les commandes :
+
+```sh
+./run_benchmark.sh --batch-file [chemin-vers-fichier]
+```
+
+Chaque ligne du fichier doit contenir un type de benchmark et ses options. Les lignes vides ou commençant par `#` sont ignorées.
+
+Exemple de fichier batch.txt :
+```
+gen-parse --nb-copies 3 --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)"
+config-analysis --marker-config "(datamatrix:encoded,datamatrix:encoded,datamatrix:encoded,datamatrix:encoded,none)"
+# Cette ligne est un commentaire
+gen-parse --nb-copies 2 --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)"
+```
 
 #### Types de benchmark disponibles
 
 Voici les différents types de benchmarks que vous pouvez exécuter :
 
-1. **parsing-time** : Évalue le temps de traitement et le taux de succès de la détection des marqueurs.
+1. **gen-parse** : Évalue le temps de génération des copies, le temps de traitement et le taux de succès de la détection des marqueurs. Il mesure également la précision de la rectification des copies après détection.
    ```sh
-   ./run_benchmark.sh --benchmark parsing-time
-   ```
-   **Important :** Le parseur actuel présente des limitations : 
-   - Parmi les marqueurs encodables, seul le "qrcode" est pleinement fonctionnel
-   - Le parseur fonctionne uniquement sur des compositions de QR codes avec des marqueurs non encodables 
-   - Les autres combinaisons de marqueurs peuvent ne pas être correctement détectées ou traitées
-
-2. **generation-time** : Mesure le temps nécessaire pour générer des copies avec différents types de marqueurs.
-   ```sh
-   ./run_benchmark.sh --benchmark generation-time
+   ./run_benchmark.sh --benchmark gen-parse
    ```
 
-3. **ink-estimation** : Analyse la consommation d'encre pour chaque type de marqueur et fournit :
-   - La surface totale couverte en cm²
-   - Le pourcentage de couverture d'encre
-   - Le volume d'encre estimé en millilitres
+   **Options spécifiques** :
+   - `--parser-type <type>` : Type de parseur à utiliser (QRCODE, ARUCO, CIRCLE, etc.)
+   - `--nb-copies <N>` : Nombre de copies à générer et analyser
+   - `--seed <N>` : Graine pour la génération aléatoire (0 pour une graine basée sur le temps)
+   - `--warmup-iterations <N>` : Nombre d'itérations d'échauffement avant les mesures
+
+2. **config-analysis** : Analyse la consommation d'encre et la surface occupée par les marqueurs.
    ```sh
-   ./run_benchmark.sh --benchmark ink-estimation
+   ./run_benchmark.sh --benchmark config-analysis
    ```
 
-### Options communes
+   **Options spécifiques** :
+   - `--calibration-factor <N>` : Facteur de calibration pour le calcul de consommation d'encre (ml/cm²)
 
-- `--benchmark <type>`          : Type de benchmark à exécuter (par défaut: `parsing-time`)
-- `--marker-config <config>`    : Configuration des marqueurs (par défaut: `(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)`)
-  > Format: (tl,tr,bl,br,header) où tl=top-left, tr=top-right, bl=bottom-left, br=bottom-right.
+### Types de parseurs disponibles
+
+Le système prend en charge plusieurs types de parseurs pour la détection et le traitement des marqueurs. Lors de l'utilisation de l'option `--parser-type` dans les benchmarks, vous pouvez spécifier l'un des parseurs suivants :
+
+1. **QRCODE** (par défaut) : Parseur standard pour les codes QR. Détecte les marqueurs QR code encodés avec l'identifiant de position (tl, tr, bl, br) et extrait les métadonnées.
+
+2. **EMPTY** : Parseur pour les codes QR sans identification de position. Utilise la disposition pour déterminer quelle position est occupée par quel marqueur.
+
+3. **CIRCLE** : Détecte les marqueurs circulaires et les utilise avec un QR code d'identification pour déterminer l'orientation.
+
+4. **ARUCO** : Détecte les marqueurs ArUco (codes carrés spécifiques pour la réalité augmentée) et les utilise pour l'alignement. Nécessite un QR code pour les métadonnées.
+
+5. **CENTER_MARKER_PARSER** : Détecte les marqueurs à partir du centre de la page, utile lorsque les marqueurs ne sont pas positionnés dans les coins.
+
+6. **CUSTOM_MARKER** : Détecte des formes personnalisées définies comme marqueurs. Expérimental.
+
+7. **SHAPE** : Détecte les marqueurs basés sur des formes géométriques simples. Utilise un processus de détection des contours.
+
+8. **DEFAULT_PARSER** : Implémentation par défaut (ne fait rien). Utile principalement à des fins de test ou comme point de départ pour de nouveaux parseurs.
+
+Exemple d'utilisation avec un parseur spécifique :
+```sh
+./run_benchmark.sh --benchmark gen-parse --parser-type CIRCLE --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)"
+```
+
+> **Note** : Tous les parseurs ne sont pas compatibles avec tous les types de marqueurs. Par exemple, le parseur CIRCLE ne fonctionnera correctement qu'avec des marqueurs de type cercle, et le parseur ARUCO avec des marqueurs ArUco.
+
+### Options communes à tous les benchmarks
+
+- `--marker-config <config>` : Configuration des marqueurs (par défaut: `(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)`)
+  > Format: (tl,tr,bl,br,header) où tl=top-left, tr=top-right, bl=bottom-left, br=bottom-right, header=en-tête.
   > Utilisez "none" pour les positions qui ne sont pas occupées par des marqueurs.
-- `--encoded-marker-size <N>`   : Taille des marqueurs encodés en mm (par défaut: 13)
+- `--encoded-marker-size <N>` : Taille des marqueurs encodés en mm (par défaut: 13)
 - `--unencoded-marker-size <N>` : Taille des marqueurs non encodés en mm (par défaut: 10)
-- `--header-marker-size <N>`    : Taille du marqueur d'en-tête en mm (par défaut: 7)
-- `--grey-level <0-255>`        : Niveau de gris pour les marqueurs (par défaut: 0)
-- `--dpi <N>`                   : Résolution en points par pouce (par défaut: 300)
+- `--header-marker-size <N>` : Taille du marqueur d'en-tête en mm (par défaut: 7)
+- `--grey-level <0-255>` : Niveau de gris pour les marqueurs (par défaut: 0)
+- `--dpi <N>` : Résolution en points par pouce (par défaut: 300)
+- `--csv-mode <mode>` : Mode de gestion des fichiers CSV existants :
+  - `overwrite` : Supprime les fichiers CSV existants et crée un nouveau fichier (par défaut)
+  - `append` : Conserve le fichier CSV existant et ajoute les nouveaux résultats à la fin
+- `--csv-filename <nom>` : Nom du fichier CSV pour les résultats (par défaut: "benchmark_results.csv")
 
-Options spécifiques pour les benchmarks `parsing-time` et `generation-time` :
-- `--nb-copies <N>`             : Nombre de copies à générer pour le test (par défaut: 1)
-- `--warmup-iterations <N>`     : Nombre d'itérations d'échauffement avant la mesure. Cela permet d'obtenir des mesures plus précises en évitant les coûts de démarrage (par défaut: 0)
+### Format des fichiers de résultats
+
+Les résultats des benchmarks sont sauvegardés dans le dossier `output/csv/` au format CSV. Les fichiers incluent :
+
+- Pour **gen-parse** : Noms des fichiers, temps de génération, temps de parsing, succès du parsing, type de parseur, configuration des marqueurs, erreurs de précision, etc.
+- Pour **config-analysis** : Configuration des marqueurs, estimation de consommation d'encre, zone totale occupée par les marqueurs, etc.
+
+### Exemples d'utilisation
+
+#### Exemple 1 : Benchmark simple avec le parseur QR code
+```sh
+./run_benchmark.sh --benchmark gen-parse --nb-copies 3 --parser-type QRCODE
+```
+
+#### Exemple 2 : Analyse de consommation d'encre pour un marqueur spécifique
+```sh
+./run_benchmark.sh --benchmark config-analysis --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)" --grey-level 50
+```
+
+#### Exemple 3 : Benchmark complet avec options avancées
+```sh
+./run_benchmark.sh --benchmark gen-parse --nb-copies 10 --parser-type QRCODE --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded)" --encoded-marker-size 15 --warmup-iterations 2 --seed 42
+```
 
 ## 🖨️ Simulateur de scan et d'impression
 

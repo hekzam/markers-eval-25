@@ -24,9 +24,10 @@ class Benchmark {
      *
      * @tparam Func Type de la fonction
      * @tparam Args Types des arguments
+     * @return double Le temps d'exécution en millisecondes
      */
     template <typename Func, typename... Args>
-    static void measure(const std::string& name, Func&& func, Args&&... args) {
+    static double measure(const std::string& name, Func&& func, Args&&... args) {
         auto start = std::chrono::high_resolution_clock::now();
 
         std::forward<Func>(func)(std::forward<Args>(args)...);
@@ -36,35 +37,6 @@ class Benchmark {
         double milliseconds = microseconds / 1000.0;
 
         std::cout << name << ": " << std::fixed << std::setprecision(3) << milliseconds << " milliseconds" << std::endl;
-        return;
-    }
-};
-
-/**
- * @brief Classe RAII simplifiée pour le benchmark avec sortie CSV sans état de succès
- */
-class BenchmarkGuard {
-  public:
-    /**
-     * @brief Constructeur qui démarre le chronomètre du benchmark
-     *
-     * @param name Nom du benchmark à afficher dans les résultats
-     * @param csv Pointeur vers un flux de fichier de sortie pour les données CSV
-     */
-    BenchmarkGuard(const std::string& name) : name_(name), start_(std::chrono::high_resolution_clock::now()) {
-    }
-
-    float end() {
-        auto end = std::chrono::high_resolution_clock::now();
-        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
-        double milliseconds = microseconds / 1000.0;
-
-        printf("%s: %.3f milliseconds\n", name_.c_str(), milliseconds);
-
         return milliseconds;
     }
-
-  protected:
-    std::string name_;
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_;
 };

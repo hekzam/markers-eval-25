@@ -42,96 +42,69 @@ json parse_json_file(const std::string& filepath) {
     }
 }
 
-bool generate_single_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& marker_config,
-                          const std::string& copy_name, Csv<std::string, float, int, CopyMarkerConfig>* benchmark_csv) {
-    bool success = false;
-    if (benchmark_csv != nullptr) {
-        BenchmarkGuard benchmark_guard(copy_name);
-        success = create_copy(style_params, marker_config, copy_name);
-        float time = benchmark_guard.end();
-        benchmark_csv->add_row({ copy_name, time, success, marker_config });
-    } else {
-        success = create_copy(style_params, marker_config, copy_name);
+void clean_directory(const std::string& dir) {
+    if (std::filesystem::exists(dir)) {
+        std::cout << "Cleaning existing directory: " << dir << std::endl;
+        std::filesystem::remove_all(dir);
     }
-
-    if (!success) {
-        std::cerr << "Failed to generate " << copy_name << std::endl;
-    } else {
-        std::cout << "Generated " << copy_name << std::endl;
-    }
-
-    return success;
+    std::filesystem::create_directories(dir);
 }
 
-bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
-                     const CopyMarkerConfig& marker_config,
-                     Csv<std::string, float, int, CopyMarkerConfig>* benchmark_csv) {
+void clean_directory_preserve_csv(const std::string& dir, const std::filesystem::path& csv_dir, CsvMode csv_mode) {
+    if (std::filesystem::exists(dir)) {
+        std::cout << "Cleaning directory: " << dir << std::endl;
 
-    std::filesystem::path copies_dir = "copies";
-    if (std::filesystem::exists(copies_dir)) {
-        std::cout << "Cleaning existing copies directory..." << std::endl;
-        std::filesystem::remove_all(copies_dir);
-    }
-    std::filesystem::create_directories(copies_dir);
+        if (csv_mode == CsvMode::APPEND && std::filesystem::exists(csv_dir)) {
+            std::filesystem::path dir_path(dir);
+            std::filesystem::path temp_csv_dir = dir_path / "temp_csv_backup";
+            std::filesystem::create_directories(temp_csv_dir);
 
-    bool all_success = true;
-    int total_iterations = warmup_iterations + nb_copies;
+            for (const auto& entry : std::filesystem::directory_iterator(csv_dir)) {
+                if (entry.path().extension() == ".csv") {
+                    std::filesystem::copy(entry.path(), temp_csv_dir / entry.path().filename());
+                }
+            }
 
-    if (warmup_iterations > 0) {
-        std::cout << "Starting benchmark with " << warmup_iterations << " warm-up iterations and " << nb_copies
-                  << " measured iterations" << std::endl;
+            for (const auto& entry : std::filesystem::directory_iterator(dir_path)) {
+                if (entry.path() != temp_csv_dir) {
+                    std::filesystem::remove_all(entry.path());
+                }
+            }
+
+            std::filesystem::create_directories(csv_dir);
+
+            for (const auto& entry : std::filesystem::directory_iterator(temp_csv_dir)) {
+                std::filesystem::copy(entry.path(), csv_dir / entry.path().filename(),
+                                      std::filesystem::copy_options::overwrite_existing);
+            }
+
+            std::filesystem::remove_all(temp_csv_dir);
+        } else {
+            std::filesystem::remove_all(dir);
+            std::filesystem::create_directories(dir);
+        }
     } else {
-        std::cout << "Starting benchmark with " << nb_copies << " iterations" << std::endl;
+        std::filesystem::create_directories(dir);
     }
-
-    for (int i = 1; i <= total_iterations; i++) {
-        bool is_warmup = i <= warmup_iterations;
-        std::ostringstream copy_name;
-        copy_name << "copy" << std::setw(2) << std::setfill('0') << i;
-
-        if (benchmark_csv != nullptr && is_warmup) {
-            std::cout << "Warmup iteration " << i << "/" << warmup_iterations << " generating: " << copy_name.str()
-                      << std::endl;
-        } else if (benchmark_csv != nullptr) {
-            std::cout << "Benchmark iteration " << (i - warmup_iterations) << "/" << nb_copies
-                      << " generating: " << copy_name.str() << std::endl;
-        }
-
-        bool should_measure = benchmark_csv != nullptr && !is_warmup;
-        if (!should_measure) {
-            benchmark_csv = nullptr;
-        }
-        bool success = generate_single_copy(style_params, marker_config, copy_name.str(), benchmark_csv);
-        if (!success) {
-            all_success = false;
-        }
-    }
-
-    std::cout << "Benchmark completed with " << warmup_iterations << " warmup iterations and " << nb_copies
-              << " measured iterations." << std::endl;
-
-    if (!all_success) {
-        std::cerr << "Error: Failed to generate some or all copies." << std::endl;
-    }
-
-    return all_success;
 }
 
 BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column,
-                                             bool create_subimg_dir) {
+                                             bool create_subimg_dir, CsvMode csv_mode) {
     BenchmarkSetup setup;
 
     setup.output_dir = std::filesystem::path{ output_dir };
-    if (std::filesystem::exists(setup.output_dir)) {
-        std::cout << "Cleaning existing output directory..." << std::endl;
-        std::filesystem::remove_all(setup.output_dir);
-    }
-    std::filesystem::create_directories(setup.output_dir);
+    setup.csv_output_dir = setup.output_dir / "csv";
+
+    clean_directory_preserve_csv(setup.output_dir, setup.csv_output_dir, csv_mode);
 
     if (create_subimg_dir) {
         setup.subimg_output_dir = create_subdir(setup.output_dir, "subimg");
     }
-    setup.csv_output_dir = create_subdir(setup.output_dir, "csv");
+
+    std::filesystem::create_directories(setup.csv_output_dir);
+
+    std::filesystem::path copies_dir = "./copies";
+    clean_directory(copies_dir);
 
     return setup;
 }

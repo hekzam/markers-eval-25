@@ -37,17 +37,6 @@ void save_image(cv::Mat img, const std::filesystem::path& output_dir,
 json parse_json_file(const std::string& filepath);
 
 /**
- * @brief Génère des copies de marqueurs avec une configuration spécifique
- * @param config Configuration des copies à générer
- * @param style_params Paramètres de style pour la génération
- * @param benchmark_csv Optionnel: Fichier CSV pour enregistrer les résultats du benchmark
- * @return true si toutes les copies ont été générées avec succès, false sinon
- */
-bool generate_copies(int nb_copies, int warmup_iterations, const CopyStyleParams& style_params,
-                     const CopyMarkerConfig& marker_config,
-                     Csv<std::string, float, int, CopyMarkerConfig>* benchmark_csv);
-
-/**
  * @brief Structure contenant les informations sur les répertoires et le fichier CSV de benchmark
  */
 struct BenchmarkSetup {
@@ -61,9 +50,10 @@ struct BenchmarkSetup {
  * @param output_dir Répertoire de sortie pour les résultats
  * @param include_success_column Indique si la colonne "Success" doit être incluse dans l'en-tête CSV
  * @param create_subimg_dir Indique s'il faut créer un sous-répertoire "subimg"
+ * @param csv_mode Mode de gestion des fichiers CSV (append ou overwrite)
  * @return Structure BenchmarkSetup contenant les chemins et le flux CSV ouvert
  */
 BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column = false,
-                                             bool create_subimg_dir = false);
+                                             bool create_subimg_dir = false, CsvMode csv_mode = CsvMode::OVERWRITE);
 
 #endif

@@ -104,20 +104,18 @@ int found_other_point(std::vector<cv::Point2f>& points, std::vector<cv::Point2f>
 
     bool find_a_corner = false;
 
-    if (right_corner_points.size() > 0 && std::get<0>(right_corner_points[0]) < 0.1f) {
+    if (right_corner_points.size() > 0 && std::get<0>(right_corner_points[0]) < 0.1f &&
+        std::get<2>(right_corner_points[0]) < 0) {
         corner_points[TOP_RIGHT] = std::get<1>(right_corner_points[0]);
         found_mask |= (1 << TOP_RIGHT);
         find_a_corner = true;
     }
 
-    if (right_corner_points.size() > 1 && std::get<0>(right_corner_points[1]) < 0.1f) {
+    if (right_corner_points.size() > 1 && std::get<0>(right_corner_points[1]) < 0.1f &&
+        std::get<2>(right_corner_points[1]) > 0) {
         corner_points[BOTTOM_LEFT] = std::get<1>(right_corner_points[1]);
         found_mask |= (1 << BOTTOM_LEFT);
         find_a_corner = true;
-    }
-
-    if (right_corner_points.size() > 0 && std::get<2>(right_corner_points[0]) > 0) {
-        std::swap(corner_points[TOP_RIGHT], corner_points[BOTTOM_LEFT]);
     }
 
     if (!find_a_corner) {
