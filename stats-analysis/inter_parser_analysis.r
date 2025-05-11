@@ -349,12 +349,43 @@ graphique_scatter_temps_precision <- function(donnees_list) {
     return(NULL)
   }
   
-  # Créer le scatter plot
-  p <- ggplot(donnees, aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Parser_Type)) +
+  # Filtrer les valeurs aberrantes
+  # Calcul des statistiques pour déterminer les valeurs aberrantes
+  Q1_temps <- quantile(donnees$Parsing_Time_ms, 0.25, na.rm = TRUE)
+  Q3_temps <- quantile(donnees$Parsing_Time_ms, 0.75, na.rm = TRUE)
+  IQR_temps <- Q3_temps - Q1_temps
+  
+  Q1_precision <- quantile(donnees$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
+  Q3_precision <- quantile(donnees$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
+  IQR_precision <- Q3_precision - Q1_precision
+  
+  # Définir les seuils pour les valeurs aberrantes (1.5 × IQR est un seuil standard)
+  seuil_inf_temps <- Q1_temps - 1.5 * IQR_temps
+  seuil_sup_temps <- Q3_temps + 1.5 * IQR_temps
+  
+  seuil_inf_precision <- Q1_precision - 1.5 * IQR_precision
+  seuil_sup_precision <- Q3_precision + 1.5 * IQR_precision
+  
+  # Filtrer les données
+  donnees_filtrees <- donnees %>%
+    filter(
+      Parsing_Time_ms >= seuil_inf_temps & 
+      Parsing_Time_ms <= seuil_sup_temps &
+      Precision_Error_Avg_px >= seuil_inf_precision & 
+      Precision_Error_Avg_px <= seuil_sup_precision
+    )
+  
+  # Ajouter un message indiquant combien de points ont été filtrés
+  nb_points_filtres <- nrow(donnees) - nrow(donnees_filtrees)
+  cat(paste0("Scatter plot temps vs précision : ", nb_points_filtres, " points aberrants filtrés (", 
+             round(nb_points_filtres / nrow(donnees) * 100, 1), "% des données)\n"))
+  
+  # Créer le scatter plot avec les données filtrées
+  p <- ggplot(donnees_filtrees, aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Parser_Type)) +
     geom_point(size = 3, alpha = 0.7) +
     scale_color_manual(values = COULEURS_PARSEURS) +
     labs(title = "Relation entre temps d'exécution et erreur de précision",
-         subtitle = "Chaque point représente une copie analysée",
+         subtitle = paste0("Données filtrées sans valeurs aberrantes (", nb_points_filtres, " points exclus)"),
          x = "Temps de parsing (ms)",
          y = "Erreur de précision moyenne (pixels)",
          color = "Parseur") +
@@ -366,8 +397,8 @@ graphique_scatter_temps_precision <- function(donnees_list) {
       legend.position = "right"
     )
   
-  # Ajouter des moyennes par parseur
-  moyennes_parseurs <- donnees %>%
+  # Ajouter des moyennes par parseur (calculées sur les données filtrées)
+  moyennes_parseurs <- donnees_filtrees %>%
     group_by(Parser_Type) %>%
     summarise(
       Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
@@ -422,12 +453,34 @@ graphique_violin_temps <- function(donnees_list) {
   
   # Si les données de précision existent, créer aussi un violin plot pour la précision
   if (donnees_list$has_precision) {
-    p2 <- ggplot(donnees, aes(x = Parser_Type, y = Precision_Error_Avg_px, fill = Parser_Type)) +
+    # Calculer des statistiques sur les erreurs de précision pour détecter les valeurs aberrantes
+    Q1 <- quantile(donnees$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
+    Q3 <- quantile(donnees$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
+    IQR <- Q3 - Q1
+    
+    # Définir des seuils pour les valeurs aberrantes (1.5 × IQR est un seuil standard)
+    seuil_inf <- max(0, Q1 - 1.5 * IQR)  # On ne veut pas de valeurs négatives pour l'erreur
+    seuil_sup <- Q3 + 1.5 * IQR
+    
+    # Filtrer les données pour le graphique de précision
+    donnees_filtrees <- donnees %>%
+      filter(Precision_Error_Avg_px >= seuil_inf & Precision_Error_Avg_px <= seuil_sup)
+    
+    # Calculer combien de points ont été filtrés
+    nb_points_filtres <- nrow(donnees) - nrow(donnees_filtrees)
+    pourcentage_filtre <- round(nb_points_filtres / nrow(donnees) * 100, 1)
+    
+    # Message pour l'utilisateur
+    cat(paste0("Violin plot de précision : ", nb_points_filtres, " points aberrants filtrés (", 
+               pourcentage_filtre, "% des données)\n"))
+    
+    # Créer le violin plot avec les données filtrées
+    p2 <- ggplot(donnees_filtrees, aes(x = Parser_Type, y = Precision_Error_Avg_px, fill = Parser_Type)) +
       geom_violin(trim = FALSE, alpha = 0.7) +
       geom_boxplot(width = 0.1, fill = "white", alpha = 0.5) +
       scale_fill_manual(values = COULEURS_PARSEURS) +
       labs(title = "Distribution des erreurs de précision par parseur",
-           subtitle = "Visualisation de la densité des erreurs de précision",
+           subtitle = paste0("Visualisation après filtrage de ", pourcentage_filtre, "% des valeurs aberrantes"),
            x = "Type de parseur",
            y = "Erreur de précision (pixels)") +
       theme_minimal() +
@@ -437,14 +490,35 @@ graphique_violin_temps <- function(donnees_list) {
         legend.position = "none"
       )
     
-    # Enregistrer le graphique
+    # Enregistrer le graphique filtré
     ggsave("analysis_results/inter_parseurs/violin_erreur_precision.png", p2, width = 10, height = 6, bg = "white")
+    
+    # Créer aussi une version avec ylim pour montrer l'ensemble des données mais avec une limite visuelle
+    p3 <- ggplot(donnees, aes(x = Parser_Type, y = Precision_Error_Avg_px, fill = Parser_Type)) +
+      geom_violin(trim = TRUE, alpha = 0.7) +  # trim=TRUE pour couper les extrémités
+      geom_boxplot(width = 0.1, fill = "white", alpha = 0.5, outlier.shape = NA) +  # masquer les outliers
+      scale_fill_manual(values = COULEURS_PARSEURS) +
+      coord_cartesian(ylim = c(0, Q3 + 1.5 * IQR)) +  # Limiter l'axe y sans perdre les données
+      labs(title = "Distribution des erreurs de précision par parseur",
+           subtitle = "Échelle limitée pour une meilleure visualisation",
+           x = "Type de parseur",
+           y = "Erreur de précision (pixels)") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        axis.title = element_text(face = "bold", color = "darkblue"),
+        legend.position = "none"
+      )
+    
+    # Enregistrer la version avec ylim
+    ggsave("analysis_results/inter_parseurs/violin_erreur_precision_scaled.png", p3, width = 10, height = 6, bg = "white")
     
     if (interactive()) {
       print(p2)
+      print(p3)
     }
     
-    return(list(temps = p, precision = p2))
+    return(list(temps = p, precision_filtree = p2, precision_scalee = p3))
   }
   
   return(list(temps = p))
@@ -505,7 +579,7 @@ graphique_pareto_temps <- function(donnees_list) {
   return(p)
 }
 
-# 7. Comparaison des erreurs par coin entre les parseurs
+# 7. Comparaison des erreurs par coin entre les parseurs - CORRIGÉE
 graphique_erreurs_coins <- function(donnees_list) {
   donnees <- donnees_list$donnees
   
@@ -528,12 +602,42 @@ graphique_erreurs_coins <- function(donnees_list) {
     pivot_longer(cols = c(TopLeft, TopRight, BottomLeft, BottomRight),
                  names_to = "Coin", values_to = "Erreur")
   
-  # Créer le graphique
-  p <- ggplot(donnees_coins, aes(x = Coin, y = Erreur, fill = Parser_Type)) +
+  # Filtrer les valeurs aberrantes pour chaque coin et parseur
+  # Calcul des quartiles par coin et parseur
+  stats_par_groupe <- donnees_coins %>%
+    group_by(Parser_Type, Coin) %>%
+    summarise(
+      Q1 = quantile(Erreur, 0.25, na.rm = TRUE),
+      Q3 = quantile(Erreur, 0.75, na.rm = TRUE),
+      IQR = Q3 - Q1,
+      .groups = "drop"
+    )
+  
+  # Joindre avec les données originales
+  donnees_coins_avec_limites <- donnees_coins %>%
+    left_join(stats_par_groupe, by = c("Parser_Type", "Coin")) %>%
+    mutate(
+      seuil_inf = max(0, Q1 - 1.5 * IQR),  # Pas de valeurs négatives pour l'erreur
+      seuil_sup = Q3 + 1.5 * IQR
+    )
+  
+  # Filtrer les données
+  donnees_coins_filtrees <- donnees_coins_avec_limites %>%
+    filter(Erreur >= seuil_inf & Erreur <= seuil_sup)
+  
+  # Calculer le nombre de points filtrés
+  nb_points_filtres <- nrow(donnees_coins) - nrow(donnees_coins_filtrees)
+  pourcentage_filtre <- round(nb_points_filtres / nrow(donnees_coins) * 100, 1)
+  
+  cat(paste0("Graphique des erreurs par coin : ", nb_points_filtres, " points aberrants filtrés (", 
+             pourcentage_filtre, "% des données)\n"))
+  
+  # Créer le graphique avec données filtrées
+  p <- ggplot(donnees_coins_filtrees, aes(x = Coin, y = Erreur, fill = Parser_Type)) +
     geom_boxplot(alpha = 0.7) +
     scale_fill_manual(values = COULEURS_PARSEURS) +
     labs(title = "Comparaison des erreurs de précision par coin entre parseurs",
-         subtitle = "Distribution des erreurs pour chaque coin du marqueur",
+         subtitle = paste0("Distribution des erreurs après filtrage de ", pourcentage_filtre, "% des valeurs aberrantes"),
          x = "Position",
          y = "Erreur (pixels)",
          fill = "Parseur") +
@@ -550,6 +654,31 @@ graphique_erreurs_coins <- function(donnees_list) {
   
   if (interactive()) {
     print(p)
+  }
+  
+  # Créer également un graphique non filtré mais avec échelle ajustée
+  p_scaled <- ggplot(donnees_coins, aes(x = Coin, y = Erreur, fill = Parser_Type)) +
+    geom_boxplot(alpha = 0.7, outlier.shape = NA) +  # Masquer les outliers
+    coord_cartesian(ylim = c(0, max(stats_par_groupe$Q3 + 1.5 * stats_par_groupe$IQR))) +  # Limiter l'axe y sans perdre les données
+    scale_fill_manual(values = COULEURS_PARSEURS) +
+    labs(title = "Comparaison des erreurs de précision par coin entre parseurs",
+         subtitle = "Échelle limitée pour une meilleure visualisation",
+         x = "Position",
+         y = "Erreur (pixels)",
+         fill = "Parseur") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    )
+  
+  # Enregistrer le graphique à échelle ajustée
+  ggsave("analysis_results/inter_parseurs/comparaison_erreurs_coins_scaled.png", p_scaled, width = 12, height = 7, bg = "white")
+  
+  if (interactive()) {
+    print(p_scaled)
   }
   
   # Créer également un graphique avec les valeurs moyennes
@@ -583,7 +712,7 @@ graphique_erreurs_coins <- function(donnees_list) {
     print(p2)
   }
   
-  return(list(boxplot = p, barres = p2))
+  return(list(boxplot_filtre = p, boxplot_scale = p_scaled, barres = p2))
 }
 
 # 8. Tableau récapitulatif des performances
@@ -694,9 +823,6 @@ graphique_radar_performance <- function(donnees_list) {
   
   metriques$Succes_Norm <- metriques$Taux_Succes / 100
   
-  # Pour générer un graphique radar, nous allons utiliser une approche alternative 
-  # en utilisant des coordonnées polaires avec ggplot2
-  
   # Transformer les données pour le format long
   radar_data <- metriques %>%
     select(Parser_Type, Temps_Norm, Precision_Norm, Succes_Norm) %>%
@@ -708,31 +834,88 @@ graphique_radar_performance <- function(donnees_list) {
                                 levels = c("Temps_Norm", "Precision_Norm", "Succes_Norm"),
                                 labels = c("Rapidité", "Précision", "Fiabilité"))
   
-  # Calculer les angles pour chaque métrique
-  n_metrics <- length(unique(radar_data$Metrique))
-  radar_data$angle <- (as.numeric(radar_data$Metrique) - 1) * 2 * pi / n_metrics
+  # Créer une grille de coordonnées pour le graphique radar
+  # Définir les métriques comme axes
+  axes <- levels(radar_data$Metrique)
+  n_axes <- length(axes)
   
-  # Créer le graphique en coordonnées polaires
-  p <- ggplot(radar_data, aes(x = Metrique, y = Valeur, group = Parser_Type, color = Parser_Type)) +
-    geom_polygon(aes(fill = Parser_Type), alpha = 0.2) +
-    geom_line(size = 1.2) +
-    geom_point(size = 3) +
+  # Calculer les angles pour chaque axe (en radians)
+  angles <- seq(0, 2 * pi, length.out = n_axes + 1)
+  angles <- angles[-(n_axes + 1)]  # Retirer le dernier pour éviter la duplication
+  
+  # Créer un dataframe avec les coordonnées des axes
+  axes_df <- data.frame(
+    Metrique = axes,
+    angle = angles,
+    hjust = ifelse(angles > pi, 1, 0),
+    vjust = ifelse(angles > pi/2 & angles < 3*pi/2, 1, 0)
+  )
+  
+  # Joindre les angles aux données
+  radar_data <- radar_data %>%
+    left_join(axes_df, by = "Metrique")
+  
+  # Calculer les coordonnées x et y pour chaque point
+  radar_data$x <- radar_data$Valeur * cos(radar_data$angle)
+  radar_data$y <- radar_data$Valeur * sin(radar_data$angle)
+  
+  # Créer le graphique radar
+  p <- ggplot() +
+    # Ajouter des lignes de référence circulaires
+    geom_polygon(data = data.frame(x = 0.25 * cos(seq(0, 2*pi, length.out = 100)),
+                                  y = 0.25 * sin(seq(0, 2*pi, length.out = 100))),
+                aes(x, y), fill = NA, color = "gray80") +
+    geom_polygon(data = data.frame(x = 0.5 * cos(seq(0, 2*pi, length.out = 100)),
+                                  y = 0.5 * sin(seq(0, 2*pi, length.out = 100))),
+                aes(x, y), fill = NA, color = "gray80") +
+    geom_polygon(data = data.frame(x = 0.75 * cos(seq(0, 2*pi, length.out = 100)),
+                                  y = 0.75 * sin(seq(0, 2*pi, length.out = 100))),
+                aes(x, y), fill = NA, color = "gray80") +
+    geom_polygon(data = data.frame(x = 1.0 * cos(seq(0, 2*pi, length.out = 100)),
+                                  y = 1.0 * sin(seq(0, 2*pi, length.out = 100))),
+                aes(x, y), fill = NA, color = "gray80") +
+    
+    # Ajouter les lignes des axes
+    geom_segment(data = axes_df, aes(x = 0, y = 0, xend = cos(angle), yend = sin(angle)),
+                color = "gray50", linewidth = 0.5) +
+    
+    # Étiquettes des axes
+    geom_text(data = axes_df, 
+              aes(x = 1.1 * cos(angle), y = 1.1 * sin(angle), label = Metrique, 
+                  hjust = hjust, vjust = vjust),
+              color = "darkblue", fontface = "bold", size = 4) +
+    
+    # Tracer les polygones pour chaque parseur
+    geom_polygon(data = radar_data %>% group_by(Parser_Type) %>% arrange(angle),
+                aes(x = x, y = y, group = Parser_Type, fill = Parser_Type, color = Parser_Type),
+                alpha = 0.2, linewidth = 1) +
+    
+    # Ajouter les points
+    geom_point(data = radar_data, 
+              aes(x = x, y = y, color = Parser_Type),
+              size = 3) +
+    
+    # Couleurs et échelles
     scale_fill_manual(values = COULEURS_PARSEURS) +
     scale_color_manual(values = COULEURS_PARSEURS) +
-    coord_polar() +
+    
+    # Titre et légende
     labs(title = "Comparaison des performances des parseurs",
          subtitle = "Les valeurs plus élevées sont meilleures pour toutes les métriques",
          fill = "Parseur",
          color = "Parseur") +
-    scale_y_continuous(limits = c(0, 1)) +
+    
+    # Ajuster les limites et enlever les axes standards
+    coord_equal() +
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right",
-      axis.text.y = element_blank(),
+      axis.text = element_blank(),
+      axis.title = element_blank(),
       axis.ticks = element_blank(),
-      panel.grid.major.x = element_blank()
+      panel.grid = element_blank()
     )
   
   # Enregistrer le graphique
@@ -845,30 +1028,7 @@ graphique_perf_par_config <- function(donnees_list) {
     graphiques$precision <- p_precision
   }
   
-  # Si les données de succès existent, créer le graphique correspondant
-  if (donnees_list$has_success) {
-    p_succes <- ggplot(stats_config, aes(x = Copy_Config, y = Taux_Succes, fill = Parser_Type)) +
-      geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
-      scale_fill_manual(values = COULEURS_PARSEURS) +
-      labs(title = "Taux de succès par configuration",
-           x = "Configuration",
-           y = "Taux de succès (%)",
-           fill = "Parseur") +
-      scale_y_continuous(limits = c(0, 100)) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
-        axis.title = element_text(face = "bold", color = "darkblue"),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.title = element_text(face = "bold", color = "darkblue"),
-        legend.position = "right"
-      )
-    
-    # Enregistrer le graphique de succès
-    ggsave("analysis_results/inter_parseurs/barres_succes_par_config.png", p_succes, width = 12, height = 7, bg = "white")
-    
-    graphiques$succes <- p_succes
-  }
+ 
   
   if (interactive()) {
     for (g in graphiques) {
@@ -877,6 +1037,157 @@ graphique_perf_par_config <- function(donnees_list) {
   }
   
   return(graphiques)
+}
+
+# 7. Graphique avec courbes gaussiennes pour la distribution des temps et erreurs
+graphique_courbes_gaussiennes <- function(donnees_list) {
+  donnees <- donnees_list$donnees
+  
+  # --- Filtrage et graphique pour les temps d'exécution ---
+  
+  # Calculer les statistiques pour filtrer les valeurs aberrantes par parseur
+  temps_stats <- donnees %>%
+    group_by(Parser_Type) %>%
+    summarise(
+      Q1 = quantile(Parsing_Time_ms, 0.25, na.rm = TRUE),
+      Q3 = quantile(Parsing_Time_ms, 0.75, na.rm = TRUE),
+      IQR = Q3 - Q1,
+      Seuil_Inf = max(0, Q1 - 1.5 * IQR),  # Pas de temps négatifs
+      Seuil_Sup = Q3 + 1.5 * IQR,
+      Moyenne = mean(Parsing_Time_ms, na.rm = TRUE),
+      Ecart_Type = sd(Parsing_Time_ms, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Filtrer les données par parseur en utilisant les seuils calculés
+  donnees_filtrees <- donnees %>%
+    left_join(temps_stats, by = "Parser_Type") %>%
+    filter(Parsing_Time_ms >= Seuil_Inf & Parsing_Time_ms <= Seuil_Sup)
+  
+  # Calculer le pourcentage de données filtrées
+  pct_filtre <- (1 - nrow(donnees_filtrees) / nrow(donnees)) * 100
+  cat(sprintf("Courbes gaussiennes de temps : %.1f%% des valeurs filtrées comme aberrantes\n", pct_filtre))
+  
+  # Créer les paramètres pour les courbes gaussiennes théoriques par parseur
+  params_gaussian <- donnees_filtrees %>%
+    group_by(Parser_Type) %>%
+    summarise(
+      Moyenne = mean(Parsing_Time_ms, na.rm = TRUE),
+      Ecart_Type = sd(Parsing_Time_ms, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Créer le graphique de densité avec courbe gaussienne superposée
+  p_temps <- ggplot(donnees_filtrees, aes(x = Parsing_Time_ms, fill = Parser_Type, color = Parser_Type)) +
+    # Histogramme en transparence pour voir la distribution réelle
+    geom_histogram(aes(y = ..density..), alpha = 0.3, position = "identity", bins = 30) +
+    # Courbe de densité pour montrer la distribution réelle
+    geom_density(alpha = 0.6) +
+    # Ajouter une courbe gaussienne théorique pour chaque parseur
+    stat_function(data = params_gaussian, 
+                 aes(x = NULL, y = NULL, color = Parser_Type),
+                 fun = function(x, mean, sd) dnorm(x, mean, sd),
+                 args = list(
+                   mean = params_gaussian$Moyenne,
+                   sd = params_gaussian$Ecart_Type
+                 ),
+                 size = 1, linetype = "dashed") +
+    facet_wrap(~ Parser_Type, scales = "free") +
+    scale_fill_manual(values = COULEURS_PARSEURS) +
+    scale_color_manual(values = COULEURS_PARSEURS) +
+    labs(title = "Distribution des temps d'exécution par parseur avec courbes gaussiennes",
+         subtitle = sprintf("Distribution réelle (ligne pleine) vs gaussienne théorique (pointillée) - %.1f%% des valeurs aberrantes filtrées", pct_filtre),
+         x = "Temps de parsing (ms)",
+         y = "Densité") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "none",
+      strip.text = element_text(face = "bold", size = 12)
+    )
+  
+  # Enregistrer le graphique
+  ggsave("analysis_results/inter_parseurs/distribution_gaussienne_temps.png", p_temps, width = 12, height = 8, bg = "white")
+  
+  if (interactive()) {
+    print(p_temps)
+  }
+  
+  # --- Filtrage et graphique pour les erreurs de précision (si disponibles) ---
+  if (donnees_list$has_precision) {
+    # Calculer les statistiques pour filtrer les valeurs aberrantes par parseur
+    precision_stats <- donnees %>%
+      filter(!is.na(Precision_Error_Avg_px)) %>%
+      group_by(Parser_Type) %>%
+      summarise(
+        Q1 = quantile(Precision_Error_Avg_px, 0.25, na.rm = TRUE),
+        Q3 = quantile(Precision_Error_Avg_px, 0.75, na.rm = TRUE),
+        IQR = Q3 - Q1,
+        Seuil_Inf = max(0, Q1 - 1.5 * IQR),  # Pas d'erreurs négatives
+        Seuil_Sup = Q3 + 1.5 * IQR,
+        Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
+        Ecart_Type = sd(Precision_Error_Avg_px, na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # Filtrer les données par parseur
+    donnees_precision_filtrees <- donnees %>%
+      filter(!is.na(Precision_Error_Avg_px)) %>%
+      left_join(precision_stats, by = "Parser_Type") %>%
+      filter(Precision_Error_Avg_px >= Seuil_Inf & Precision_Error_Avg_px <= Seuil_Sup)
+    
+    # Calculer le pourcentage de données filtrées
+    pct_filtre_precision <- (1 - nrow(donnees_precision_filtrees) / sum(!is.na(donnees$Precision_Error_Avg_px))) * 100
+    cat(sprintf("Courbes gaussiennes de précision : %.1f%% des valeurs filtrées comme aberrantes\n", pct_filtre_precision))
+    
+    # Calculer les paramètres des gaussiennes théoriques
+    params_precision <- donnees_precision_filtrees %>%
+      group_by(Parser_Type) %>%
+      summarise(
+        Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
+        Ecart_Type = sd(Precision_Error_Avg_px, na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # Créer le graphique pour la précision
+    p_precision <- ggplot(donnees_precision_filtrees, aes(x = Precision_Error_Avg_px, fill = Parser_Type, color = Parser_Type)) +
+      geom_histogram(aes(y = ..density..), alpha = 0.3, position = "identity", bins = 30) +
+      geom_density(alpha = 0.6) +
+      stat_function(data = params_precision,
+                   aes(x = NULL, y = NULL, color = Parser_Type),
+                   fun = function(x, mean, sd) dnorm(x, mean, sd),
+                   args = list(
+                     mean = params_precision$Moyenne,
+                     sd = params_precision$Ecart_Type
+                   ),
+                   size = 1, linetype = "dashed") +
+      facet_wrap(~ Parser_Type, scales = "free") +
+      scale_fill_manual(values = COULEURS_PARSEURS) +
+      scale_color_manual(values = COULEURS_PARSEURS) +
+      labs(title = "Distribution des erreurs de précision par parseur avec courbes gaussiennes",
+           subtitle = sprintf("Distribution réelle (ligne pleine) vs gaussienne théorique (pointillée) - %.1f%% des valeurs aberrantes filtrées", pct_filtre_precision),
+           x = "Erreur de précision (pixels)",
+           y = "Densité") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        axis.title = element_text(face = "bold", color = "darkblue"),
+        legend.position = "none",
+        strip.text = element_text(face = "bold", size = 12)
+      )
+    
+    # Enregistrer le graphique
+    ggsave("analysis_results/inter_parseurs/distribution_gaussienne_precision.png", p_precision, width = 12, height = 8, bg = "white")
+    
+    if (interactive()) {
+      print(p_precision)
+    }
+    
+    return(list(temps = p_temps, precision = p_precision))
+  }
+  
+  return(list(temps = p_temps))
 }
 
 # 11. Fonction d'analyse principale qui exécute toutes les analyses
@@ -898,203 +1209,16 @@ analyse_comparative_inter_parseurs <- function(chemin_csv) {
     erreurs_coins = graphique_erreurs_coins(donnees_list),
     tableau_performances = generer_tableau_performances(donnees_list),
     radar_performance = graphique_radar_performance(donnees_list),
-    perf_par_config = graphique_perf_par_config(donnees_list)
+    perf_par_config = graphique_perf_par_config(donnees_list),
+    courbes_gaussiennes = graphique_courbes_gaussiennes(donnees_list)
   )
   
-  # Générer un rapport HTML synthétique avec les images des graphiques
-  generer_rapport_html(resultats, donnees_list)
-  
+
   # Retourner la liste des résultats
   return(resultats)
 }
 
-# 12. Fonction pour générer un rapport HTML synthétique
-generer_rapport_html <- function(resultats, donnees_list) {
-  # En-tête du document HTML
-  html_content <- c(
-    "<!DOCTYPE html>",
-    "<html>",
-    "<head>",
-    "  <meta charset='UTF-8'>",
-    "  <title>Rapport d'Analyse Comparative Inter-Parseurs</title>",
-    "  <style>",
-    "    body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }",
-    "    h1 { color: #005A9C; text-align: center; }",
-    "    h2 { color: #0077CC; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }",
-    "    .figure { margin: 20px 0; text-align: center; }",
-    "    .caption { font-style: italic; margin-top: 10px; color: #666; }",
-    "    img { max-width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }",
-    "    table { border-collapse: collapse; width: 100%; margin: 20px 0; }",
-    "    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }",
-    "    th { background-color: #f2f2f2; color: #333; }",
-    "    tr:nth-child(even) { background-color: #f9f9f9; }",
-    "    .highlight { background-color: #e6f7ff; }",
-    "    .section { margin-bottom: 40px; }",
-    "    .summary { background-color: #f8f8f8; padding: 15px; border-left: 4px solid #0077CC; margin: 20px 0; }",
-    "  </style>",
-    "</head>",
-    "<body>",
-    "  <h1>Rapport d'Analyse Comparative des Performances Inter-Parseurs</h1>",
-    "  <div class='summary'>",
-    "    <p>Ce rapport présente une analyse comparative détaillée des performances entre différents parseurs de marqueurs. ",
-    "    L'analyse couvre les aspects de temps d'exécution, de précision et de taux de succès (lorsque disponibles).</p>",
-    "  </div>"
-  )
-  
-  # Section 1: Analyse des temps d'exécution
-  html_content <- c(html_content,
-    "  <div class='section'>",
-    "    <h2>1. Analyse des Temps d'Exécution</h2>",
-    "    <div class='figure'>",
-    "      <img src='boxplot_temps_execution.png' alt='Boîtes à moustaches des temps d'exécution'>",
-    "      <p class='caption'>Figure 1: Distribution des temps d'exécution pour chaque parseur (boîtes à moustaches)</p>",
-    "    </div>",
-    "    <div class='figure'>",
-    "      <img src='violin_temps_execution.png' alt='Violin plots des temps d'exécution'>",
-    "      <p class='caption'>Figure 2: Distribution des temps d'exécution pour chaque parseur (violin plots)</p>",
-    "    </div>",
-    "    <div class='figure'>",
-    "      <img src='pareto_temps_moyens.png' alt='Pareto des temps moyens'>",
-    "      <p class='caption'>Figure 3: Analyse de Pareto des temps moyens d'exécution par parseur</p>",
-    "    </div>"
-  )
-  
-  # Ajouter les figures de configuration si elles existent
-  if (donnees_list$has_config) {
-    html_content <- c(html_content,
-      "    <div class='figure'>",
-      "      <img src='evolution_temps_par_config.png' alt='Évolution des temps par configuration'>",
-      "      <p class='caption'>Figure 4: Évolution des temps d'exécution selon la configuration</p>",
-      "    </div>",
-      "    <div class='figure'>",
-      "      <img src='barres_temps_par_config.png' alt='Temps moyen par configuration'>",
-      "      <p class='caption'>Figure 5: Temps moyen d'exécution par configuration</p>",
-      "    </div>"
-    )
-  }
-  html_content <- c(html_content, "  </div>")
-  
-  # Section 2: Analyse de la précision (si disponible)
-  if (donnees_list$has_precision) {
-    html_content <- c(html_content,
-      "  <div class='section'>",
-      "    <h2>2. Analyse de la Précision</h2>",
-      "    <div class='figure'>",
-      "      <img src='barres_erreur_precision.png' alt='Erreur moyenne de précision'>",
-      "      <p class='caption'>Figure 6: Erreur moyenne de précision par parseur</p>",
-      "    </div>",
-      "    <div class='figure'>",
-      "      <img src='violin_erreur_precision.png' alt='Distribution des erreurs de précision'>",
-      "      <p class='caption'>Figure 7: Distribution des erreurs de précision par parseur</p>",
-      "    </div>",
-      "    <div class='figure'>",
-      "      <img src='comparaison_erreurs_coins.png' alt='Erreurs par coin'>",
-      "      <p class='caption'>Figure 8: Comparaison des erreurs de précision par coin</p>",
-      "    </div>",
-      "    <div class='figure'>",
-      "      <img src='moyennes_erreurs_coins.png' alt='Erreur moyenne par coin'>",
-      "      <p class='caption'>Figure 9: Erreur moyenne par coin pour chaque parseur</p>",
-      "    </div>"
-    )
-    
-    # Ajouter les figures de configuration si elles existent
-    if (donnees_list$has_config) {
-      html_content <- c(html_content,
-        "    <div class='figure'>",
-        "      <img src='evolution_precision_par_config.png' alt='Évolution de la précision par configuration'>",
-        "      <p class='caption'>Figure 10: Évolution de l'erreur de précision selon la configuration</p>",
-        "    </div>",
-        "    <div class='figure'>",
-        "      <img src='barres_precision_par_config.png' alt='Erreur moyenne par configuration'>",
-        "      <p class='caption'>Figure 11: Erreur moyenne de précision par configuration</p>",
-        "    </div>"
-      )
-    }
-    html_content <- c(html_content, "  </div>")
-  }
-  
-  # Section 3: Analyse du taux de succès (si disponible)
-  if (donnees_list$has_success) {
-    html_content <- c(html_content,
-      "  <div class='section'>",
-      "    <h2>3. Analyse du Taux de Succès</h2>",
-      "    <div class='figure'>",
-      "      <img src='barres_taux_succes.png' alt='Taux de succès'>",
-      "      <p class='caption'>Figure 12: Taux de succès par parseur</p>",
-      "    </div>"
-    )
-    
-    # Ajouter les figures de configuration si elles existent
-    if (donnees_list$has_config) {
-      html_content <- c(html_content,
-        "    <div class='figure'>",
-        "      <img src='barres_taux_succes_par_config.png' alt='Taux de succès par configuration'>",
-        "      <p class='caption'>Figure 13: Taux de succès par configuration et par parseur</p>",
-        "    </div>",
-        "    <div class='figure'>",
-        "      <img src='barres_succes_par_config.png' alt='Taux de succès par configuration (barres)'>",
-        "      <p class='caption'>Figure 14: Représentation en barres du taux de succès par configuration</p>",
-        "    </div>"
-      )
-    }
-    html_content <- c(html_content, "  </div>")
-  }
-  
-  # Section 4: Analyses croisées
-  html_content <- c(html_content,
-    "  <div class='section'>",
-    "    <h2>4. Analyses Croisées et Synthèse</h2>"
-  )
-  
-  # Ajouter le scatter plot si disponible
-  if (donnees_list$has_precision) {
-    html_content <- c(html_content,
-      "    <div class='figure'>",
-      "      <img src='scatter_temps_vs_precision.png' alt='Relation temps vs précision'>",
-      "      <p class='caption'>Figure 15: Relation entre temps d'exécution et erreur de précision</p>",
-      "    </div>"
-    )
-  }
-  
-  # Ajouter le graphique radar si précision disponible
-  if (donnees_list$has_precision) {
-    html_content <- c(html_content,
-      "    <div class='figure'>",
-      "      <img src='radar_performances.png' alt='Graphique radar des performances'>",
-      "      <p class='caption'>Figure 16: Comparaison des performances globales des parseurs (graphique radar)</p>",
-      "    </div>"
-    )
-  }
-  html_content <- c(html_content, "  </div>")
-  
-  # Section 5: Tableau récapitulatif
-  html_content <- c(html_content,
-    "  <div class='section'>",
-    "    <h2>5. Tableau Récapitulatif des Performances</h2>",
-    "    <p>Un tableau récapitulatif détaillé est disponible dans le fichier CSV: <a href='tableau_performances.csv'>tableau_performances.csv</a></p>",
-    "  </div>",
-    
-    # Conclusion
-    "  <div class='section'>",
-    "    <h2>Conclusion</h2>",
-    "    <p>Cette analyse comparative a permis d'évaluer les performances relatives des différents parseurs ",
-    "    selon plusieurs critères clés. Pour des recommandations spécifiques basées sur ces résultats, ",
-    "    veuillez consulter le rapport complet d'analyse.</p>",
-    "  </div>",
-    
-    # Pied de page
-    "  <footer style='margin-top: 50px; text-align: center; color: #777; font-size: 0.8em;'>",
-    "    <p>Rapport généré automatiquement par le script d'analyse comparative inter-parseurs</p>",
-    "    <p>Date de génération: ", format(Sys.time(), "%d/%m/%Y %H:%M:%S"), "</p>",
-    "  </footer>",
-    "</body>",
-    "</html>"
-  )
-  
-  # Écrire le fichier HTML
-  writeLines(html_content, "analysis_results/inter_parseurs/rapport_analyse_comparative.html")
-  cat("Rapport HTML généré avec succès: analysis_results/inter_parseurs/rapport_analyse_comparative.html\n")
-}
+
 
 # 13. Fonction principale pour exécuter l'analyse
 main <- function() {
@@ -1121,7 +1245,6 @@ main <- function() {
   
   cat("\n=== Analyse comparative inter-parseurs terminée avec succès! ===\n")
   cat("Les résultats ont été enregistrés dans le dossier 'analysis_results/inter_parseurs'\n")
-  cat("Un rapport HTML récapitulatif est disponible: analysis_results/inter_parseurs/rapport_analyse_comparative.html\n")
   
   return(invisible(resultats))
 }
