@@ -74,7 +74,7 @@ static float distance(cv::Point2f a, cv::Point2f b) {
     return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
 }
 
-#define DISTANCE_THRESHOLD 250
+#define DISTANCE_THRESHOLD 350
 
 std::vector<cv::Point2f> find_closest_point_corner(const std::vector<cv::Point2f>& detected_shapes,
                                                    const cv::Size& img_size, int& flag) {

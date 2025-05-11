@@ -3,8 +3,8 @@
 #define MODIFIER_CONSTANTS_H
 
 // Rotation (degrés)
-constexpr float MIN_ROTATE = -3.0f;
-constexpr float MAX_ROTATE = 3.0f;
+constexpr float MIN_ROTATE = -5.0f;
+constexpr float MAX_ROTATE = 5.0f;
 
 // Translation (pixels)
 constexpr int MIN_TRANS = -5;
