@@ -1,6 +1,9 @@
 #include <common.h>
 #include <random>
+#include <iostream>
 #include "utils/math_utils.h"
+#include "modifier_constants.h"
+#include "modifier.h"
 
 #include "modifier.h"
 
@@ -89,6 +92,26 @@ void translate_img(cv::Mat& img, int dx, int dy) {
     cv::warpAffine(img_out, img, affine, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
 }
 
+void distorsion_coef_exec(cv::Mat& img, cv::Mat& modification_matrix, float coef) {
+    int percent = 30;
+    float neg_value = 1 * coef;
+    if (time(0) % 2 == 0) {
+        neg_value = -neg_value;
+    }
+    cv::RNG rng = cv::RNG(time(0));
+    cv::copyMakeBorder(img, img, percent, percent, percent, percent, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+    cv::Mat img_out = img.clone();
+    modification_matrix = cv::Mat::eye(3, 3, CV_32F);
+    modification_matrix *= rotate_center(neg_value * 70, img_out.cols / 2, img_out.rows / 2);
+    modification_matrix *= translate(neg_value * 50, neg_value * 50);
+    modification_matrix = modification_matrix(cv::Rect(0, 0, 3, 2));
+    cv::warpAffine(img_out, img, modification_matrix, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT,
+                   cv::Scalar(255, 255, 255));
+    add_salt_pepper_noise(img, rng, coef * 50, coef * 50);
+    add_gaussian_noise(img, rng, coef * 50, coef * 50);
+    contrast_brightness_modifier(img, neg_value * 100, neg_value * 100);
+    add_ink_stain(img, rng, coef * MAX_NB_SPOT, rng.uniform(4, 8), rng.uniform(9, 35));
+}
 /**
  * @brief Applique une compression JPEG à une image avec un niveau de qualité spécifié
  *
@@ -110,7 +133,7 @@ void apply_jpeg_compression(cv::Mat& img, int quality) {
 
 /**
  * @brief Simule des effets d'impression sur une image
- * 
+ *
  * @param img Image à modifier
  * @param rng Générateur de nombres aléatoires
  * @param intensity Intensité des effets (entre 0 et 100)
@@ -118,7 +141,7 @@ void apply_jpeg_compression(cv::Mat& img, int quality) {
 void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
     intensity = std::max(0, std::min(100, intensity));
     float intensity_factor = intensity / 100.0f;
-    
+
     // Convertir l'image en niveaux de gris temporairement si elle est en couleur
     cv::Mat gray_img;
     bool isColor = img.channels() == 3;
@@ -127,7 +150,7 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
     } else {
         gray_img = img.clone();
     }
-    
+
     // Appliquer systématiquement l'effet de tramage/dithering
     {
         // Effet de tramage/dithering (pattern artificiels)
@@ -138,13 +161,14 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
                 pattern.at<uchar>(y, x) = ((x ^ y) & 1) ? 10 : -10;
             }
         }
-        
+
         // Appliquer le motif à l'image avec l'intensité donnée
         for (int y = 0; y < img.rows; y++) {
             for (int x = 0; x < img.cols; x++) {
                 int pattern_val = pattern.at<uchar>(y % pattern.rows, x % pattern.cols);
-                int adjustment = pattern_val * intensity_factor * 0.5f; // Réduire légèrement l'intensité pour le dithering systématique
-                
+                int adjustment = pattern_val * intensity_factor *
+                                 0.5f; // Réduire légèrement l'intensité pour le dithering systématique
+
                 if (isColor) {
                     cv::Vec3b pixel = img.at<cv::Vec3b>(y, x);
                     pixel[0] = cv::saturate_cast<uchar>(pixel[0] + adjustment);
@@ -158,23 +182,23 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
             }
         }
     }
-    
+
     // En plus du tramage, appliquer un effet aléatoire supplémentaire
     int effect_type = rng.uniform(1, 3); // Maintenant seulement 3 types d'effets différents (sans le dithering)
-    
-    switch(effect_type) {
+
+    switch (effect_type) {
         // case 0: {
         //     // Effet 1: Stries horizontales (similaires aux imprimantes jet d'encre)
         //     int num_stripes = rng.uniform(3, 15);
         //     int stripe_height = img.rows / num_stripes;
-            
+
         //     for (int i = 0; i < num_stripes; i++) {
         //         int y_start = i * stripe_height;
         //         int y_end = std::min(y_start + stripe_height, img.rows);
-                
+
         //         // Intensité variable par bande
         //         float stripe_factor = 1.0f - rng.uniform(0.0f, 0.3f * intensity_factor);
-                
+
         //         for (int y = y_start; y < y_end; y++) {
         //             for (int x = 0; x < img.cols; x++) {
         //                 if (isColor) {
@@ -196,10 +220,10 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
             // Effet 2: Variations de densité d'encre (impression non uniforme)
             // cv::Mat noise(img.size(), CV_32FC(img.channels()));
             // cv::randn(noise, 1.0, 0.2 * intensity_factor);
-            
+
             // cv::Mat img_float;
             // img.convertTo(img_float, CV_32F);
-            
+
             // Multiplier l'image par le bruit pour créer des variations de densité
             // cv::multiply(img_float, noise, img_float);
             // img_float.convertTo(img, img.type());
@@ -208,14 +232,14 @@ void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
         case 2: {
             // Effet 3: Lignes manquantes (simule un défaut d'impression)
             int num_lines = rng.uniform(1, 5 + int(intensity_factor * 10));
-            
+
             for (int i = 0; i < num_lines; i++) {
                 int y = rng.uniform(0, img.rows);
-                int length = rng.uniform(img.cols/10, img.cols/3);
+                int length = rng.uniform(img.cols / 10, img.cols / 3);
                 int start_x = rng.uniform(0, img.cols - length);
-                
-                cv::line(img, cv::Point(start_x, y), cv::Point(start_x + length, y), 
-                        cv::Scalar(255, 255, 255), 1 + rng.uniform(0, 2));
+
+                cv::line(img, cv::Point(start_x, y), cv::Point(start_x + length, y), cv::Scalar(255, 255, 255),
+                         1 + rng.uniform(0, 2));
             }
             break;
         }
@@ -244,24 +268,24 @@ void random_exec(cv::Mat& img, cv::Mat& modification_matrix, int seed) {
     float rotation_angle;
     if (flip_image) {
         // Rotation à 180 degrés avec une légère variation de ±3 degrés
-        rotation_angle = 180.0f + rng.uniform(-2.0f, 2.0f);
+        rotation_angle = 180.0f + rng.uniform(MIN_ROTATE, MAX_ROTATE);
     } else {
         // Légère rotation comme avant
-        rotation_angle = rng.uniform(-2.0f, 2.0f);
+        rotation_angle = rng.uniform(MIN_ROTATE, MAX_ROTATE);
     }
 
     // Appliquer la rotation
     modification_matrix = cv::Mat::eye(3, 3, CV_32F);
     modification_matrix *= rotate_center(rotation_angle, img_out.cols / 2, img_out.rows / 2);
-    modification_matrix *= translate(rng.uniform(-5, 5), rng.uniform(-5, 5));
+    modification_matrix *= translate(rng.uniform(MIN_TRANS, MAX_TRANS), rng.uniform(MIN_TRANS, MAX_TRANS));
     modification_matrix = modification_matrix(cv::Rect(0, 0, 3, 2));
     cv::warpAffine(img_out, img, modification_matrix, img.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT,
                    cv::Scalar(255, 255, 255));
-
-    // add_salt_pepper_noise(img, rng, rng.uniform(0.01, 0.13), rng.uniform(0.01, 0.13));
-    // add_gaussian_noise(img, rng, rng.uniform(1.0, 5.0), rng.uniform(1.0, 5.0));
-    // contrast_brightness_modifier(img, rng.uniform(-20, 20), rng.uniform(-20, 20));
-    // add_ink_stain(img, rng, rng.uniform(0, 8), rng.uniform(4, 8), rng.uniform(9, 35));
+    add_salt_pepper_noise(img, rng, rng.uniform(MIN_SALT, MAX_SALT), rng.uniform(MIN_PEPPER, MAX_PEPPER));
+    add_gaussian_noise(img, rng, rng.uniform(MIN_DISP, MAX_DISP), rng.uniform(MIN_OFFSET, MAX_OFFSET));
+    contrast_brightness_modifier(img, rng.uniform(MIN_CONTRAST, MAX_CONTRAST), rng.uniform(MIN_BRIGHT, MAX_BRIGHT));
+    add_ink_stain(img, rng, rng.uniform(MIN_NB_SPOT, MAX_NB_SPOT), rng.uniform(MIN_RMIN, MAX_RMIN),
+                  rng.uniform(MIN_RMAX, MAX_RMAX));
 
     // Simuler des effets d'impression avec une intensité aléatoire
     simulate_printer_effects(img, rng, rng.uniform(60, 70));

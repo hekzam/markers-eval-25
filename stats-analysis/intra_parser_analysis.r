@@ -1,6 +1,6 @@
 ####################################################
 # SCRIPT RESTRUCTURÉ D'ANALYSE DE DONNÉES PAR PARSEUR
-# Version améliorée du script fusionné
+# Version adaptée pour nouvelles colonnes CSV
 ####################################################
 
 # Chargement des bibliothèques
@@ -10,8 +10,8 @@ library(tidyr)
 library(fs) # Pour la gestion des dossiers
 
 # Liste des parseurs à analyser
-PARSEURS <- c("aruco_parser", "circle_parser", "custom_marker_parser", 
-              "default_parser", "qrcode_empty_parser", "qrcode_parser", "shape_parser")
+PARSEURS <- c("QRCODE", "CIRCLE", "SHAPE", 
+              "ARUCO", "CENTER_MARKER_PARSER")
 
 # Fonction pour créer des dossiers s'ils n'existent pas
 creer_dossiers <- function() {
@@ -28,14 +28,14 @@ creer_dossiers <- function() {
 
 # Fonction pour filtrer les données par parseur
 filtrer_par_parseur <- function(donnees, nom_parseur) {
-  # Vérifier si la colonne Parser existe
-  if (!("Parser" %in% colnames(donnees))) {
-    stop("Erreur : Le fichier CSV ne contient pas la colonne 'Parser'.")
+  # Vérifier si la colonne Parser_Type existe
+  if (!("Parser_Type" %in% colnames(donnees))) {
+    stop("Erreur : Le fichier CSV ne contient pas la colonne 'Parser_Type'.")
   }
   
   # Filtrer les données pour le parseur spécifié
   donnees_filtrees <- donnees %>%
-    filter(Parser == nom_parseur)
+    filter(Parser_Type == nom_parseur)
   
   # Vérifier si des données ont été trouvées pour ce parseur
   if (nrow(donnees_filtrees) == 0) {
@@ -87,60 +87,157 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
       legend.title = element_text(color = "darkblue", face = "bold")
     )
   
-  # Calculer la moyenne et l'écart-type
-  temps_moyen <- mean(donnees$Time_ms, na.rm = TRUE)
-  ecart_type <- sd(donnees$Time_ms, na.rm = TRUE)
+  # Calculer la moyenne et l'écart-type du temps de parsing
+  temps_moyen <- mean(donnees$Parsing_Time_ms, na.rm = TRUE)
+  ecart_type <- sd(donnees$Parsing_Time_ms, na.rm = TRUE)
   
   # 1. Graphique linéaire du temps d'exécution par numéro de copie
-  p1 <- ggplot(donnees, aes(x = Numero_Copie, y = Time_ms)) +
+  p1 <- ggplot(donnees, aes(x = Numero_Copie, y = Parsing_Time_ms)) +
     geom_point(color = "darkblue", size = 3) +
-    labs(title = paste("Temps d'exécution pour chaque copie -", nom_parseur),
+    labs(title = paste("Temps de parsing pour chaque copie -", nom_parseur),
          subtitle = "Évolution du temps de traitement",
          x = "Numéro de copie",
-         y = "Temps d'exécution (ms)") +
+         y = "Temps de parsing (ms)") +
+    expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
     mon_theme
   
   # 2. Comparaison avec la moyenne
-  p2 <- ggplot(donnees, aes(x = Numero_Copie, y = Time_ms)) +
+  p2 <- ggplot(donnees, aes(x = Numero_Copie, y = Parsing_Time_ms)) +
     geom_hline(yintercept = temps_moyen, linetype = "dashed", color = "orangered", size = 1) +
     geom_ribbon(aes(ymin = temps_moyen - ecart_type, ymax = temps_moyen + ecart_type), 
                 fill = "lightblue", alpha = 0.3) +
-    geom_point(size = 3, aes(color = Time_ms > temps_moyen)) +
+    geom_point(size = 3, aes(color = Parsing_Time_ms > temps_moyen)) +
     scale_color_manual(values = c("darkgreen", "red"),
                        labels = c("Inférieur à la moyenne", "Supérieur à la moyenne"),
                        name = "Performance") +
     labs(title = paste("Comparaison des temps par rapport à la moyenne -", nom_parseur),
          subtitle = paste("Temps moyen:", round(temps_moyen, 5), "ms. Écart-type:", round(ecart_type, 5), "ms"),
          x = "Numéro de copie",
-         y = "Temps d'exécution (ms)") +
+         y = "Temps de parsing (ms)") +
+    expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
     mon_theme
   
   # 3. Histogramme de distribution des temps
-  p3 <- ggplot(donnees, aes(x = Time_ms)) +
+  p3 <- ggplot(donnees, aes(x = Parsing_Time_ms)) +
     geom_histogram(bins = 10, fill = "steelblue", color = "darkblue", alpha = 0.7) +
     geom_vline(xintercept = temps_moyen, linetype = "dashed", color = "red", size = 1) +
-    labs(title = paste("Distribution des temps d'exécution -", nom_parseur),
+    labs(title = paste("Distribution des temps de parsing -", nom_parseur),
          subtitle = "Fréquence des différents temps de traitement",
-         x = "Temps d'exécution (ms)",
+         x = "Temps de parsing (ms)",
          y = "Nombre de copies") +
+    expand_limits(x = 0, y = 0) +  # Ajout pour faire apparaître le zéro sur les deux axes
     mon_theme
   
-  # 4. Temps d'exécution par groupe de copies (groupé dynamiquement)
-  nb_groupes <- ceiling(max(donnees$Numero_Copie, na.rm = TRUE) / 5)
-  donnees$Groupe_Copie <- cut(donnees$Numero_Copie, 
-                              breaks = seq(0, max(donnees$Numero_Copie, na.rm = TRUE) + 5, by = 5), 
-                              include.lowest = TRUE, right = FALSE)
+ # 4. Temps d'exécution par groupe de copies (groupé dynamiquement)
+  # Calculer la taille de groupe optimale (nombre total de copies / 5)
+  taille_groupe <- ceiling(nrow(donnees) / 5)
   
-  p4 <- ggplot(donnees, aes(x = Groupe_Copie, y = Time_ms, fill = Groupe_Copie)) +
+  # S'assurer que la taille de groupe est au moins 1
+  taille_groupe <- max(1, taille_groupe)
+  
+  # Calculer le nombre d'intervalles nécessaires
+  max_copie <- max(donnees$Numero_Copie, na.rm = TRUE)
+  breaks <- seq(0, max_copie + taille_groupe, by = taille_groupe)
+  num_intervals <- length(breaks) - 1
+  
+  # Créer des groupes de taille dynamique avec le bon nombre d'étiquettes
+  donnees$Groupe_Copie <- cut(donnees$Numero_Copie, 
+                             breaks = breaks, 
+                             include.lowest = TRUE, right = FALSE,
+                             labels = paste("Groupe", 1:num_intervals))
+  
+  p4 <- ggplot(donnees, aes(x = Groupe_Copie, y = Parsing_Time_ms, fill = Groupe_Copie)) +
     geom_boxplot(alpha = 0.7) +
     geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.7) +
-    labs(title = paste("Comparaison des temps d'exécution par groupe de copies -", nom_parseur),
-         subtitle = "Analyse par tranches de 5 copies",
+    labs(title = paste("Comparaison des temps de parsing par groupe de copies -", nom_parseur),
+         subtitle = paste("Analyse par tranches de", taille_groupe, "copies"),
          x = "Groupe de copies",
-         y = "Temps d'exécution (ms)") +
+         y = "Temps de parsing (ms)") +
     scale_fill_brewer(palette = "Blues") +
+    expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
     mon_theme +
     theme(legend.position = "none")
+  
+  # 5. Nouvelle analyse - Graphique de précision moyenne d'erreur
+  if ("Precision_Error_Avg_px" %in% colnames(donnees)) {
+    p5 <- ggplot(donnees, aes(x = Numero_Copie, y = Precision_Error_Avg_px)) +
+      geom_point(color = "darkred", size = 3) +
+      geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
+      labs(title = paste("Erreur de précision moyenne par copie -", nom_parseur),
+           subtitle = "Évaluation de la précision de détection",
+           x = "Numéro de copie",
+           y = "Erreur moyenne (pixels)") +
+      expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
+      mon_theme
+    
+    # Sauvegarder le graphique d'erreur de précision
+    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_precision_erreur_moyenne.png"), p5, width = 10, height = 6, bg = "white")
+    
+    if (interactive()) {
+      print(p5)
+    }
+  }
+  
+  # 6. Nouvelle analyse - Comparaison des erreurs aux quatre coins
+  if (all(c("Precision_Error_TopLeft_px", "Precision_Error_TopRight_px", 
+            "Precision_Error_BottomLeft_px", "Precision_Error_BottomRight_px") %in% colnames(donnees))) {
+    
+    # Transformer les données pour le graphique
+    donnees_coins <- donnees %>%
+      select(Numero_Copie, 
+             TopLeft = Precision_Error_TopLeft_px,
+             TopRight = Precision_Error_TopRight_px,
+             BottomLeft = Precision_Error_BottomLeft_px,
+             BottomRight = Precision_Error_BottomRight_px) %>%
+      pivot_longer(cols = c(TopLeft, TopRight, BottomLeft, BottomRight),
+                   names_to = "Coin", values_to = "Erreur")
+    
+    p6 <- ggplot(donnees_coins, aes(x = Coin, y = Erreur, fill = Coin)) +
+      geom_boxplot(alpha = 0.7) +
+      geom_jitter(width = 0.2, alpha = 0.5) +
+      labs(title = paste("Erreur de précision par coin -", nom_parseur),
+           subtitle = "Comparaison des quatre coins du marqueur",
+           x = "Position",
+           y = "Erreur (pixels)") +
+      scale_fill_brewer(palette = "Set1") +
+      expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
+      mon_theme
+    
+    # Sauvegarder le graphique de comparaison des coins
+    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_precision_erreur_coins.png"), p6, width = 10, height = 6, bg = "white")
+    
+    if (interactive()) {
+      print(p6)
+    }
+  }
+  
+  # 7. Nouvelle analyse - Taux de succès du parsing
+  if ("Parsing_Success" %in% colnames(donnees)) {
+    # Convertir en facteur pour assurer le bon affichage
+    donnees$Parsing_Success <- as.factor(donnees$Parsing_Success)
+    
+    # Calculer le pourcentage de succès
+    taux_succes <- sum(donnees$Parsing_Success == TRUE, na.rm = TRUE) / nrow(donnees) * 100
+    
+    p7 <- ggplot(donnees, aes(x = Parsing_Success, fill = Parsing_Success)) +
+      geom_bar() +
+      geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +
+      labs(title = paste("Taux de succès du parsing -", nom_parseur),
+           subtitle = paste0("Pourcentage de succès: ", round(taux_succes, 2), "%"),
+           x = "Parsing réussi",
+           y = "Nombre de copies") +
+      scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"),
+                      name = "Résultat") +
+      expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
+      mon_theme
+    
+    # Sauvegarder le graphique de taux de succès
+    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_taux_succes.png"), p7, width = 8, height = 6, bg = "white")
+    
+    if (interactive()) {
+      print(p7)
+    }
+  }
   
   # Enregistrer les graphiques dans le dossier du parseur
   ggsave(paste0(dossier_parseur, "/", nom_parseur, "_temps_execution_copies.png"), p1, width = 10, height = 6, bg = "white")
@@ -157,168 +254,389 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
   
   # Statistiques complémentaires
   cat("\nStatistiques complémentaires pour le parseur", nom_parseur, ":\n")
-  cat("Temps moyen :", mean(donnees$Time_ms, na.rm = TRUE), "ms\n")
-  cat("Temps médian :", median(donnees$Time_ms, na.rm = TRUE), "ms\n")
-  cat("Écart-type :", sd(donnees$Time_ms, na.rm = TRUE), "ms\n")
-  cat("Copie la plus rapide :", donnees$File[which.min(donnees$Time_ms)], "\n")
-  cat("Copie la plus lente :", donnees$File[which.max(donnees$Time_ms)], "\n")
+  cat("Temps moyen de parsing:", mean(donnees$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps médian de parsing:", median(donnees$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Écart-type:", sd(donnees$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Copie la plus rapide:", donnees$File[which.min(donnees$Parsing_Time_ms)], "\n")
+  cat("Copie la plus lente:", donnees$File[which.max(donnees$Parsing_Time_ms)], "\n")
+  
+  # Ajouter les nouvelles statistiques si disponibles
+  if ("Precision_Error_Avg_px" %in% colnames(donnees)) {
+    cat("Erreur moyenne de précision:", mean(donnees$Precision_Error_Avg_px, na.rm = TRUE), "pixels\n")
+  }
+  
+  if ("Parsing_Success" %in% colnames(donnees)) {
+    cat("Taux de succès du parsing:", sum(donnees$Parsing_Success == TRUE, na.rm = TRUE) / nrow(donnees) * 100, "%\n")
+  }
   
   # Enregistrer les statistiques dans un fichier texte
   stats_file <- paste0(dossier_parseur, "/", nom_parseur, "_statistiques.txt")
   sink(stats_file)
   cat("Statistiques pour le parseur", nom_parseur, ":\n\n")
-  cat("Nombre de copies analysées :", nrow(donnees), "\n")
-  cat("Temps moyen :", mean(donnees$Time_ms, na.rm = TRUE), "ms\n")
-  cat("Temps médian :", median(donnees$Time_ms, na.rm = TRUE), "ms\n")
-  cat("Écart-type :", sd(donnees$Time_ms, na.rm = TRUE), "ms\n")
-  cat("Copie la plus rapide :", donnees$File[which.min(donnees$Time_ms)], "\n")
-  cat("Copie la plus lente :", donnees$File[which.max(donnees$Time_ms)], "\n")
+  cat("Nombre de copies analysées:", nrow(donnees), "\n")
+  cat("Temps moyen de parsing:", mean(donnees$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps médian de parsing:", median(donnees$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Écart-type:", sd(donnees$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Copie la plus rapide:", donnees$File[which.min(donnees$Parsing_Time_ms)], "\n")
+  cat("Copie la plus lente:", donnees$File[which.max(donnees$Parsing_Time_ms)], "\n")
+  
+  # Ajouter les nouvelles statistiques au fichier
+  if ("Precision_Error_Avg_px" %in% colnames(donnees)) {
+    cat("Erreur moyenne de précision:", mean(donnees$Precision_Error_Avg_px, na.rm = TRUE), "pixels\n")
+    cat("Écart-type de l'erreur de précision:", sd(donnees$Precision_Error_Avg_px, na.rm = TRUE), "pixels\n")
+  }
+  
+  if (all(c("Precision_Error_TopLeft_px", "Precision_Error_TopRight_px", 
+            "Precision_Error_BottomLeft_px", "Precision_Error_BottomRight_px") %in% colnames(donnees))) {
+    cat("\nErreur moyenne par position:\n")
+    cat("- Coin supérieur gauche:", mean(donnees$Precision_Error_TopLeft_px, na.rm = TRUE), "pixels\n")
+    cat("- Coin supérieur droit:", mean(donnees$Precision_Error_TopRight_px, na.rm = TRUE), "pixels\n")
+    cat("- Coin inférieur gauche:", mean(donnees$Precision_Error_BottomLeft_px, na.rm = TRUE), "pixels\n")
+    cat("- Coin inférieur droit:", mean(donnees$Precision_Error_BottomRight_px, na.rm = TRUE), "pixels\n")
+  }
+  
+  if ("Parsing_Success" %in% colnames(donnees)) {
+    cat("\nTaux de succès du parsing:", sum(donnees$Parsing_Success == TRUE, na.rm = TRUE) / nrow(donnees) * 100, "%\n")
+    cat("Nombre de copies réussies:", sum(donnees$Parsing_Success == TRUE, na.rm = TRUE), "\n")
+    cat("Nombre de copies échouées:", sum(donnees$Parsing_Success == FALSE, na.rm = TRUE), "\n")
+  }
+  
+  if ("Copy_Config" %in% colnames(donnees)) {
+    cat("\nRépartition par configuration de copie:\n")
+    print(table(donnees$Copy_Config))
+  }
+  
+  
   sink()
   
   # Retourner les données pour d'autres analyses potentielles
   return(donnees)
 }
 
-# Fonction pour analyser l'impact du bruit par parseur
-analyser_impact_bruit_parseur <- function(donnees, nom_parseur) {
-  # Vérifier si la colonne Noise_Level existe
-  if (!("Noise_Level" %in% colnames(donnees))) {
-    cat("Avertissement : Le fichier CSV ne contient pas la colonne 'Noise_Level'. Analyse du bruit ignorée.\n")
+# Fonction pour analyser l'impact des configurations de copie
+analyser_impact_config_parseur <- function(donnees, nom_parseur) {
+  # Vérifier si la colonne Copy_Config existe
+  if (!("Copy_Config" %in% colnames(donnees))) {
+    cat("Avertissement : Le fichier CSV ne contient pas la colonne 'Copy_Config'. Analyse des configurations ignorée.\n")
     return(NULL)
   }
   
   # Créer le chemin du dossier pour ce parseur
   dossier_parseur <- paste0("analysis_results/", nom_parseur)
   
-  # Statistiques par niveau de bruit
-  stats_bruit <- donnees %>%
-    group_by(Noise_Level) %>%
+  # Statistiques par configuration
+  stats_config <- donnees %>%
+    group_by(Copy_Config) %>%
     summarise(
-      Moyenne = mean(Time_ms, na.rm = TRUE),
-      IC_bas = Moyenne - qt(0.975, df = n() - 1) * sd(Time_ms, na.rm = TRUE) / sqrt(n()),
-      IC_haut = Moyenne + qt(0.975, df = n() - 1) * sd(Time_ms, na.rm = TRUE) / sqrt(n()),
+      Moyenne_Temps = mean(Parsing_Time_ms, na.rm = TRUE),
+      IC_bas_Temps = Moyenne_Temps - qt(0.975, df = n() - 1) * sd(Parsing_Time_ms, na.rm = TRUE) / sqrt(n()),
+      IC_haut_Temps = Moyenne_Temps + qt(0.975, df = n() - 1) * sd(Parsing_Time_ms, na.rm = TRUE) / sqrt(n()),
       .groups = "drop"
     )
   
-  # Graphique avec points par copie et courbe moyenne + IC
-  p <- ggplot() +
+  # Graphique pour le temps de parsing
+  p1 <- ggplot() +
     # Points individuels par copie
-    geom_point(data = donnees, aes(x = Noise_Level, y = Time_ms), 
-               color = "darkred", alpha = 0.6, size = 3, shape = 16) +
+    geom_point(data = donnees, aes(x = Copy_Config, y = Parsing_Time_ms), 
+               color = "darkblue", alpha = 0.6, size = 3, shape = 16) +
     
     # Points moyens
-    geom_point(data = stats_bruit, aes(x = Noise_Level, y = Moyenne), 
-               size = 4, color = "steelblue") +
+    geom_point(data = stats_config, aes(x = Copy_Config, y = Moyenne_Temps), 
+               size = 4, color = "red") +
     
     # Intervalle de confiance
-    geom_ribbon(data = stats_bruit, 
-                aes(x = Noise_Level, ymin = IC_bas, ymax = IC_haut), 
-                fill = "lightblue", alpha = 0.3) +
+    geom_errorbar(data = stats_config, 
+                 aes(x = Copy_Config, ymin = IC_bas_Temps, ymax = IC_haut_Temps), 
+                 width = 0.2, color = "red") +
     
     # Titre et axes
     labs(
-      title = paste("Impact du bruit sur le temps de parsing -", nom_parseur),
+      title = paste("Impact de la configuration sur le temps de parsing -", nom_parseur),
       subtitle = "Chaque point correspond à une copie individuelle. Moyenne + IC à 95%",
-      x = "Niveau de bruit (%)",
+      x = "Configuration de copie",
       y = "Temps de parsing (ms)"
     ) +
+    expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
-      axis.title = element_text(face = "bold", color = "darkblue")
-    )
-  
-  if (interactive()) {
-    print(p)
-  }
-  
-  ggsave(paste0(dossier_parseur, "/", nom_parseur, "_impact_bruit_temps.png"), p, width = 10, height = 7, bg = "white")
-  
-  return(stats_bruit)
-}
-
-# Fonction pour analyser les différences entre les parseurs
-analyser_differences_parseurs <- function(donnees_completes) {
-  # Créer le dossier pour l'analyse comparative
-  dir_create("analysis_results/comparaison_parseurs", recurse = TRUE)
-  
-  # Calculer les statistiques par parseur
-  stats_parseurs <- donnees_completes %>%
-    group_by(Parser) %>%
-    summarise(
-      Nb_Copies = n(),
-      Temps_Moyen = mean(Time_ms, na.rm = TRUE),
-      Temps_Median = median(Time_ms, na.rm = TRUE),
-      Ecart_Type = sd(Time_ms, na.rm = TRUE),
-      Temps_Min = min(Time_ms, na.rm = TRUE),
-      Temps_Max = max(Time_ms, na.rm = TRUE),
-      .groups = "drop"
-    ) %>%
-    arrange(Temps_Moyen)
-  
-  # Écrire les statistiques dans un fichier
-  write.csv(stats_parseurs, "analysis_results/comparaison_parseurs/statistiques_parseurs.csv", row.names = FALSE)
-  
-  # Créer un graphique comparatif des temps moyens
-  p1 <- ggplot(stats_parseurs, aes(x = reorder(Parser, Temps_Moyen), y = Temps_Moyen)) +
-    geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) +
-    geom_errorbar(aes(ymin = Temps_Moyen - Ecart_Type, ymax = Temps_Moyen + Ecart_Type), width = 0.2) +
-    labs(title = "Comparaison des temps moyens par parseur",
-         subtitle = "Avec écart-type",
-         x = "Parseur",
-         y = "Temps moyen (ms)") +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
-      axis.title = element_text(face = "bold", color = "darkblue")
-    )
-  
-  ggsave("analysis_results/comparaison_parseurs/comparaison_temps_moyens.png", p1, width = 12, height = 8, bg = "white")
-  
-  # Créer un boxplot pour comparer les distributions
-  p2 <- ggplot(donnees_completes, aes(x = reorder(Parser, Time_ms, FUN = median), y = Time_ms)) +
-    geom_boxplot(aes(fill = Parser), alpha = 0.7) +
-    labs(title = "Distribution des temps d'exécution par parseur",
-         x = "Parseur",
-         y = "Temps d'exécution (ms)") +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
-      legend.position = "none"
+      axis.text.x = element_text(angle = 45, hjust = 1)
     )
   
-  ggsave("analysis_results/comparaison_parseurs/distribution_temps_parseurs.png", p2, width = 12, height = 8, bg = "white")
-  
-  # Si la colonne Noise_Level existe, créer un graphique d'interaction
-  if ("Noise_Level" %in% colnames(donnees_completes)) {
-    # Calculer les moyennes par parseur et niveau de bruit
-    stats_bruit_parseurs <- donnees_completes %>%
-      group_by(Parser, Noise_Level) %>%
+  # Si la colonne d'erreur de précision existe, faire un graphique similaire
+  if ("Precision_Error_Avg_px" %in% colnames(donnees)) {
+    stats_config_precision <- donnees %>%
+      group_by(Copy_Config) %>%
       summarise(
-        Temps_Moyen = mean(Time_ms, na.rm = TRUE),
+        Moyenne_Erreur = mean(Precision_Error_Avg_px, na.rm = TRUE),
+        IC_bas_Erreur = Moyenne_Erreur - qt(0.975, df = n() - 1) * sd(Precision_Error_Avg_px, na.rm = TRUE) / sqrt(n()),
+        IC_haut_Erreur = Moyenne_Erreur + qt(0.975, df = n() - 1) * sd(Precision_Error_Avg_px, na.rm = TRUE) / sqrt(n()),
         .groups = "drop"
       )
     
-    p3 <- ggplot(stats_bruit_parseurs, aes(x = Noise_Level, y = Temps_Moyen, color = Parser, group = Parser)) +
-      geom_line(linewidth = 1.2) +
-      geom_point(size = 3) +
-      labs(title = "Évolution du temps d'exécution selon le niveau de bruit",
-           subtitle = "Comparaison entre les parseurs",
-           x = "Niveau de bruit (%)",
-           y = "Temps moyen (ms)") +
+    p2 <- ggplot() +
+      # Points individuels par copie
+      geom_point(data = donnees, aes(x = Copy_Config, y = Precision_Error_Avg_px), 
+                 color = "darkred", alpha = 0.6, size = 3, shape = 16) +
+      
+      # Points moyens
+      geom_point(data = stats_config_precision, aes(x = Copy_Config, y = Moyenne_Erreur), 
+                 size = 4, color = "green4") +
+      
+      # Intervalle de confiance
+      geom_errorbar(data = stats_config_precision, 
+                   aes(x = Copy_Config, ymin = IC_bas_Erreur, ymax = IC_haut_Erreur), 
+                   width = 0.2, color = "green4") +
+      
+      # Titre et axes
+      labs(
+        title = paste("Impact de la configuration sur la précision -", nom_parseur),
+        subtitle = "Chaque point correspond à une copie individuelle. Moyenne + IC à 95%",
+        x = "Configuration de copie",
+        y = "Erreur de précision moyenne (pixels)"
+      ) +
+      expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
       theme_minimal() +
       theme(
         plot.title = element_text(face = "bold", size = 14, color = "navy"),
-        axis.title = element_text(face = "bold", color = "darkblue")
+        axis.title = element_text(face = "bold", color = "darkblue"),
+        axis.text.x = element_text(angle = 45, hjust = 1)
       )
     
-    ggsave("analysis_results/comparaison_parseurs/effet_bruit_parseurs.png", p3, width = 12, height = 8, bg = "white")
+    if (interactive()) {
+      print(p2)
+    }
+    
+    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_impact_config_precision.png"), p2, width = 10, height = 7, bg = "white")
   }
   
-  return(stats_parseurs)
+  if (interactive()) {
+    print(p1)
+  }
+  
+  ggsave(paste0(dossier_parseur, "/", nom_parseur, "_impact_config_temps.png"), p1, width = 10, height = 7, bg = "white")
+  
+  # Si on a aussi la colonne de succès du parsing
+  if ("Parsing_Success" %in% colnames(donnees)) {
+    stats_success <- donnees %>%
+      group_by(Copy_Config) %>%
+      summarise(
+        Taux_Succes = sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100,
+        .groups = "drop"
+      )
+    
+    p3 <- ggplot(stats_success, aes(x = Copy_Config, y = Taux_Succes)) +
+      geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) +
+      geom_text(aes(label = paste0(round(Taux_Succes, 1), "%")), vjust = -0.5) +
+      labs(
+        title = paste("Taux de succès par configuration -", nom_parseur),
+        subtitle = "Pourcentage de copies parsées avec succès",
+        x = "Configuration de copie",
+        y = "Taux de succès (%)"
+      ) +
+      # Utiliser scale_y_continuous pour garantir le 0 et ajuster le maximum pour les étiquettes
+      scale_y_continuous(limits = c(0, max(100, max(stats_success$Taux_Succes, na.rm = TRUE) * 1.1))) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        axis.title = element_text(face = "bold", color = "darkblue"),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+    
+    if (interactive()) {
+      print(p3)
+    }
+    
+    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_taux_succes_config.png"), p3, width = 10, height = 7, bg = "white")
+  }
+  
+  return(stats_config)
+}
+
+# Fonction pour analyser les tendances générales du temps de parsing
+analyser_tendances_temps_parsing <- function(donnees_completes) {
+  cat("\n========== ANALYSE DES TENDANCES GÉNÉRALES DE PARSING ==========\n")
+  
+  # S'assurer que le dossier existe
+  dir_create("analysis_results/informations_generales", recurse = TRUE)
+  
+  # Vérifier si la colonne Parsing_Time_ms existe
+  if (!("Parsing_Time_ms" %in% colnames(donnees_completes))) {
+    cat("Avertissement : Le fichier CSV ne contient pas la colonne 'Parsing_Time_ms'. Analyse des tendances de parsing ignorée.\n")
+    return(NULL)
+  }
+  
+  # Nettoyer et préparer les données
+  # Vérifier les valeurs manquantes ou NA dans Parsing_Time_ms
+  nb_na <- sum(is.na(donnees_completes$Parsing_Time_ms))
+  if (nb_na > 0) {
+    cat("Attention:", nb_na, "valeurs manquantes dans Parsing_Time_ms\n")
+  }
+  
+  # Filtrer les lignes avec des valeurs valides pour Parsing_Time_ms
+  donnees_valides <- donnees_completes[!is.na(donnees_completes$Parsing_Time_ms), ]
+  
+  # Vérifier s'il reste des données après filtrage
+  if (nrow(donnees_valides) == 0) {
+    cat("Erreur : Aucune donnée valide pour l'analyse des tendances de parsing\n")
+    return(NULL)
+  }
+  
+  # Créer un index séquentiel basé sur l'ordre dans le fichier CSV
+  donnees_valides$Index_Sequence <- 1:nrow(donnees_valides)
+  
+  # Afficher quelques informations pour le débogage
+  cat("Nombre de lignes avec données valides de parsing:", nrow(donnees_valides), "\n")
+  cat("Plage de temps de parsing:", min(donnees_valides$Parsing_Time_ms, na.rm = TRUE), 
+      "à", max(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  
+  # Définir un thème pour le graphique
+  mon_theme <- theme_minimal() +
+    theme(
+      text = element_text(color = "darkblue"),
+      axis.text = element_text(color = "darkblue"),
+      axis.title = element_text(color = "darkblue", face = "bold"),
+      plot.title = element_text(color = "darkblue", face = "bold", size = 14),
+      plot.subtitle = element_text(color = "darkblue"),
+      legend.text = element_text(color = "darkblue"),
+      legend.title = element_text(color = "darkblue", face = "bold")
+    )
+  
+  # Graphique d'évolution du temps de parsing selon l'index séquentiel
+  p1 <- ggplot(donnees_valides, aes(x = Index_Sequence, y = Parsing_Time_ms)) +
+    geom_point(color = "darkred", alpha = 0.7) +
+    geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
+    labs(title = "Évolution du temps de parsing",
+         subtitle = paste("Tendance générale pour", nrow(donnees_valides), "copies (tous parseurs confondus)"),
+         x = "Index séquentiel (ordre dans le fichier CSV)",
+         y = "Temps de parsing (ms)") +
+    expand_limits(y = 0) +
+    mon_theme
+  
+  # Enregistrer le graphique
+  ggsave("analysis_results/informations_generales/evolution_temps_parsing.png", p1, width = 10, height = 6, bg = "white")
+  
+  if (interactive()) {
+    print(p1)
+  }
+  
+  # Statistiques générales sur le temps de parsing
+  stats_file <- "analysis_results/informations_generales/statistiques_parsing_general.txt"
+  sink(stats_file)
+  cat("STATISTIQUES GÉNÉRALES SUR LES TEMPS DE PARSING:\n\n")
+  cat("Nombre total de copies analysées:", nrow(donnees_valides), "\n")
+  cat("Temps moyen de parsing:", mean(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps médian de parsing:", median(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Écart-type du temps de parsing:", sd(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de parsing minimum:", min(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de parsing maximum:", max(donnees_valides$Parsing_Time_ms, na.rm = TRUE), "ms\n")
+  
+  # Statistiques par type de parseur si disponible
+  if ("Parser_Type" %in% colnames(donnees_valides)) {
+    cat("\nRépartition par type de parseur:\n")
+    stats_parseur <- donnees_valides %>%
+      group_by(Parser_Type) %>%
+      summarise(
+        Nombre = n(),
+        Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
+        Temps_Median = median(Parsing_Time_ms, na.rm = TRUE),
+        Ecart_Type = sd(Parsing_Time_ms, na.rm = TRUE),
+        Minimum = min(Parsing_Time_ms, na.rm = TRUE),
+        Maximum = max(Parsing_Time_ms, na.rm = TRUE)
+      )
+    print(stats_parseur)
+  }
+  sink()
+  
+  cat("Analyse des tendances générales de parsing terminée. Les résultats sont disponibles dans le dossier 'analysis_results/informations_generales'.\n")
+  
+  return(TRUE)
+}
+
+
+# Fonction pour analyser les tendances générales
+analyser_tendances_generales <- function(donnees_completes) {
+  cat("\n========== ANALYSE DES TENDANCES GÉNÉRALES ==========\n")
+  
+  # Créer un dossier pour les informations générales
+  dir_create("analysis_results/informations_generales", recurse = TRUE)
+  
+  # Vérifier si la colonne Generation_Time_ms existe
+  if (!("Generation_Time_ms" %in% colnames(donnees_completes))) {
+    cat("Avertissement : Le fichier CSV ne contient pas la colonne 'Generation_Time_ms'. Analyse des tendances de génération ignorée.\n")
+    return(NULL)
+  }
+  
+  # Nettoyer et préparer les données
+  # Vérifier les valeurs manquantes ou NA dans Generation_Time_ms
+  nb_na <- sum(is.na(donnees_completes$Generation_Time_ms))
+  if (nb_na > 0) {
+    cat("Attention:", nb_na, "valeurs manquantes dans Generation_Time_ms\n")
+  }
+  
+  # Filtrer les lignes avec des valeurs valides pour Generation_Time_ms
+  donnees_valides <- donnees_completes[!is.na(donnees_completes$Generation_Time_ms), ]
+  
+  # Vérifier s'il reste des données après filtrage
+  if (nrow(donnees_valides) == 0) {
+    cat("Erreur : Aucune donnée valide pour l'analyse des tendances générales\n")
+    return(NULL)
+  }
+  
+  # Créer un index séquentiel basé sur l'ordre dans le fichier CSV
+  donnees_valides$Index_Sequence <- 1:nrow(donnees_valides)
+  
+  # Afficher quelques informations pour le débogage
+  cat("Nombre de lignes avec données valides:", nrow(donnees_valides), "\n")
+  cat("Plage de temps de génération:", min(donnees_valides$Generation_Time_ms, na.rm = TRUE), 
+      "à", max(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  
+  # Définir un thème pour le graphique
+  mon_theme <- theme_minimal() +
+    theme(
+      text = element_text(color = "darkblue"),
+      axis.text = element_text(color = "darkblue"),
+      axis.title = element_text(color = "darkblue", face = "bold"),
+      plot.title = element_text(color = "darkblue", face = "bold", size = 14),
+      plot.subtitle = element_text(color = "darkblue"),
+      legend.text = element_text(color = "darkblue"),
+      legend.title = element_text(color = "darkblue", face = "bold")
+    )
+  
+  # Graphique d'évolution du temps de génération selon l'index séquentiel
+  p1 <- ggplot(donnees_valides, aes(x = Index_Sequence, y = Generation_Time_ms)) +
+    geom_point(color = "darkgreen", alpha = 0.7) +
+    geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
+    labs(title = "Évolution du temps de génération",
+         subtitle = paste("Tendance générale pour", nrow(donnees_valides), "copies"),
+         x = "Index séquentiel (ordre dans le fichier CSV)",
+         y = "Temps de génération (ms)") +
+    expand_limits(y = 0) +
+    mon_theme
+  
+  # Enregistrer le graphique
+  ggsave("analysis_results/informations_generales/evolution_temps_generation.png", p1, width = 10, height = 6, bg = "white")
+  
+  if (interactive()) {
+    print(p1)
+  }
+  
+  # Statistiques générales sur le temps de génération
+  stats_file <- "analysis_results/informations_generales/statistiques_generales.txt"
+  sink(stats_file)
+  cat("STATISTIQUES GÉNÉRALES SUR LES TEMPS DE GÉNÉRATION:\n\n")
+  cat("Nombre total de copies analysées:", nrow(donnees_valides), "\n")
+  cat("Temps moyen de génération:", mean(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps médian de génération:", median(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Écart-type du temps de génération:", sd(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de génération minimum:", min(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  cat("Temps de génération maximum:", max(donnees_valides$Generation_Time_ms, na.rm = TRUE), "ms\n")
+  sink()
+  
+  cat("Analyse des tendances générales terminée. Les résultats sont disponibles dans le dossier 'analysis_results/informations_generales'.\n")
+  
+  return(TRUE)
 }
 
 # Fonction principale pour analyser tous les parseurs
@@ -332,12 +650,14 @@ analyser_tous_parseurs <- function(chemin_csv) {
   donnees_completes <- read.csv(chemin_csv, stringsAsFactors = FALSE)
   
   # Vérifier si les colonnes nécessaires existent
-  if (!all(c("File", "Time_ms", "Parser") %in% colnames(donnees_completes))) {
-    stop("Erreur : Le fichier CSV ne contient pas les colonnes attendues (File, Time_ms, Parser).")
+  if (!all(c("File", "Parsing_Time_ms", "Parser_Type") %in% colnames(donnees_completes))) {
+    stop("Erreur : Le fichier CSV ne contient pas les colonnes attendues (File, Parsing_Time_ms, Parser_Type).")
   }
   
   # Créer les dossiers nécessaires
   creer_dossiers()
+  analyser_tendances_generales(donnees_completes)
+  analyser_tendances_temps_parsing(donnees_completes)
   
   cat("\n========== ANALYSE PAR PARSEUR ==========\n\n")
   
@@ -353,25 +673,21 @@ analyser_tous_parseurs <- function(chemin_csv) {
       # Analyser les performances générales
       donnees_analysees <- analyser_donnees_parseur(donnees_parseur, parseur)
       
-      # Analyser l'impact du bruit si applicable
-      stats_bruit <- analyser_impact_bruit_parseur(donnees_parseur, parseur)
+      # Analyser l'impact des configurations de copie si applicable
+      stats_config <- analyser_impact_config_parseur(donnees_parseur, parseur)
       
       # Stocker les résultats
       resultats_parseurs[[parseur]] <- list(
         donnees = donnees_analysees,
-        stats_bruit = stats_bruit
+        stats_config = stats_config
       )
     }
   }
   
-  # Analyser les différences entre les parseurs
-  cat("\n----- ANALYSE COMPARATIVE DES PARSEURS -----\n")
-  stats_parseurs <- analyser_differences_parseurs(donnees_completes)
-  
   cat("\n========== ANALYSE TERMINÉE ==========\n")
   cat("Les graphiques ont été enregistrés dans le dossier 'analysis_results'.\n")
   
-  return(list(resultats_parseurs = resultats_parseurs, stats_parseurs = stats_parseurs))
+  return(resultats_parseurs)
 }
 
 # Point d'entrée du script
@@ -379,8 +695,8 @@ main <- function() {
   args <- commandArgs(trailingOnly = TRUE)
   
   if (length(args) == 0) {
-    cat("Aucun fichier CSV spécifié. Utilisation du fichier par défaut 'csv_parfait.csv'.\n")
-    chemin_csv <- "csv_parfait.csv"
+    cat("Aucun fichier CSV spécifié. Utilisation du fichier par défaut 'resultats_parseurs.csv'.\n")
+    chemin_csv <- "resultats_parseurs.csv"
   } else {
     chemin_csv <- args[1]
   }
