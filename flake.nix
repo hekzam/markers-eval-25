@@ -78,6 +78,8 @@
               rPackages.dplyr
               rPackages.tidyr
               rPackages.fs
+              rPackages.RColorBrewer
+              rPackages.gridExtra
             ];
 
             installPhase = ''

@@ -24,7 +24,9 @@ pkgs.mkShell  {
       pkgs.rPackages.ggplot2
       pkgs.rPackages.dplyr
       pkgs.rPackages.tidyr
-      pkgs.rPackages.fs  
+      pkgs.rPackages.fs
+      pkgs.rPackages.RColorBrewer
+      pkgs.rPackages.gridExtra
       flake.outputs.packages.x86_64-linux.default
   ];
 }

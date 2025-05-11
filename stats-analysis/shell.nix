@@ -8,6 +8,8 @@ pkgs.mkShell {
       rPackages.ggplot2
       rPackages.dplyr
       rPackages.tidyr
-      rPackages.fs  
+      rPackages.fs
+      rPackages.RColorBrewer
+      rPackages.gridExtra
   ];
 }
