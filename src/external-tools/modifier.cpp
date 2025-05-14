@@ -138,8 +138,8 @@ void apply_jpeg_compression(cv::Mat& img, int quality) {
  * @param rng Générateur de nombres aléatoires
  * @param intensity Intensité des effets (entre 0 et 100)
  */
-void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, int intensity) {
-    intensity = std::max(0, std::min(100, intensity));
+void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, float intensity) {
+    intensity = std::max(0.0f, std::min(100.0f, intensity));
     float intensity_factor = intensity / 100.0f;
 
     // Convertir l'image en niveaux de gris temporairement si elle est en couleur

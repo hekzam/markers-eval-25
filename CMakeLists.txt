@@ -64,11 +64,7 @@ set(SRC_TYPST_INTERFACE
 
 file(GLOB UTILS_SRC src/utils/*.cpp)
 file(GLOB PARSER_SRC src/parser/*.cpp)
-# Remplacer le GLOB par une liste explicite des fichiers existants
-set(BENCHMARK_SRC 
-    src/bench/gen_parse.cpp
-    src/bench/config_analysis.cpp
-)
+file(GLOB BENCHMARK_SRC src/bench/*.cpp)
 
 # add debug definitions
 if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)

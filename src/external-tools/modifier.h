@@ -13,6 +13,9 @@ void add_ink_stain(cv::Mat& image, cv::RNG rng, int nombreTaches, int rayonMin, 
 void rotate_img(cv::Mat& img, float deg);
 void translate_img(cv::Mat& img, int dx, int dy);
 void distorsion_coef_exec(cv::Mat& img, cv::Mat& modification_matrix, float coef);
+void apply_jpeg_compression(cv::Mat& img, int quality);
+
+void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, float intensity);
 
 /**
  * @brief Exécute une série de transformations aléatoires sur une image
