@@ -23,21 +23,35 @@ gen_parse_bench = True
 if gen_parse_bench:
     all_batch = []
     for i in range(nb_copies_per_config):
-        random.shuffle(config)
         all_batch += config
 
     first = True
 
-    for config, parser in all_batch:
+    for config_, parser in all_batch:
         line.append(f"gen-parse --nb-copies 1 {"--warmup-iterations 1" if first else ""} --seed {random.randint(0,10000)} --parser-type {parser} --header-marker-size {header_marker_size} --marker-config {config} --unencoded-marker-size {unencoded_marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename gen-parse.csv {"" if first else "--csv-mode append"}\n")
         first = False
 
 config_analysis_bench = True
 if config_analysis_bench:
     first = True
-    for config in set_config:
+    for config_ in set_config:
         line.append(f"config-analysis --header-marker-size {header_marker_size} --marker-config {config} --unencoded-marker-size {unencoded_marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename config-analysis.csv {"" if first else "--csv-mode append"}\n")
         first = False
+
+limite_bench = True
+if limite_bench:
+    all_batch = []
+    for i in range(nb_copies_per_config):
+        all_batch += config
+    
+    first = True
+    for config, parser in all_batch:
+        line.append(f"limite --nb-copies 1 {"--warmup-iterations 1" if first else ""} --seed {random.randint(0,10000)} --parser-type {parser} --header-marker-size {header_marker_size} --marker-config {config} --unencoded-marker-size {unencoded_marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename limite.csv {"" if first else "--csv-mode append"}\n")
+        first = False
+
+random_bench = True
+if random_bench:
+    random.shuffle(line)
 
 with open("batch.txt", "w") as f:
     f.write("".join(line))
