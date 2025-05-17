@@ -61,6 +61,8 @@ int main(int argc, char* argv[]) {
             style_params.marker_margin = std::atoi(argv[i + 1]);
         } else if (arg == "--generating-content") {
             style_params.generating_content = (std::string(argv[i + 1]) == "1" || std::string(argv[i + 1]) == "true");
+        } else if (arg == "--seed") {
+            style_params.seed = std::atoi(argv[i + 1]);
         } else if (arg == "--tl") {
             top_left = Marker::parseMarker(argv[i + 1]);
         } else if (arg == "--tr") {
