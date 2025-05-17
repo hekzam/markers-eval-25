@@ -245,7 +245,7 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
     try {
         atomic_boxes_json = json::parse(atomic_boxes_file);
     } catch (const json::exception& e) {
-        throw std::runtime_error(std::string("could not json parse file './original_boxes.json': ") + e.what());
+        throw std::runtime_error(std::string("could not json parse file : ") + e.what());
     }
 
     auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
