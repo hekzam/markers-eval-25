@@ -1,6 +1,8 @@
 import random
 import json
 
+random.seed(42)
+
 config: list[list[str]] = json.load(open("all_config.json"))
 
 set_config = set()
