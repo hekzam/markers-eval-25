@@ -16,19 +16,9 @@
           parser = pkgs.stdenv.mkDerivation {
             pname = "hekzam-parser";
             version = if (self ? rev) then self.shortRev else self.dirtyShortRev;
-
-            # src = pkgs.lib.sourceByRegex ./. [
-            #   "^(src|include)"
-            #   "^(src|include)/.*\.(h|hpp)"
-            #   "^(src|include)/.*\.(c|cpp)"
-            #   "^(typst).*"
-            #   "^.*\.sh"
-            #   "^CMakeLists\.txt"
-            # ];
             src = ./.;
             
             nativeBuildInputs = with pkgs; [
-              # cmake
               ninja
               pkg-config
               meson
@@ -44,12 +34,6 @@
             propagatedBuildInputs = with pkgs; [
               typst
             ];
-
-            # cmakeFlags = [
-            #   "-G Ninja"
-            #   "-DCMAKE_BUILD_TYPE=Release"
-            #   "-DENABLE_ZBAR=ON"
-            # ];
 
             installPhase = ''
               mkdir -p $out/bin

@@ -10,7 +10,6 @@
 #include "benchmark_helper.h"
 #include "../external-tools/create_copy.h"
 #include "../utils/cli_helper.h"
-#include "benchmark.hpp"
 #include "csv_utils.h"
 
 std::filesystem::path create_subdir(const std::filesystem::path& base_dir, const std::string& subdir_name) {

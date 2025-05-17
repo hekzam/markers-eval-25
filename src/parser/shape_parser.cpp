@@ -1,9 +1,3 @@
-/**
- * @file default_parser.cpp
- * @brief Default parser implementation. (do nothing)
- *
- */
-
 #include <vector>
 #include <string>
 

@@ -17,7 +17,6 @@
 #include "shape_parser.h"
 #include "cli_helper.h"
 
-/// TODO: Corentin je te laisse le soin de t'en occuper stp
 std::unordered_map<ParserType, Parser> parsers = {
     { ParserType::DEFAULT_PARSER, { default_parser } },
     { ParserType::QRCODE, { qrcode_parser } },
@@ -25,8 +24,6 @@ std::unordered_map<ParserType, Parser> parsers = {
     { ParserType::ARUCO, { aruco_parser } },
     { ParserType::SHAPE, { shape_parser } },
     { ParserType::CENTER_MARKER_PARSER, { center_marker_parser } },
-    // { ParserType::CUSTOM_MARKER, { custom_marker_parser, draw_custom_marker } }, // drop custom parser because of his
-    // complexity
     { ParserType::EMPTY, { qrcode_empty_parser } },
 };
 
@@ -120,25 +117,6 @@ std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
     return cv::getAffineTransform(src, dst);
 }
 
-/**
- * @brief Différencie les AtomicBox en les classant par type et page.
- *
- * La fonction sépare les boîtes en trois catégories :
- * - Les marqueurs généraux (markers) dont l'identifiant commence par "marker barcode ".
- * - Les marqueurs de coin (corner_markers) pour lesquels l'identifiant contient les suffixes tl, tr, bl, br.
- * - Les boîtes utilisateur (user_boxes_per_page), regroupées par numéro de page.
- *
- * Un contrôle est effectué pour s'assurer que tous les marqueurs de coin sont présents. En cas d'absence,
- * une exception std::invalid_argument est levée.
- *
- * @param boxes Vecteur de pointeurs partagés sur les AtomicBox à différencier.
- * @param markers Vecteur de pointeurs partagés où seront stockés les marqueurs généraux.
- * @param corner_markers Vecteur de pointeurs partagés (de taille 4) où chaque index correspond à un coin :
- *        TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT.
- * @param user_boxes_per_page Vecteur de vecteurs de pointeurs partagés qui regroupe les boîtes utilisateur par page.
- *
- * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants dans la description JSON.
- */
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
                                 std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
                                 std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page) {
@@ -182,18 +160,6 @@ void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
     //     throw std::invalid_argument("some corner markers are missing in the atomic box JSON description");
 }
 
-/**
- * @brief Calcule le centre des marqueurs de coin.
- *
- * Pour chaque marqueur de coin fourni, la fonction calcule le centre de sa boîte englobante
- * en réduisant la matrice contenant les coordonnées, puis applique une transformation de redimensionnement
- * pour adapter ce centre aux dimensions de l'image destination.
- *
- * @param corner_markers Vecteur de pointeurs partagés sur les marqueurs de coin (AtomicBox) dans l'image source.
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return std::vector<cv::Point2f> Vecteur contenant les points centraux des marqueurs redimensionnés.
- */
 std::vector<cv::Point2f>
 calculate_center_of_marker(const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
                            const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size) {
@@ -219,20 +185,6 @@ calculate_center_of_marker(const std::vector<std::optional<std::shared_ptr<Atomi
     return corner_points;
 }
 
-/**
- * @brief Redresse et calibre une image en fonction des marqueurs de coin.
- *
- * La fonction calcule les centres des marqueurs à partir des boîtes des coins, puis applique
- * une transformation affine (via la fonction qrcode_parser) pour redresser l'image.
- * Ensuite, l'image redressée est convertie en couleur BGR.
- *
- * @param img Image en niveaux de gris à redresser.
- * @param meta Métadonnées associées à l'image.
- * @param corner_markers Vecteur de pointeurs partagés sur les marqueurs de coin (AtomicBox).
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return cv::Mat Image redressée et convertie en couleur BGR.
- */
 cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform) {
 
     cv::Mat calibrated_img = img.clone();
@@ -290,12 +242,6 @@ std::string parser_type_to_string(ParserType parser_type) {
     }
 }
 
-/**
- * @brief Convertit une chaîne de caractères en type de parseur (ParserType)
- *
- * @param parser_type_str Chaîne de caractères représentant le type de parseur
- * @return ParserType Le type de parseur correspondant, ou ParserType::QRCODE par défaut
- */
 ParserType string_to_parser_type(const std::string& parser_type_str) {
     static const std::unordered_map<std::string, ParserType> parser_type_map = {
         { "ARUCO", ParserType::ARUCO },

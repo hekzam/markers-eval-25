@@ -1,9 +1,8 @@
 #include "cli_helper.h"
 
-std::vector<std::pair<std::string, Config>>::const_iterator findConfigByKey(
-    const std::vector<std::pair<std::string, Config>>& vec, const std::string& key) {
-    return std::find_if(vec.begin(), vec.end(), 
-                       [&key](const auto& pair) { return pair.first == key; });
+std::vector<std::pair<std::string, Config>>::const_iterator
+findConfigByKey(const std::vector<std::pair<std::string, Config>>& vec, const std::string& key) {
+    return std::find_if(vec.begin(), vec.end(), [&key](const auto& pair) { return pair.first == key; });
 }
 
 void print_help_config(const std::vector<std::pair<std::string, Config>>& default_config) {
@@ -28,18 +27,18 @@ get_config(int argc, char* argv[], const std::vector<std::pair<std::string, Conf
             return {};
         }
         arg = arg.substr(2);
-        
+
         auto it = findConfigByKey(default_config, arg);
         if (it == default_config.end()) {
             std::cerr << "Unknown argument: " << arg << std::endl;
             return {};
         }
-        
+
         if (i + 1 >= argc) {
             std::cerr << "Missing value for argument: " << arg << std::endl;
             return {};
         }
-        
+
         std::string value = argv[i + 1];
         if (std::holds_alternative<int>(it->second.value)) {
             try {

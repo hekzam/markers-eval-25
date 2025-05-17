@@ -1,8 +1,3 @@
-/**
- * @file custom_marker_parser.cpp
- * @brief Custom marker parser implementation. (not finish because way to hard to detect shape of marker)
- */
-
 #include <vector>
 #include <string>
 

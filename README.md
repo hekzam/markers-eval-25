@@ -301,8 +301,7 @@ python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brigh
 
 ```
 .
-├── include/                   # Fichiers d'en-tête (*.h, *.hpp)
-│   ├── benchmark.hpp          # En-têtes pour le benchmarking
+├── include/                   # Fichiers d'en-tête
 │   └── common.h               # Définitions de structures communes
 ├── src/                       # Code source C++ principal
 │   ├── bench/                 # Code source des benchmarks
