@@ -7,20 +7,28 @@
  */
 
 /**
- * @brief Redimensionne une coordonnée d'une image source vers une image destination
- * @param src_coord Coordonnée à redimensionner
- * @param src_img_size Taille de l'image source (largeur, hauteur)
- * @param dst_img_size Taille de l'image destination (largeur, hauteur)
- * @return Coordonnée redimensionnée dans l'image destination
+ * @brief Redimensionne une coordonnée d'une image source vers une image destination.
+ *
+ * Cette fonction prend une coordonnée dans l'image source et la redimensionne proportionnellement
+ * à l'image de destination.
+ *
+ * @param src_coord Coordonnée à redimensionner.
+ * @param src_img_size Taille de l'image source (largeur, hauteur).
+ * @param dst_img_size Taille de l'image destination (largeur, hauteur).
+ * @return cv::Point2f Coordonnée redimensionnée dans l'image destination.
  */
 cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size);
 
 /**
- * @brief Convertit un ensemble de points en coordonnées flottantes vers des coordonnées raster (entiers)
- * @param vec_points Vecteur de points en coordonnées flottantes
- * @param src_img_size Taille de l'image source (largeur, hauteur)
- * @param dst_img_size Taille de l'image destination (largeur, hauteur)
- * @return Vecteur de points en coordonnées raster (entiers)
+ * @brief Convertit un ensemble de points en coordonnées flottantes vers des coordonnées raster (entiers).
+ *
+ * La fonction redimensionne chaque point en fonction de la transformation entre l'image source et l'image destination,
+ * puis convertit les coordonnées flottantes en coordonnées entières arrondies.
+ *
+ * @param vec_points Vecteur de points en coordonnées flottantes.
+ * @param src_img_size Taille de l'image source (largeur, hauteur).
+ * @param dst_img_size Taille de l'image destination (largeur, hauteur).
+ * @return std::vector<cv::Point> Vecteur de points en coordonnées raster (entiers).
  */
 std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_points, const cv::Point2f& src_img_size,
                                          const cv::Point2f& dst_img_size);
@@ -89,21 +97,18 @@ cv::Mat rotate_center(float angle, float cx, float cy);
 void print_mat(cv::Mat mat);
 double percentage_to_offset(int depth, double percentage);
 double percentage_to_dispersion(int depth, double percentage);
-template<typename In, typename Out>
-Out normalize_range(In v, In in_min, In in_max, Out out_min, Out out_max)
-{
+template <typename In, typename Out> Out normalize_range(In v, In in_min, In in_max, Out out_min, Out out_max) {
     // Calcul du ratio (en double pour conserver précision)
     double ratio = 0.0;
     if (in_max != in_min) {
-        ratio = static_cast<double>(v - in_min)
-              / static_cast<double>(in_max - in_min);
+        ratio = static_cast<double>(v - in_min) / static_cast<double>(in_max - in_min);
     }
     // Clamp dans [0,1]
     ratio = std::clamp(ratio, 0.0, 1.0);
 
     // Passage dans la nouvelle échelle
-    double mapped = static_cast<double>(out_min)
-                  + ratio * (static_cast<double>(out_max) - static_cast<double>(out_min));
+    double mapped =
+        static_cast<double>(out_min) + ratio * (static_cast<double>(out_max) - static_cast<double>(out_min));
 
     // Si sortie entière, on arrondit
     if constexpr (std::is_integral_v<Out>) {
@@ -113,8 +118,4 @@ Out normalize_range(In v, In in_min, In in_max, Out out_min, Out out_max)
     }
 }
 
-
 #endif
-
-
-

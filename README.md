@@ -45,7 +45,46 @@ cmake --build build-cmake -j
 - `-DCMAKE_BUILD_TYPE=Release` : Compilation optimisée.
 - `-DENABLE_ZBAR=ON` : si vous souhaitez utiliser zbar pour la détection des QR codes au lieu de ZXing.
 
-## 📄 Génération de copie
+## Utilisation de Nix
+
+Ce projet prend également en charge [Nix](https://nixos.org/) pour gérer les dépendances et créer des environnements de développement reproductibles, ce qui peut simplifier l'installation et la configuration.
+
+### Utilisation du build system Meson avec Nix
+
+Ce projet utilise systématiquement le système de build [Meson](https://mesonbuild.com/) lorsqu'il est compilé dans un environnement Nix. Contrairement à l'utilisation de CMake décrite ci-dessus, nix-shell repose exclusivement sur Meson pour la compilation du projet.
+
+### Environnements de développement Nix
+
+Le projet propose plusieurs environnements de développement Nix, tous utilisant Meson comme système de build :
+
+#### Utilisation avec les flakes
+
+```sh
+# Entrer dans l'environnement Nix
+nix develop
+
+# Configurer le projet avec Meson (utilisé automatiquement par nix-shell)
+meson setup build
+
+# Compiler le projet
+meson compile -C build
+
+# Les exécutables seront disponibles dans le dossier `build`
+```
+
+#### Utilisation sans flakes
+
+Pour ceux qui préfèrent ne pas utiliser les flakes :
+
+```sh
+# Environnement de développement principal (utilise Meson pour la compilation)
+nix-shell --pure
+
+# Environnement pour l'analyse statistique
+cd stats-analysis && nix-shell --pure
+```
+
+## Génération de copie
 
 Une fois la compilation terminée, vous pouvez générer des copies d'examen avec différents types de marqueurs.
 
@@ -113,7 +152,7 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 ./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
 ```
 
-## 📊 Exécution du benchmark
+## Exécution du benchmark
 
 Le projet inclut plusieurs outils de benchmark pour évaluer différents aspects des marqueurs, comme leur consommation d'encre, leur facilité de détection, et leurs performances globales.
 
@@ -253,7 +292,7 @@ Les résultats des benchmarks sont sauvegardés dans le dossier `output/csv/` au
 ./run_benchmark.sh --benchmark gen-parse --nb-copies 10 --parser-type QRCODE --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded)" --encoded-marker-size 15 --warmup-iterations 2 --seed 42
 ```
 
-## 🖨️ Simulateur de scan et d'impression
+## Simulateur de scan et d'impression
 
 Le projet inclut un simulateur Python qui permet d'appliquer diverses transformations aux documents générés, simulant ainsi des défauts d'impression et de numérisation pour des tests de robustesse.
 
@@ -297,12 +336,11 @@ python tools/pdf_noiser/printer_emulator.py --rotation 2 --nb_copy 1
 python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brightness 60 --gaussian 30 --nb_copy 3
 ```
 
-## 📂 Structure du projet
+## Structure du projet
 
 ```
 .
-├── include/                   # Fichiers d'en-tête (*.h, *.hpp)
-│   ├── benchmark.hpp          # En-têtes pour le benchmarking
+├── include/                   # Fichiers d'en-tête
 │   └── common.h               # Définitions de structures communes
 ├── src/                       # Code source C++ principal
 │   ├── bench/                 # Code source des benchmarks
@@ -334,13 +372,13 @@ python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brigh
 └── LICENSE                    # Fichier de licence
 ```
 
-## 📖 Références techniques
+## Références techniques
 
 - **OpenCV** : [https://opencv.org/](https://opencv.org/)
 - **Typst** : [https://typst.app/](https://typst.app/)
 - **ZXing** : [https://github.com/zxing/zxing](https://github.com/zxing/zxing)
 
-## ⚖️ License
+## License
 
 - Code: Apache-2.0
 - Everything else, in particular documentation and measurements: CC-BY-SA-4.0

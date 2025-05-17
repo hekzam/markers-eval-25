@@ -9,12 +9,10 @@
 
 
 /**
- * @brief Ajout de bruit poivre et sel
+ * @brief Parse une chaîne de caractères pour extraire deux valeurs entières
  *
- * @param img Image à modifier                                                                                  //TODO
- * @param max_pepper Pourcentage maximum de poivre
- * @param bright bright = 0 : Neutre; bright > 0 : Éclaircit; bright < 0 : Assombrit
- *
+ * @param value Chaîne de caractères au format "int,int"
+ * @return std::optional<std::tuple<int, int>> Tuple contenant les deux valeurs si le parsing a réussi, sinon nullopt
  */
 std::optional<std::tuple<int, int>> parse_2(const std::string& value) {
     auto comma = value.find(',');

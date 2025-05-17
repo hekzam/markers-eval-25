@@ -2,23 +2,12 @@
 #include <tuple>
 #include <iostream>
 #include <algorithm>
-#include <type_traits> 
-#include <cmath>  
+#include <type_traits>
+#include <cmath>
 
 #include <common.h>
 #include "parser_helper.h"
 
-/**
- * @brief Redimensionne une coordonnée d'une image source vers une image destination.
- *
- * Cette fonction prend une coordonnée dans l'image source et la redimensionne proportionnellement
- * à l'image de destination.
- *
- * @param src_coord Coordonnée à redimensionner.
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return cv::Point2f Coordonnée redimensionnée dans l'image destination.
- */
 cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img_size,
                         const cv::Point2f& dst_img_size) {
     return cv::Point2f{
@@ -27,17 +16,6 @@ cv::Point2f coord_scale(const cv::Point2f& src_coord, const cv::Point2f& src_img
     };
 }
 
-/**
- * @brief Convertit un ensemble de points en coordonnées flottantes vers des coordonnées raster (entiers).
- *
- * La fonction redimensionne chaque point en fonction de la transformation entre l'image source et l'image destination,
- * puis convertit les coordonnées flottantes en coordonnées entières arrondies.
- *
- * @param vec_points Vecteur de points en coordonnées flottantes.
- * @param src_img_size Taille de l'image source (largeur, hauteur).
- * @param dst_img_size Taille de l'image destination (largeur, hauteur).
- * @return std::vector<cv::Point> Vecteur de points en coordonnées raster (entiers).
- */
 std::vector<cv::Point> convert_to_raster(const std::vector<cv::Point2f>& vec_points, const cv::Point2f& src_img_size,
                                          const cv::Point2f& dst_img_size) {
     std::vector<cv::Point> raster_points;
@@ -227,4 +205,3 @@ double percentage_to_dispersion(int depth, double percentage) {
 
     return (percentage / 100.0) * max_value;
 }
-

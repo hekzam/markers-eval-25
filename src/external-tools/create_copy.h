@@ -14,23 +14,35 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief Énumération des différents types de marqueurs supportés
+ * 
+ * Cette énumération définit tous les types de marqueurs que le système
+ * peut générer et utiliser pour le repérage dans les documents.
+ */
 enum class MarkerType {
-    QR_CODE,
-    MICRO_QR_CODE,
-    DATAMATRIX,
-    AZTEC,
-    PDF417,
-    RMQR,
-    BARCODE,
-    CIRCLE,
-    SQUARE,
-    ARUCO,
-    QR_EYE,
-    CROSS,
-    CUSTOM,
-    NONE
+    QR_CODE,       // Code QR standard
+    MICRO_QR_CODE, // Version réduite du code QR
+    DATAMATRIX,    // Code DataMatrix
+    AZTEC,         // Code Aztec
+    PDF417,        // Code-barres 2D PDF417
+    RMQR,          // Code QR rectangulaire (Rectangular Micro QR Code)
+    BARCODE,       // Code-barres linéaire (Code 128 par défaut)
+    CIRCLE,        // Marqueur circulaire simple
+    SQUARE,        // Marqueur carré simple
+    ARUCO,         // Marqueur ArUco pour la réalité augmentée
+    QR_EYE,        // Marqueur en forme d'œil de code QR
+    CROSS,         // Marqueur en forme de croix
+    CUSTOM,        // Marqueur personnalisé
+    NONE           // Aucun marqueur
 };
 
+/**
+ * @brief Convertit un type de marqueur en sa représentation textuelle
+ * 
+ * @param type Le type de marqueur à convertir
+ * @return std::string La chaîne correspondant au type de marqueur
+ */
 std::string toString(MarkerType type);
 
 /**
@@ -82,17 +94,30 @@ struct Marker {
 
 /**
  * @brief Structure pour configurer précisément les marqueurs sur une copie
+ * 
+ * Cette structure permet de définir le type et les propriétés des marqueurs
+ * pour chacun des quatre coins du document ainsi qu'un marqueur d'en-tête optionnel.
  */
 struct CopyMarkerConfig {
-    Marker top_left;
-    Marker top_right;
-    Marker bottom_left;
-    Marker bottom_right;
-    Marker header;
+    Marker top_left;     // Marqueur en haut à gauche
+    Marker top_right;    // Marqueur en haut à droite
+    Marker bottom_left;  // Marqueur en bas à gauche
+    Marker bottom_right; // Marqueur en bas à droite
+    Marker header;       // Marqueur d'en-tête (généralement au centre)
 
+    // Constructeur par défaut
     CopyMarkerConfig() {
     }
 
+    /**
+     * @brief Constructeur avec spécification complète des marqueurs
+     * 
+     * @param tl Marqueur en haut à gauche
+     * @param tr Marqueur en haut à droite
+     * @param bl Marqueur en bas à gauche
+     * @param br Marqueur en bas à droite
+     * @param h Marqueur d'en-tête
+     */
     CopyMarkerConfig(Marker tl, Marker tr, Marker bl, Marker br, Marker h)
         : top_left(tl), top_right(tr), bottom_left(bl), bottom_right(br), header(h) {
     }
@@ -114,6 +139,13 @@ struct CopyMarkerConfig {
     static int fromString(const std::string& str, CopyMarkerConfig& config);
 };
 
+/**
+ * @brief Surcharge de l'opérateur d'insertion pour faciliter l'affichage de la configuration
+ * 
+ * @param outs Flux de sortie
+ * @param config Configuration à afficher
+ * @return std::ostream& Référence au flux de sortie
+ */
 inline std::ostream& operator<<(std::ostream& outs, const CopyMarkerConfig& config) {
     outs << ("(" + config.top_left.toString() + " | " + config.top_right.toString() + " | " +
              config.bottom_left.toString() + " | " + config.bottom_right.toString() + " | " + config.header.toString() +
@@ -125,18 +157,33 @@ inline std::ostream& operator<<(std::ostream& outs, const CopyMarkerConfig& conf
  * @brief Structure contenant les paramètres de style pour la génération de copies
  */
 struct CopyStyleParams {
-    int encoded_marker_size = 15;   // Taille du marqueur encodé
-    int unencoded_marker_size = 3;  // Taille du marqueur encodé
-    int header_marker_size = 7;     // Taille du marqueur d'en-tête
-    int stroke_width = 1;           // Épaisseur du trait des marqueurs
-    int marker_margin = 3;          // Marge entre les marqueurs
-    int grey_level = 0;             // 0 = noir et blanc, 1 = niveaux de gris, 2 = couleur
-    int dpi = 300;                  // Résolution de l'image en DPI
-    bool generating_content = true; // true = contenu généré, false = contenu statique
+    int encoded_marker_size = 15;   // Taille en mm des marqueurs encodés (QR, DataMatrix, etc.)
+    int unencoded_marker_size = 3;  // Taille en mm des marqueurs non encodés (cercles, carrés, etc.)
+    int header_marker_size = 7;     // Taille en mm du marqueur d'en-tête
+    int stroke_width = 1;           // Épaisseur du trait des marqueurs (en points)
+    int marker_margin = 3;          // Marge en mm entre les marqueurs et le bord du document
+    int grey_level = 0;             // Niveau de gris: 0 = noir et blanc, 1 = niveaux de gris, 2 = couleur
+    int dpi = 300;                  // Résolution de l'image en points par pouce (DPI)
+    bool generating_content = true; // Si true, génère du contenu aléatoire, sinon ne génère pas de contenu
     int seed = 42;                  // Graine pour la génération aléatoire du contenu
-    int content_margin_x = 10;      // Marge horizontale pour le contenu (mm)
-    int content_margin_y = 10;      // Marge verticale pour le contenu (mm)
+    int content_margin_x = 10;      // Marge horizontale en mm pour le contenu par rapport aux bords
+    int content_margin_y = 10;      // Marge verticale en mm pour le contenu par rapport aux bords
 
+    /**
+     * @brief Constructeur avec paramètres optionnels
+     * 
+     * @param ems Taille des marqueurs encodés (encoded_marker_size)
+     * @param ums Taille des marqueurs non encodés (unencoded_marker_size)
+     * @param hms Taille du marqueur d'en-tête (header_marker_size)
+     * @param sw Épaisseur du trait (stroke_width)
+     * @param mm Marge des marqueurs (marker_margin)
+     * @param gl Niveau de gris (grey_level)
+     * @param dpi Résolution en DPI
+     * @param gc Génération de contenu (generating_content)
+     * @param s Graine aléatoire (seed)
+     * @param cmx Marge horizontale du contenu (content_margin_x)
+     * @param cmy Marge verticale du contenu (content_margin_y)
+     */
     CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 1, int mm = 3, int gl = 0, int dpi = 300,
                     bool gc = true, int s = 42, int cmx = 10, int cmy = 10)
         : encoded_marker_size(ems), unencoded_marker_size(ums), header_marker_size(hms), stroke_width(sw),
@@ -148,9 +195,13 @@ struct CopyStyleParams {
 /**
  * @brief Génère et exporte une copie paramétrée, enregistrée dans le répertoire ./copies
  *
+ * Cette fonction utilise Typst pour générer un document avec les marqueurs spécifiés.
+ * Le document est exporté en PNG avec les métadonnées associées (position des marqueurs)
+ * stockées dans un fichier JSON séparé.
+ *
  * @param style_params Paramètres de style pour la génération
  * @param marker_config Configuration des marqueurs à utiliser
- * @param filename Nom du fichier de sortie
+ * @param filename Nom du fichier de sortie (sans extension)
  * @param verbose Si true, affiche tous les messages de sortie des commandes
  * @return true si la copie a été générée avec succès
  * @return false si une erreur est survenue

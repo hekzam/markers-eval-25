@@ -4,7 +4,7 @@
 #include "external-tools/create_copy.h"
 
 /**
- * @file parse_helper.h
+ * @file parser_helper.h
  * @brief Module d'analyse des images pour la détection de marqueurs et de codes-barres.
  *
  * Ce module fournit des fonctions pour détecter et analyser différents types de marqueurs
@@ -72,16 +72,22 @@ std::optional<cv::Mat> get_affine_transform(int found_corner_mask,
                                             const std::vector<cv::Point2f>& found_corner_points);
 
 /**
- * @brief Différencie les AtomicBox en les classant par type et page
+ * @brief Différencie les AtomicBox en les classant par type et page.
  *
  * La fonction sépare les boîtes en trois catégories :
- * - Les marqueurs de coin (corner_markers) pour lesquels l'identifiant contient les suffixes tl, tr, bl, br.
+ * - Les marqueurs généraux (markers) dont l'identifiant commence par "marker barcode ".
+ * - Les marqueurs de coin (corner_markers) pour lesquels l'identifiant contient les suffixes tl, tr, bl, br, tc.
  * - Les boîtes utilisateur (user_boxes_per_page), regroupées par numéro de page.
  *
- * @param boxes Vecteur de pointeurs partagés sur les AtomicBox à différencier
- * @param corner_markers Vecteur de pointeurs partagés (de taille 5) où chaque index correspond à un coin
- * @param user_boxes_per_page Vecteur de vecteurs de pointeurs partagés qui regroupe les boîtes utilisateur par page
- * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants
+ * Un contrôle est effectué pour s'assurer que tous les marqueurs de coin sont présents. En cas d'absence,
+ * une exception std::invalid_argument est levée.
+ *
+ * @param boxes Vecteur de pointeurs partagés sur les AtomicBox à différencier.
+ * @param corner_markers Vecteur de pointeurs partagés (de taille 5) où chaque index correspond à un coin :
+ *        TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_CENTER.
+ * @param user_boxes_per_page Vecteur de vecteurs de pointeurs partagés qui regroupe les boîtes utilisateur par page.
+ *
+ * @throw std::invalid_argument Si un ou plusieurs marqueurs de coin sont manquants dans la description JSON.
  */
 void differentiate_atomic_boxes(std::vector<std::shared_ptr<AtomicBox>>& boxes,
                                 std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
@@ -104,11 +110,14 @@ calculate_center_of_marker(const std::vector<std::optional<std::shared_ptr<Atomi
                            const cv::Point2f& src_img_size, const cv::Point2f& dst_img_size);
 
 /**
- * @brief Redresse une image en appliquant une transformation affine
+ * @brief Redresse une image en appliquant une transformation affine.
  *
- * @param img Image à redresser
+ * Cette fonction applique une transformation affine à une image pour la redresser.
+ * Ensuite, l'image redressée est convertie en couleur BGR.
+ *
+ * @param img Image en niveaux de gris à redresser
  * @param affine_transform Matrice de transformation affine à appliquer
- * @return cv::Mat Image redressée et convertie en BGR
+ * @return cv::Mat Image redressée et convertie en couleur BGR
  */
 cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform);
 
@@ -117,9 +126,9 @@ cv::Mat redress_image(cv::Mat img, cv::Mat affine_transform);
  *
  * @param parser_type Type de parseur à utiliser
  * @param img Image à analyser
- * @param debug_img Image de debug (uniquement si DEBUG est défini)
  * @param meta Métadonnées à remplir pendant l'analyse
  * @param dst_corner_points Points de coin de destination pour la transformation
+ * @param flag_barcode Type de code-barres à rechercher (par défaut : QRCode)
  * @return std::optional<cv::Mat> Matrice de transformation affine si trouvée, sinon nullopt
  */
 std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,
@@ -151,8 +160,10 @@ std::vector<T> smaller_parse(const cv::Mat& img,
     cv::Mat img_tl = img(cv::Rect(0, 0, img.cols * size, img.rows * size));
 #ifdef DEBUG
     cv::polylines(debug_img,
-                  std::vector<cv::Point2i>{
-                      { 0, 0 }, { (int) (img.cols * size), 0 }, { (int) (img.cols * size), (int) (img.rows * size) }, { 0, (int) (img.rows * size) } },
+                  std::vector<cv::Point2i>{ { 0, 0 },
+                                            { (int) (img.cols * size), 0 },
+                                            { (int) (img.cols * size), (int) (img.rows * size) },
+                                            { 0, (int) (img.rows * size) } },
                   true, cv::Scalar(255, 0, 0), 2);
 #endif
     auto parsed_tl = parse_func(img_tl, { 0, 0 });
