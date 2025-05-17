@@ -159,7 +159,7 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
     fs::create_directories("./copies/metadata"); // Use a subdirectory of copies
 
     std::string doc = "template.typ";
-    std::string root = "..";
+    std::string root = ".";
     std::string redirect = verbose ? "" : getOutputRedirection();
 
     std::string params = "--input encoded-marker-size=" + std::to_string(style_params.encoded_marker_size) + " " +

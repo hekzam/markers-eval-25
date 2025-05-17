@@ -35,7 +35,7 @@ sudo snap install typst
 Une fois les dépendances installées, compilez le projet avec :
 
 ```sh
-cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release
+cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DAUTO_DOWNLOAD_ZXING=ON
 cmake --build build-cmake -j
 ```
 
@@ -91,7 +91,11 @@ Une fois la compilation terminée, vous pouvez générer des copies d'examen ave
 Utilisez la commande suivante pour générer des copies avec des options personnalisées :
 
 ```sh
-./create-copie.sh [options]
+# Si vous avez compilé avec CMake
+./build-cmake/create-copie [options]
+
+# Si vous avez compilé avec Meson
+./build/create-copie [options]
 ```
 
 Les copies générées sont sauvegardées dans le dossier **copies/**.
@@ -144,12 +148,12 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 
 #### Exemple simple avec des QR codes
 ```sh
-./create-copie.sh --tl qrcode --tr qrcode --bl qrcode --br qrcode --header qrcode
+./build-cmake/create-copie --tl qrcode --tr qrcode --bl qrcode --br qrcode --header qrcode
 ```
 
 #### Configuration avancée avec différents marqueurs
 ```sh
-./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
+./build-cmake/create-copie --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
 ```
 
 ## Exécution du benchmark
@@ -165,12 +169,16 @@ Vous disposez de deux méthodes pour exécuter les benchmarks :
 Spécifiez directement tous les paramètres dans votre commande :
 
 ```sh
-./run_benchmark.sh --benchmark [nom-du-benchmark] [autres-options]
+# Si vous avez compilé avec CMake
+./build-cmake/bench --benchmark [nom-du-benchmark] [autres-options]
+
+# Si vous avez compilé avec Meson
+./build/bench --benchmark [nom-du-benchmark] [autres-options]
 ```
 
 Exemple :
 ```sh
-./run_benchmark.sh --benchmark gen-parse --nb-copies 5 --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" --parser-type QRCODE
+./build-cmake/bench --benchmark gen-parse --nb-copies 5 --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" --parser-type QRCODE
 ```
 
 #### 2. Mode interactif
@@ -178,10 +186,14 @@ Exemple :
 Exécutez simplement la commande en spécifiant au minimum le type de benchmark :
 
 ```sh
-./run_benchmark.sh --benchmark [nom-du-benchmark]
+# Si vous avez compilé avec CMake
+./build-cmake/bench --benchmark [nom-du-benchmark]
+
+# Si vous avez compilé avec Meson
+./build/bench --benchmark [nom-du-benchmark]
 ```
 
-Le script vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
+Le programme vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
 
 > **Note** : Si vous ne spécifiez pas de type avec l'option `--benchmark`, le benchmark par défaut sera `config-analysis`.
 
@@ -190,7 +202,11 @@ Le script vous guidera ensuite pour saisir les autres paramètres via une interf
 Vous pouvez également exécuter une série de benchmarks depuis un fichier texte contenant les commandes :
 
 ```sh
-./run_benchmark.sh --batch-file [chemin-vers-fichier]
+# Si vous avez compilé avec CMake
+./build-cmake/bench --batch-file [chemin-vers-fichier]
+
+# Si vous avez compilé avec Meson
+./build/bench --batch-file [chemin-vers-fichier]
 ```
 
 Chaque ligne du fichier doit contenir un type de benchmark et ses options. Les lignes vides ou commençant par `#` sont ignorées.
@@ -209,7 +225,7 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 
 1. **gen-parse** : Évalue le temps de génération des copies, le temps de traitement et le taux de succès de la détection des marqueurs. Il mesure également la précision de la rectification des copies après détection.
    ```sh
-   ./run_benchmark.sh --benchmark gen-parse
+   ./build-cmake/bench --benchmark gen-parse
    ```
 
    **Options spécifiques** :
@@ -220,7 +236,7 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 
 2. **config-analysis** : Analyse la consommation d'encre et la surface occupée par les marqueurs.
    ```sh
-   ./run_benchmark.sh --benchmark config-analysis
+   ./build-cmake/bench --benchmark config-analysis
    ```
 
    **Options spécifiques** :
@@ -240,15 +256,13 @@ Le système prend en charge plusieurs types de parseurs pour la détection et le
 
 5. **CENTER_MARKER_PARSER** : Détecte les marqueurs à partir du centre de la page, utile lorsque les marqueurs ne sont pas positionnés dans les coins.
 
-6. **CUSTOM_MARKER** : Détecte des formes personnalisées définies comme marqueurs. Expérimental.
+6. **SHAPE** : Détecte les marqueurs basés sur des formes géométriques simples. Utilise un processus de détection des contours.
 
-7. **SHAPE** : Détecte les marqueurs basés sur des formes géométriques simples. Utilise un processus de détection des contours.
-
-8. **DEFAULT_PARSER** : Implémentation par défaut (ne fait rien). Utile principalement à des fins de test ou comme point de départ pour de nouveaux parseurs.
+7. **DEFAULT_PARSER** : Implémentation par défaut (ne fait rien). Utile principalement à des fins de test ou comme point de départ pour de nouveaux parseurs.
 
 Exemple d'utilisation avec un parseur spécifique :
 ```sh
-./run_benchmark.sh --benchmark gen-parse --parser-type CIRCLE --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)"
+./build-cmake/bench --benchmark gen-parse --parser-type CIRCLE --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)"
 ```
 
 > **Note** : Tous les parseurs ne sont pas compatibles avec tous les types de marqueurs. Par exemple, le parseur CIRCLE ne fonctionnera correctement qu'avec des marqueurs de type cercle, et le parseur ARUCO avec des marqueurs ArUco.
@@ -279,17 +293,17 @@ Les résultats des benchmarks sont sauvegardés dans le dossier `output/csv/` au
 
 #### Exemple 1 : Benchmark simple avec le parseur QR code
 ```sh
-./run_benchmark.sh --benchmark gen-parse --nb-copies 3 --parser-type QRCODE
+./build-cmake/bench --benchmark gen-parse --nb-copies 3 --parser-type QRCODE
 ```
 
 #### Exemple 2 : Analyse de consommation d'encre pour un marqueur spécifique
 ```sh
-./run_benchmark.sh --benchmark config-analysis --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)" --grey-level 50
+./build-cmake/bench --benchmark config-analysis --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)" --grey-level 50
 ```
 
 #### Exemple 3 : Benchmark complet avec options avancées
 ```sh
-./run_benchmark.sh --benchmark gen-parse --nb-copies 10 --parser-type QRCODE --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded)" --encoded-marker-size 15 --warmup-iterations 2 --seed 42
+./build-cmake/bench --benchmark gen-parse --nb-copies 10 --parser-type QRCODE --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded)" --encoded-marker-size 15 --warmup-iterations 2 --seed 42
 ```
 
 ## Simulateur de scan et d'impression
@@ -364,10 +378,11 @@ python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brigh
 ├── stats-analysis/            # Scripts et outils d'analyse statistique
 ├── copies/                    # Dossier de sortie pour les copies générées
 ├── output/                    # Dossier de sortie pour les résultats d'analyse
-├── build-cmake/               # Répertoire de build (généré)
+├── build-cmake/               # Répertoire de build CMake (généré)
+├── build/                     # Répertoire de build Meson (généré)
 ├── CMakeLists.txt             # Configuration du projet CMake
-├── create-copie.sh            # Script de génération de copies
-├── run_benchmark.sh           # Script d'exécution du benchmark
+├── meson.build                # Configuration du projet Meson
+├── meson_options.txt          # Options de configuration Meson
 ├── README.md                  # Ce fichier
 └── LICENSE                    # Fichier de licence
 ```

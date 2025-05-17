@@ -10,7 +10,6 @@
 #include "default_parser.h"
 #include "qrcode_parser.h"
 #include "circle_parser.h"
-#include "custom_marker_parser.h"
 #include "qrcode_empty_parser.h"
 #include "center_marker_parser.h"
 #include "aruco_parser.h"
@@ -227,8 +226,6 @@ std::string parser_type_to_string(ParserType parser_type) {
             return "CIRCLE";
         case ParserType::QRCODE:
             return "QRCODE";
-        case ParserType::CUSTOM_MARKER:
-            return "CUSTOM_MARKER";
         case ParserType::SHAPE:
             return "SHAPE";
         case ParserType::CENTER_MARKER_PARSER:
@@ -247,7 +244,6 @@ ParserType string_to_parser_type(const std::string& parser_type_str) {
         { "ARUCO", ParserType::ARUCO },
         { "CIRCLE", ParserType::CIRCLE },
         { "QRCODE", ParserType::QRCODE },
-        { "CUSTOM_MARKER", ParserType::CUSTOM_MARKER },
         { "SHAPE", ParserType::SHAPE },
         { "CENTER_MARKER_PARSER", ParserType::CENTER_MARKER_PARSER },
         { "DEFAULT_PARSER", ParserType::DEFAULT_PARSER },
