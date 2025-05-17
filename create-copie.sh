@@ -13,6 +13,7 @@ show_usage() {
   echo "  --grey-level N        : Grey level (0: black, 255: white) (default: 0)"
   echo "  --dpi N               : DPI (default: 300)"
   echo "  --generating-content BOOL : Generate content in document (1/true or 0/false) (default: 1)"
+  echo "  --seed N              : Random seed for content generation (default: 42)"
   echo "  --filename NAME       : Output filename (default: copy)"
   echo "  --verbose             : Show all command outputs (default: false)"
   echo ""
