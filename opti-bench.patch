@@ -1,0 +1,40 @@
+diff --git a/src/bench/gen_parse.cpp b/src/bench/gen_parse.cpp
+index ed6f5bb..96c16f3 100644
+--- a/src/bench/gen_parse.cpp
++++ b/src/bench/gen_parse.cpp
+@@ -319,7 +319,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
+         random_exec(img, mat, unique_seed);
+ 
+         std::string modified_filename = "./copies/" + copy_info.filename;
+-        cv::imwrite(modified_filename, img);
++        // cv::imwrite(modified_filename, img);
+         std::cout << "  Saved modified image: " << modified_filename << std::endl;
+ 
+ #ifdef DEBUG
+diff --git a/src/utils/benchmark_helper.cpp b/src/utils/benchmark_helper.cpp
+index 175a472..13565db 100644
+--- a/src/utils/benchmark_helper.cpp
++++ b/src/utils/benchmark_helper.cpp
+@@ -24,7 +24,7 @@ void save_image(cv::Mat img, const std::filesystem::path& output_dir,
+     char* output_img_fname = nullptr;
+     int nb = asprintf(&output_img_fname, "%s/%s%s", output_dir.c_str(), prefix.c_str(), output_img_path_fname.c_str());
+     (void) nb;
+-    cv::imwrite(output_img_fname, img);
++    // cv::imwrite(output_img_fname, img);
+     printf("output image: %s\n", output_img_fname);
+     free(output_img_fname);
+ }
+diff --git a/src/utils/draw_helper.cpp b/src/utils/draw_helper.cpp
+index 811cf95..ab741e4 100644
+--- a/src/utils/draw_helper.cpp
++++ b/src/utils/draw_helper.cpp
+@@ -27,7 +27,7 @@ void save_debug_img(cv::Mat debug_img, std::filesystem::path output_dir, std::fi
+     char* output_img_fname = nullptr;
+     int nb = asprintf(&output_img_fname, "%s/cal-debug-%s", output_dir.c_str(), output_img_path_fname.c_str());
+     (void) nb;
+-    cv::imwrite(output_img_fname, debug_img);
++    // cv::imwrite(output_img_fname, debug_img);
+     printf("output image: %s\n", output_img_fname);
+     free(output_img_fname);
+ }
+\ No newline at end of file

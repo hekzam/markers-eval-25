@@ -26,6 +26,135 @@ struct CopyInfo {
 };
 
 /**
+ * @brief Dessine un contour autour d'une boîte
+ *
+ * @param box La boîte atomique à dessiner
+ * @param image L'image sur laquelle dessiner
+ * @param src_size Dimensions de l'image source
+ * @param dst_size Dimensions de l'image de destination
+ * @param color Couleur du contour
+ * @param thickness Épaisseur de la ligne
+ */
+void draw_box_outline(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
+                      const cv::Point2f& dst_size, const cv::Scalar& color, int thickness = 2) {
+    std::vector<cv::Point> raster_box = convert_to_raster(
+        { cv::Point2f{ box->x, box->y }, cv::Point2f{ box->x + box->width, box->y },
+          cv::Point2f{ box->x + box->width, box->y + box->height }, cv::Point2f{ box->x, box->y + box->height } },
+        src_size, dst_size);
+    cv::polylines(image, raster_box, true, color, thickness);
+}
+
+/**
+ * @brief Dessine un cercle au centre d'une boîte
+ *
+ * @param box La boîte atomique
+ * @param image L'image sur laquelle dessiner
+ * @param src_size Dimensions de l'image source
+ * @param dst_size Dimensions de l'image de destination
+ * @param color Couleur du cercle
+ * @param radius Rayon du cercle
+ * @param thickness Épaisseur du cercle (-1 pour rempli)
+ */
+void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
+                     const cv::Point2f& dst_size, const cv::Scalar& color, int radius = 3, int thickness = -1) {
+    cv::Point center =
+        convert_to_raster({ cv::Point2f{ box->x + box->width / 2, box->y + box->height / 2 } }, src_size, dst_size)[0];
+    cv::circle(image, center, radius, color, thickness);
+}
+
+/**
+ * @brief Calcule la distance euclidienne entre deux points
+ *
+ * @param p1 Premier point
+ * @param p2 Second point
+ * @return double Distance euclidienne entre les deux points
+ */
+double euclidean_distance(const cv::Point2f& p1, const cv::Point2f& p2) {
+    return std::sqrt(std::pow(p2.x - p1.x, 2) + std::pow(p2.y - p1.y, 2));
+}
+
+/**
+ * @brief Calcule les coordonnées des coins théoriques d'une page A4
+ *
+ * @param src_img_size Dimensions théoriques de l'image source (210x297 mm)
+ * @param dst_img_size Dimensions de l'image cible en pixels
+ * @return std::vector<cv::Point2f> Les quatre coins de la page dans l'ordre: haut-gauche, haut-droit, bas-gauche,
+ * bas-droit
+ */
+std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& dst_img_size) {
+    // Les coordonnées théoriques des coins d'une page A4 en mm (0,0 est en haut à gauche)
+    std::vector<cv::Point2f> theoretical_corners = {
+        { 0, 0 },                          // Haut-gauche
+        { dst_img_size.x, 0 },             // Haut-droit
+        { 0, dst_img_size.y },             // Bas-gauche
+        { dst_img_size.x, dst_img_size.y } // Bas-droit
+    };
+    return theoretical_corners;
+}
+
+/**
+ * @brief Calcule l'erreur de précision entre les coins originaux et les coins calibrés
+ *
+ * @param src_img_size Dimensions théoriques de l'image source (210x297 mm)
+ * @param dst_img_size Dimensions de l'image calibrée en pixels
+ * @param transform_matrix Matrice de transformation appliquée à l'image
+ * @param rectification_transform Matrice de transformation affine du parser
+ * @param margin Marge d'erreur en pixels
+ * @return std::vector<double> Erreurs de précision pour chaque coin (haut-gauche, haut-droit, bas-gauche, bas-droit) et
+ * la moyenne en dernière position
+ */
+std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, const cv::Mat& transform_matrix,
+                                              const cv::Mat& rectification_transform, float margin) {
+    std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(dst_img_size);
+
+    std::vector<cv::Point2f> transformed_corner = original_corners;
+    for (auto& corner : transformed_corner) {
+        // Ajuster les coordonnées pour compenser la marge
+        if (corner.x < dst_img_size.x / 2)
+            corner.x += margin;
+        else
+            corner.x -= margin;
+
+        if (corner.y < dst_img_size.y / 2)
+            corner.y += margin;
+        else
+            corner.y -= margin;
+    }
+    cv::transform(transformed_corner, transformed_corner, transform_matrix);
+
+    cv::transform(transformed_corner, transformed_corner, rectification_transform);
+
+    std::vector<double> distances;
+    double total_distance = 0.0;
+
+    for (size_t i = 0; i < 4; i++) {
+        double distance = euclidean_distance(original_corners[i], transformed_corner[i]);
+
+        std::cout << "  Corner " << i << " - Original: (" << original_corners[i].x << ", " << original_corners[i].y
+                  << "), after Transformation: (" << transformed_corner[i].x << ", " << transformed_corner[i].y
+                  << "), Difference x: " << transformed_corner[i].x - original_corners[i].x
+                  << ", Difference y: " << transformed_corner[i].y - original_corners[i].y << ", Distance: " << distance
+                  << " pixels" << std::endl;
+
+        total_distance += distance;
+        distances.push_back(distance);
+    }
+
+    if (!distances.empty()) {
+        double avg_error = total_distance / distances.size();
+        std::cout << "  Average precision error: " << avg_error << " pixels" << std::endl;
+        distances.push_back(avg_error);
+        return distances;
+    }
+
+    return { -1.0, -1.0, -1.0, -1.0, -1.0 };
+}
+
+std::string get_metadata_path(const std::string& filename) {
+    return "./copies/metadata/" + filename + ".json";
+}
+
+/**
  * @brief Vérifie et extrait les paramètres de configuration
  * @param config Map de configuration contenant les paramètres
  * @return Tuple contenant les paramètres validés
@@ -108,15 +237,25 @@ void warmup_copy(int warmup_iterations, const CopyStyleParams& style_params,
         return;
     }
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
     for (int i = 0; i < warmup_iterations; i++) {
         std::string warmup_copy_name = "warmup" + std::to_string(i + 1);
-        create_copy(style_params, copy_marker_config, warmup_copy_name, false);
-        std::cout << "  Warmup iteration " << (i + 1) << "/" << warmup_iterations << " completed" << std::endl;
+
+        int warmup_seed = gen();
+
+        CopyStyleParams local_style_params = style_params;
+        local_style_params.seed = warmup_seed;
+
+        create_copy(local_style_params, copy_marker_config, warmup_copy_name, false);
+        std::cout << "  Warmup iteration " << (i + 1) << "/" << warmup_iterations
+                  << " completed with seed: " << warmup_seed << std::endl;
     }
 }
 
 std::vector<CopyInfo> bench_copy(int nb_copies, const CopyStyleParams& style_params,
-                                 const CopyMarkerConfig& copy_marker_config) {
+                                 const CopyMarkerConfig& copy_marker_config, std::mt19937& master_gen) {
     std::vector<CopyInfo> generated_copies;
 
     std::random_device rd;
@@ -130,7 +269,12 @@ std::vector<CopyInfo> bench_copy(int nb_copies, const CopyStyleParams& style_par
         std::string copy_name = "copy-" + std::to_string(i) + "-" + std::to_string(random_suffix);
         std::string filename = copy_name + ".png";
 
-        auto create_copy_lambda = [&]() { create_copy(style_params, copy_marker_config, copy_name, false); };
+        int content_seed = master_gen();
+
+        CopyStyleParams local_style_params = style_params;
+        local_style_params.seed = content_seed;
+
+        auto create_copy_lambda = [&]() { create_copy(local_style_params, copy_marker_config, copy_name, false); };
 
         double milliseconds = Benchmark::measure("  Generation time", create_copy_lambda);
 
@@ -139,8 +283,7 @@ std::vector<CopyInfo> bench_copy(int nb_copies, const CopyStyleParams& style_par
     return generated_copies;
 }
 
-void warmup_parsing(int warmup_iterations, const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
-                    const cv::Point2f& src_img_size, ParserType selected_parser,
+void warmup_parsing(int warmup_iterations, const cv::Point2f& src_img_size, ParserType selected_parser,
                     const CopyMarkerConfig& copy_marker_config) {
     if (warmup_iterations > 0) {
         std::cout << "\nParsing warmup iterations..." << std::endl;
@@ -148,9 +291,34 @@ void warmup_parsing(int warmup_iterations, const std::vector<std::optional<std::
         std::cout << "No warmup iterations requested." << std::endl;
         return;
     }
+
     for (int i = 0; i < warmup_iterations; i++) {
-        std::string warmup_filename = "warmup" + std::to_string(i + 1) + ".png";
+        std::string warmup_copy_name = "warmup" + std::to_string(i + 1);
+        std::string warmup_filename = warmup_copy_name + ".png";
         std::cout << "Parsing warmup copy: " << warmup_filename << "..." << std::endl;
+
+        // Récupérer le fichier de métadonnées pour cette copie d'échauffement
+        std::string json_path = get_metadata_path(warmup_copy_name);
+        std::cout << "  Loading metadata from: " << json_path << std::endl;
+
+        // Vérifier si le fichier JSON existe
+        if (!std::filesystem::exists(json_path)) {
+            std::cerr << "  Error: Metadata file not found for warmup: " << json_path << std::endl;
+            continue;
+        }
+
+        // Lire les métadonnées spécifiques à cette copie d'échauffement
+        json atomic_boxes_json = parse_json_file(json_path);
+        if (atomic_boxes_json.empty()) {
+            std::cerr << "  Error: Failed to parse metadata for warmup: " << json_path << std::endl;
+            continue;
+        }
+
+        std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
+        std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
+
+        auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
+        differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
         cv::Mat img = cv::imread("./copies/" + warmup_filename, cv::IMREAD_GRAYSCALE);
         if (!img.data) {
@@ -167,29 +335,56 @@ void warmup_parsing(int warmup_iterations, const std::vector<std::optional<std::
                                                       cv::Mat(),
 #endif
                                                       meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
+
+        std::cout << "  Warmup parsing " << (i + 1) << "/" << warmup_iterations << " completed with "
+                  << (transform.has_value() ? "success" : "failure") << std::endl;
     }
 }
 
-void bench_parsing(std::vector<CopyInfo>& generated_copies,
-                   const std::vector<std::optional<std::shared_ptr<AtomicBox>>>& corner_markers,
-                   const cv::Point2f& src_img_size, ParserType selected_parser,
+void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& src_img_size, ParserType selected_parser,
                    const CopyMarkerConfig& copy_marker_config,
-                   const std::vector<std::vector<std::shared_ptr<AtomicBox>>>& user_boxes_per_page,
                    Csv<std::string, double, double, int, std::string, CopyMarkerConfig, int, double, double, double,
                        double, double>& benchmark_csv,
                    std::string output_dir, std::mt19937& master_gen) {
     std::random_device rd;
     std::mt19937 gen(rd());
 
+    auto add_error_to_csv = [&](const CopyInfo& copy_info, int seed = -1) {
+        benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
+                                parser_type_to_string(selected_parser), copy_marker_config, seed, -1.0, -1.0, -1.0,
+                                -1.0, -1.0 });
+    };
+
     for (const auto& copy_info : generated_copies) {
         std::cout << "Parsing copy: " << copy_info.filename << "..." << std::endl;
+
+        std::string filename_without_ext = copy_info.filename.substr(0, copy_info.filename.find_last_of('.'));
+        std::string json_path = get_metadata_path(filename_without_ext);
+        std::cout << "  Loading metadata from: " << json_path << std::endl;
+
+        if (!std::filesystem::exists(json_path)) {
+            std::cerr << "  Error: Metadata file not found: " << json_path << std::endl;
+            add_error_to_csv(copy_info);
+            continue;
+        }
+
+        json atomic_boxes_json = parse_json_file(json_path);
+        if (atomic_boxes_json.empty()) {
+            std::cerr << "  Error: Failed to parse metadata from: " << json_path << std::endl;
+            add_error_to_csv(copy_info);
+            continue;
+        }
+
+        std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
+        std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
+
+        auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
+        differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
         cv::Mat img = cv::imread("./copies/" + copy_info.filename, cv::IMREAD_GRAYSCALE);
         if (!img.data) {
             std::cerr << "Error: Could not read generated image: " << copy_info.filename << std::endl;
-            benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
-                                    parser_type_to_string(selected_parser), copy_marker_config, -1, -1.0, -1.0, -1.0,
-                                    -1.0, -1.0 });
+            add_error_to_csv(copy_info);
             continue;
         }
 
@@ -286,21 +481,6 @@ void gen_parse(const std::unordered_map<std::string, Config>& config) {
 
     warmup_copy(warmup_iterations, style_params, copy_marker_config);
 
-    auto generated_copies = bench_copy(nb_copies, style_params, copy_marker_config);
-
-    /// TODO: peut-être charger un json différent par copie
-    json atomic_boxes_json = parse_json_file("./original_boxes.json");
-    auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
-    std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
-    std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
-    differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
-
-    const cv::Point2f src_img_size{ 210, 297 };
-
-    warmup_parsing(warmup_iterations, corner_markers, src_img_size, selected_parser, copy_marker_config);
-
-    std::cout << "\nÉTAPE 2: Parsing des copies générées..." << std::endl;
-
     std::mt19937 master_gen;
     if (master_seed != 0) {
         std::cout << "Using master seed: " << master_seed << std::endl;
@@ -311,8 +491,20 @@ void gen_parse(const std::unordered_map<std::string, Config>& config) {
         std::cout << "No master seed provided, using random initialization" << std::endl;
     }
 
-    bench_parsing(generated_copies, corner_markers, src_img_size, selected_parser, copy_marker_config,
-                  user_boxes_per_page, benchmark_csv, benchmark_setup.output_dir, master_gen);
+    auto generated_copies = bench_copy(nb_copies, style_params, copy_marker_config, master_gen);
+
+    if (generated_copies.empty()) {
+        throw std::runtime_error("No copies were generated");
+    }
+
+    const cv::Point2f src_img_size{ 210, 297 };
+
+    warmup_parsing(warmup_iterations, src_img_size, selected_parser, copy_marker_config);
+
+    std::cout << "\nÉTAPE 2: Parsing des copies générées..." << std::endl;
+
+    bench_parsing(generated_copies, src_img_size, selected_parser, copy_marker_config, benchmark_csv,
+                  benchmark_setup.output_dir, master_gen);
 
     std::cout << "gen-parse benchmark completed with " << warmup_iterations << " warmup iterations and " << nb_copies
               << " copies." << std::endl;

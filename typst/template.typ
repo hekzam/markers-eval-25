@@ -23,6 +23,8 @@
   stroke_width: float(sys.inputs.at("stroke-width", default: "2")) * 1mm,
   marker_margin: float(sys.inputs.at("marker-margin", default: "3")) * 1mm,
   grey_level: int(sys.inputs.at("grey-level", default: "0")),
+  content_margin_x: float(sys.inputs.at("content-margin-x", default: "10")) * 1mm,
+  content_margin_y: float(sys.inputs.at("content-margin-y", default: "10")) * 1mm,
 )
 
 // Paramètres de génération
@@ -30,6 +32,7 @@
 #let duplex-printing = int(sys.inputs.at("duplex-printing", default: "0")) == 1
 #let marker-types = sys.inputs.at("marker-types", default: "(qrcode,qrcode,qrcode,qrcode,rmqr)")
 #let should-generate-content = int(sys.inputs.at("generating-content", default: "1")) == 1
+#let seed = int(sys.inputs.at("seed", default: "42"))
 
 #let marker-config = parse-marker-types(marker-types)
 
@@ -40,4 +43,5 @@
   marker-config,
   style-params,
   should-generate-content,
+  seed:seed,
 )

@@ -156,6 +156,7 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
                  const std::string& filename, bool verbose) {
 
     fs::create_directories("./copies");
+    fs::create_directories("./copies/metadata"); // Use a subdirectory of copies
 
     std::string doc = "template.typ";
     std::string root = "..";
@@ -168,18 +169,25 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
                          "--input marker-margin=" + std::to_string(style_params.marker_margin) + " " +
                          "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
                          "--input generating-content=" + (style_params.generating_content ? "1" : "0") + " " +
-                         "--input marker-types=" + "\"" + marker_config.toString() + "\"";
+                         "--input marker-types=" + "\"" + marker_config.toString() + "\"" + " " +
+                         "--input seed=" + std::to_string(style_params.seed) + " " +
+                         "--input content-margin-x=" + std::to_string(style_params.content_margin_x) + " " +
+                         "--input content-margin-y=" + std::to_string(style_params.content_margin_y);
 
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"" + root + "/typst/" + doc +
                               "\" \"./copies/" + filename + ".png\" --format png --ppi " +
                               std::to_string(style_params.dpi) + redirect;
 
+    // Use the filename for metadata
+    std::string metadata_filename = "./copies/metadata/" + filename + ".json";
+    
     std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"" +
-                                     root + "/typst/" + doc + "\" '<atomic-boxes>' --pretty > original_boxes.json" +
-                                     redirect;
+                                     root + "/typst/" + doc + "\" '<atomic-boxes>' --pretty > " + 
+                                     metadata_filename + redirect;
 
     std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"" + root +
-                             "/typst/" + doc + "\" '<page>' --pretty > page.json" + redirect;
+                             "/typst/" + doc + "\" '<page>' --pretty > ./copies/metadata/page_" + 
+                             filename + ".json" + redirect;
 
     int compile_result = system(compile_cmd.c_str());
     if (compile_result != 0) {
