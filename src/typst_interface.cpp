@@ -18,7 +18,7 @@
  *
  * Cette fonction analyse les arguments de la ligne de commande pour configurer
  * et générer une copie avec les marqueurs spécifiés. Les arguments supportés sont :
- * --encoded-size, --unencoded-size, --stroke-width, --margin, --config,
+ * --encoded-size, --unencoded-size, --stroke-width, --marker-margin, --config,
  * --tl, --tr, --bl, --br, --header, --grey-level, --header-size, --filename, --dpi, --verbose
  *
  * @param argc Nombre d'arguments passés au programme
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
             style_params.unencoded_marker_size = std::atoi(argv[i + 1]);
         } else if (arg == "--stroke-width") {
             style_params.stroke_width = std::atoi(argv[i + 1]);
-        } else if (arg == "--margin") {
+        } else if (arg == "--marker-margin") {
             style_params.marker_margin = std::atoi(argv[i + 1]);
         } else if (arg == "--generating-content") {
             style_params.generating_content = (std::string(argv[i + 1]) == "1" || std::string(argv[i + 1]) == "true");
@@ -81,6 +81,10 @@ int main(int argc, char* argv[]) {
             filename = argv[i + 1];
         } else if (arg == "--dpi") {
             style_params.dpi = std::atoi(argv[i + 1]);
+        } else if (arg == "--content-margin-x") {
+            style_params.content_margin_x = std::atoi(argv[i + 1]);
+        } else if (arg == "--content-margin-y") {
+            style_params.content_margin_y = std::atoi(argv[i + 1]);
         } else {
             std::cerr << "Unknown argument: " << arg << std::endl;
             return 1;

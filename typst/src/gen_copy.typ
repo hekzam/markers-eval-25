@@ -1,12 +1,13 @@
 #import "@preview/suiji:0.3.0": *
-
-#import "../style/const.typ": PAGE_WIDTH, PAGE_HEIGHT, MARGIN_X, MARGIN_Y
 #import "../common/global_variables.typ": copy-counter, generating-content
 #import "../common/utils.typ": check-type, update-page-state, finalize-states
 #import "../components/corner_markers.typ": setup-corner-markers, place-header-marker
 #import "../content/content.typ": content
 #import "../content/presentation-grid.typ": presentation-grid-1, presentation-grid-2
 #import "../content/understanding.typ": understanding-1, understanding-2
+
+#let PAGE_WIDTH = 210mm
+#let PAGE_HEIGHT = 297mm
 
 /**
  * Génère un contenu aléatoire à partir d'une liste de blocs de contenu.
@@ -141,9 +142,10 @@
 
   // Applique les marges uniquement au contenu
   let content-with-margins(content) = {
+    let margin-y = style-params.content_margin_y+style-params.marker_margin+calc.max(style-params.encoded_marker_size, style-params.unencoded_marker_size)
     context {
       if should-generate-content {
-        pad(x: MARGIN_X, y: MARGIN_Y, content)
+        pad(x: style-params.content_margin_x, y: margin-y, content)
       } else {
         none
       }

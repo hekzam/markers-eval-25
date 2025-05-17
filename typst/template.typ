@@ -23,6 +23,8 @@
   stroke_width: float(sys.inputs.at("stroke-width", default: "2")) * 1mm,
   marker_margin: float(sys.inputs.at("marker-margin", default: "3")) * 1mm,
   grey_level: int(sys.inputs.at("grey-level", default: "0")),
+  content_margin_x: float(sys.inputs.at("content-margin-x", default: "10")) * 1mm,
+  content_margin_y: float(sys.inputs.at("content-margin-y", default: "10")) * 1mm,
 )
 
 // Paramètres de génération
