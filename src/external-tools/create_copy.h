@@ -133,11 +133,12 @@ struct CopyStyleParams {
     int grey_level = 0;             // 0 = noir et blanc, 1 = niveaux de gris, 2 = couleur
     int dpi = 300;                  // Résolution de l'image en DPI
     bool generating_content = true; // true = contenu généré, false = contenu statique
+    int seed = 42;                  // Graine pour la génération aléatoire du contenu
 
     CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 1, int mm = 3, int gl = 0, int dpi = 300,
-                    bool gc = true)
+                    bool gc = true, int s = 42)
         : encoded_marker_size(ems), unencoded_marker_size(ums), header_marker_size(hms), stroke_width(sw),
-          marker_margin(mm), grey_level(gl), dpi(dpi), generating_content(gc) {
+          marker_margin(mm), grey_level(gl), dpi(dpi), generating_content(gc), seed(s) {
     }
 };
 

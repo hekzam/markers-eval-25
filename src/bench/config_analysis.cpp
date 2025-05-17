@@ -195,7 +195,9 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
         csv_mode);
 
     std::filesystem::path dir_path{ "./copies" };
+    std::filesystem::create_directories("./copies/metadata");
     std::filesystem::remove_all(dir_path);
+    std::filesystem::create_directories(dir_path);
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -203,6 +205,7 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
     int random_suffix = dist(gen);
 
     std::string copy_name = "copy-" + std::to_string(random_suffix);
+    style_params.seed = random_suffix;
 
     create_copy(style_params, copy_marker_config, copy_name);
 
@@ -226,9 +229,16 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
     // Analyse de la consommation d'encre
     double ink_volume_ml = analyze_ink_consumption(image_path, dpi, calibration_factor);
 
-    std::ifstream atomic_boxes_file("./original_boxes.json");
+    std::string base_filename = image_path.filename().string();
+    size_t dot_pos = base_filename.find_last_of(".");
+    if (dot_pos != std::string::npos) {
+        base_filename = base_filename.substr(0, dot_pos);
+    }
+    
+    std::string metadata_path = "./copies/metadata/" + base_filename + ".json";
+    std::ifstream atomic_boxes_file(metadata_path);
     if (!atomic_boxes_file.is_open()) {
-        throw std::runtime_error("could not open file './original_boxes.json'");
+        throw std::runtime_error("could not open file '" + metadata_path + "'");
     }
 
     json atomic_boxes_json;

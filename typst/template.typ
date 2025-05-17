@@ -30,6 +30,7 @@
 #let duplex-printing = int(sys.inputs.at("duplex-printing", default: "0")) == 1
 #let marker-types = sys.inputs.at("marker-types", default: "(qrcode,qrcode,qrcode,qrcode,rmqr)")
 #let should-generate-content = int(sys.inputs.at("generating-content", default: "1")) == 1
+#let seed = int(sys.inputs.at("seed", default: "42"))
 
 #let marker-config = parse-marker-types(marker-types)
 
@@ -40,4 +41,5 @@
   marker-config,
   style-params,
   should-generate-content,
+  seed:seed,
 )
