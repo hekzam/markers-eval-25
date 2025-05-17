@@ -170,7 +170,9 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
                          "--input grey-level=" + std::to_string(style_params.grey_level) + " " +
                          "--input generating-content=" + (style_params.generating_content ? "1" : "0") + " " +
                          "--input marker-types=" + "\"" + marker_config.toString() + "\"" + " " +
-                         "--input seed=" + std::to_string(style_params.seed);
+                         "--input seed=" + std::to_string(style_params.seed) + " " +
+                         "--input content-margin-x=" + std::to_string(style_params.content_margin_x) + " " +
+                         "--input content-margin-y=" + std::to_string(style_params.content_margin_y);
 
     std::string compile_cmd = "typst compile --root \"" + root + "\" " + params + " \"" + root + "/typst/" + doc +
                               "\" \"./copies/" + filename + ".png\" --format png --ppi " +
