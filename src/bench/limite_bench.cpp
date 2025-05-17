@@ -301,22 +301,6 @@ std::vector<std::pair<std::string, option>> all_config = {
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
               } } },
-    { "marker_margin",
-      option{ 0, 20,
-              [](param_t current, param_t start, param_t end, bool& stop) {
-                  if (std::get<int>(current) >= std::get<int>(end)) {
-                      stop = true;
-                      return current;
-                  }
-                  return param_t{ std::get<int>(current) + 2 };
-              },
-              [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
-                 CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  style.marker_margin = std::get<int>(param);
-                  create_copy(style, marker_config, copy_name, false);
-                  img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
-                  affine_transformation = cv::Mat::eye(2, 3, CV_32F);
-              } } },
 };
 
 static std::tuple<int, int, CopyStyleParams, CopyMarkerConfig, ParserType, int, CsvMode, std::string>
@@ -438,7 +422,7 @@ void limite_bench(const std::unordered_map<std::string, Config>& config) {
                 // std::string local_copy_name = copy_name + "_" + std::to_string(i + 1) + ".png";
                 std::string local_copy_name = copy_full_name;
 
-                json atomic_boxes_json = parse_json_file("./original_boxes.json");
+                json atomic_boxes_json = parse_json_file(get_metadata_path(copy_name));
                 auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
                 std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
                 std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;

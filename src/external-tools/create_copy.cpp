@@ -180,14 +180,14 @@ bool create_copy(const CopyStyleParams& style_params, const CopyMarkerConfig& ma
 
     // Use the filename for metadata
     std::string metadata_filename = "./copies/metadata/" + filename + ".json";
-    
+
     std::string query_atomic_boxes = "typst query --one --field value --root \"" + root + "\" " + params + " \"" +
-                                     root + "/typst/" + doc + "\" '<atomic-boxes>' --pretty > " + 
-                                     metadata_filename + redirect;
+                                     root + "/typst/" + doc + "\" '<atomic-boxes>' --pretty > \"" + metadata_filename +
+                                     "\"" + redirect;
 
     std::string query_page = "typst query --one --field value --root \"" + root + "\" " + params + " \"" + root +
-                             "/typst/" + doc + "\" '<page>' --pretty > ./copies/metadata/page_" + 
-                             filename + ".json" + redirect;
+                             "/typst/" + doc + "\" '<page>' --pretty > \"./copies/metadata/page_" + filename +
+                             ".json\"" + redirect;
 
     int compile_result = system(compile_cmd.c_str());
     if (compile_result != 0) {

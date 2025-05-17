@@ -234,3 +234,7 @@ std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, c
 
     return { -1.0, -1.0, -1.0, -1.0, -1.0 };
 }
+
+std::string get_metadata_path(const std::string& filename) {
+    return "./copies/metadata/" + filename + ".json";
+}

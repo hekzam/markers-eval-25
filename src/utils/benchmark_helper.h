@@ -61,5 +61,6 @@ void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, cons
                      const cv::Point2f& dst_size, const cv::Scalar& color, int radius = 3, int thickness = -1);
 std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, const cv::Mat& transform_matrix,
                                               const cv::Mat& rectification_transform, float margin);
+std::string get_metadata_path(const std::string& filename);
 
 #endif
