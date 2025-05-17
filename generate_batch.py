@@ -45,8 +45,8 @@ if limite_bench:
         all_batch += config
     
     first = True
-    for config, parser in all_batch:
-        line.append(f"limite --nb-copies 1 {"--warmup-iterations 1" if first else ""} --seed {random.randint(0,10000)} --parser-type {parser} --header-marker-size {header_marker_size} --marker-config {config} --unencoded-marker-size {unencoded_marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename limite.csv {"" if first else "--csv-mode append"}\n")
+    for config_, parser in all_batch:
+        line.append(f"limite-bench --nb-copies 1 {"--warmup-iterations 1" if first else ""} --seed {random.randint(0,10000)} --parser-type {parser} --header-marker-size {header_marker_size} --marker-config {config_} --unencoded-marker-size {unencoded_marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename limite.csv {"" if first else "--csv-mode append"}\n")
         first = False
 
 random_bench = True
