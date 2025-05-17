@@ -10,12 +10,17 @@
     ["(circle,circle,circle,qrcode:encoded,none)", "SHAPE"],
     ["(circle:outlined,circle:outlined,circle:outlined,qrcode:encoded,none)", "SHAPE"],
     ["(square,square,square,qrcode:encoded,none)", "SHAPE"],
+    ["(square:outlined,square:outlined,square:outlined,qrcode:encoded,none)", "SHAPE"],
     ["(cross,cross,cross,qrcode:encoded,none)", "SHAPE"],
     ["(qreye,qreye,qreye,qrcode:encoded,none)", "SHAPE"],
     ["(custom,custom,custom,qrcode:encoded,none)", "SHAPE"],
     ["(aruco,aruco,aruco,qrcode:encoded,none)", "SHAPE"],
     ["(circle,circle,circle,circle,qrcode:encoded)", "CENTER_MARKER_PARSER"],
+    ["(circle:outlined,circle:outlined,circle:outlined,circle:outlined,qrcode:encoded)", "CENTER_MARKER_PARSER"],
     ["(circle,circle,circle,circle,pdf417:encoded)", "CENTER_MARKER_PARSER"],
+    ["(circle:outlined,circle:outlined,circle:outlined,circle:outlined,pdf417:encoded)", "CENTER_MARKER_PARSER"],
     ["(circle,circle,circle,circle,code128:encoded)", "CENTER_MARKER_PARSER"],
-    ["(circle,circle,circle,circle,rmqr:encoded)", "CENTER_MARKER_PARSER"]
+    ["(circle:outlined,circle:outlined,circle:outlined,circle:outlined,code128:encoded)", "CENTER_MARKER_PARSER"],
+    ["(circle,circle,circle,circle,rmqr:encoded)", "CENTER_MARKER_PARSER"],
+    ["(circle:outlined,circle:outlined,circle:outlined,circle:outlined,rmqr:encoded)", "CENTER_MARKER_PARSER"]
 ]
