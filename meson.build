@@ -38,7 +38,7 @@ src_modifieur_files = [
 ]
 
 src_typst_interface_files = [
-    'src/typst_interface.cpp',
+    'src/create-copy.cpp',
     'src/external-tools/create_copy.cpp'
 ]
 
@@ -52,7 +52,6 @@ utils_src = [
     'src/utils/benchmark_helper.h',
     'src/utils/cli_helper.cpp',
     'src/utils/cli_helper.h',
-    'src/utils/csv_utils.cpp',
     'src/utils/csv_utils.h',
     'src/utils/draw_helper.cpp',
     'src/utils/draw_helper.h',
@@ -92,12 +91,12 @@ executable('parser',
            include_directories : inc_dirs,
            dependencies : deps)
 
-executable('benchmarker',
+executable('bench',
            src_bench_files + utils_src + parser_src + benchmark_src,
            include_directories : inc_dirs,
            dependencies : deps)
 
-executable('typst_interface',
+executable('create-copy',
            src_typst_interface_files,
            include_directories : inc_dirs,
            dependencies : deps)
