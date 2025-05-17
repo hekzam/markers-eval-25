@@ -49,3 +49,7 @@ stats-analysis/*.txt
 stats-analysis/analysis_results
 result
 analysis_results
+
+html/
+
+doxy_warnings.log
