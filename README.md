@@ -19,7 +19,7 @@ Les nouvelles solutions devront être plus sobres en encre et en espace tout en 
 Avant de compiler et d'exécuter le projet, installez les dépendances suivantes :
 
 ```sh
-sudo apt-get install cmake ninja-build libopencv-dev nlohmann-json3-dev snapd
+sudo apt-get install cmake ninja-build libopencv-dev nlohmann-json3-dev snapd doxygen graphviz
 sudo snap install typst
 ```
 
@@ -83,6 +83,30 @@ nix-shell --pure
 # Environnement pour l'analyse statistique
 cd stats-analysis && nix-shell --pure
 ```
+
+## Génération de la documentation
+
+Ce projet utilise Doxygen pour générer sa documentation technique. La documentation inclut des détails sur les classes, les fonctions et les structures de données utilisées dans le projet.
+
+Pour générer la documentation, exécutez la commande suivante depuis la racine du projet :
+
+```sh
+# Si vous utilisez CMake
+cmake --build build-cmake --target docs
+
+# Si vous utilisez Meson
+ninja -C build docs
+```
+
+Alternativement, vous pouvez utiliser directement Doxygen avec le fichier de configuration :
+
+```sh
+doxygen Doxyfile
+```
+
+### Consultation de la documentation
+
+Une fois générée, la documentation HTML sera disponible dans le répertoire `html/`.
 
 ## Génération de copie
 
@@ -154,6 +178,94 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 #### Configuration avancée avec différents marqueurs
 ```sh
 ./build-cmake/create-copie --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
+```
+
+## Outil d'analyse d'images (expl_pars)
+
+Le programme `expl_pars` (Exploratory Parser) est un outil d'analyse d'images qui permet de détecter les marqueurs, redresser les images, et extraire des zones spécifiques pour leur traitement ultérieur.
+
+### Fonctionnalités principales
+
+- **Détection de marqueurs** : Identifie les marqueurs placés sur les coins des documents
+- **Redressement d'images** : Applique une transformation affine pour corriger les déformations
+- **Extraction de zones** : Extrait des zones précises définies dans un fichier JSON
+- **Calibration automatique** : S'adapte à différents types de marqueurs grâce aux parseurs spécialisés
+
+### Utilisation
+
+```sh
+# Si vous avez compilé avec CMake
+./build-cmake/expl_pars <output_dir> <atomic_boxes.json> <image1> [image2] [image3] ...
+
+# Si vous avez compilé avec Meson
+./build/expl_pars <output_dir> <atomic_boxes.json> <image1> [image2] [image3] ...
+```
+
+- `output_dir` : Répertoire où seront enregistrés les résultats
+- `atomic_boxes.json` : Fichier de définition des zones à extraire
+- `image1, image2...` : Images à analyser (copies d'examens scannées)
+
+### Résultats générés
+
+Pour chaque image traitée, le programme produit :
+
+1. **Image calibrée** : Une version redressée de l'image originale avec les zones d'intérêt surlignées, enregistrée dans le format `cal-<nom_original>.png`
+
+2. **Sous-images extraites** : Des images individuelles pour chaque zone d'intérêt, enregistrées dans le sous-répertoire `subimg/` au format `raw-<id_copie>-<id_zone>.png`
+
+### Format du fichier JSON de définition des zones
+
+Le fichier JSON doit décrire les "boîtes atomiques" (zones d'intérêt) avec leurs coordonnées en millimètres sur la page :
+
+```json
+[
+  {
+    "id": "marker-tl",
+    "x": 10,
+    "y": 10,
+    "width": 15,
+    "height": 15,
+    "page": 1,
+    "type": "marker",
+    "position": "tl"
+  },
+  {
+    "id": "question1",
+    "x": 50,
+    "y": 70,
+    "width": 100,
+    "height": 30,
+    "page": 1,
+    "type": "question"
+  }
+  // ...autres zones
+]
+```
+
+Les zones de type "marker" avec des positions "tl", "tr", "bl", "br" définissent les marqueurs de coin utilisés pour la calibration.
+
+### Exemples d'utilisation
+
+#### Analyse d'une copie individuelle
+
+```sh
+./build-cmake/expl_pars output/ description.json copies/copie_modifiee.png
+```
+
+#### Traitement par lot de toutes les copies d'un examen
+
+```sh
+./build-cmake/expl_pars output/ description.json copies/*.png
+```
+
+#### Utilisation avec des images modifiées
+
+```sh
+# Modifier d'abord une image
+./build-cmake/modifier copies/copie1.png -r=5 -cb=10,5
+
+# Puis analyser l'image modifiée
+./build-cmake/expl_pars output/ description.json calibrated_img.png
 ```
 
 ## Exécution du benchmark
@@ -306,48 +418,79 @@ Les résultats des benchmarks sont sauvegardés dans le dossier `output/csv/` au
 ./build-cmake/bench --benchmark gen-parse --nb-copies 10 --parser-type QRCODE --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded)" --encoded-marker-size 15 --warmup-iterations 2 --seed 42
 ```
 
-## Simulateur de scan et d'impression
+## Module de modification d'images
 
-Le projet inclut un simulateur Python qui permet d'appliquer diverses transformations aux documents générés, simulant ainsi des défauts d'impression et de numérisation pour des tests de robustesse.
+Le projet inclut un module de simulation de défauts d'image qui permet de tester la robustesse des marqueurs dans des conditions réelles de numérisation. Ce module est particulièrement important pour évaluer la fiabilité des différents types de marqueurs face aux dégradations typiques qui surviennent lors de l'impression et de la numérisation des copies d'examen.
 
-### Exécution du simulateur
+### Fonctionnalités de simulation
 
-Pour exécuter le simulateur sur une image originale, utilisez la commande suivante :
+Le module offre plusieurs transformations et dégradations qui peuvent être appliquées individuellement ou combinées :
+
+- **Bruit "sel et poivre"** : Ajoute des pixels noirs et blancs aléatoires
+- **Bruit gaussien** : Simule le bruit de fond naturel avec une dispersion contrôlée
+- **Contraste et luminosité** : Modifie les niveaux pour simuler les variations d'exposition
+- **Taches d'encre** : Ajoute des marques similaires à celles que pourrait faire un étudiant
+- **Rotations et translations** : Simule le désalignement lors de la numérisation
+- **Effets d'impression** : Reproduit les artefacts typiques des imprimantes (tramage, lignes manquantes)
+- **Compression JPEG** : Simule les artefacts de compression numérique
+
+### Utilisation en ligne de commande
+
+L'outil peut être utilisé directement en ligne de commande pour traiter des images individuelles :
 
 ```sh
-python tools/pdf_noiser/printer_emulator.py [options]
+# Si vous avez compilé avec CMake
+./build-cmake/modifier <chemin_image> [options]
+
+# Si vous avez compilé avec Meson
+./build/modifier <chemin_image> [options]
 ```
 
-Par défaut, le script appliquera des transformations aléatoires à l'image originale située dans `copies/original.png` et générera 10 copies avec des défauts différents dans le dossier `tools/pdf_noiser/noisy_copies/`.
+#### Modes d'utilisation
 
-### Transformations disponibles
+1. **Mode aléatoire simple** : Applique une combinaison aléatoire de toutes les transformations
+   ```sh
+   ./build-cmake/modifier input.jpg
+   ```
 
-Le simulateur peut appliquer les transformations suivantes pour imiter les défauts d'impression et de numérisation :
+2. **Mode aléatoire avec seed** : Applique des transformations aléatoires avec une graine spécifique
+   ```sh
+   ./build-cmake/modifier input.jpg -seed=123
+   ```
 
-- **Rotation** (`-r`, `--rotation`) : Applique une rotation à l'image (en degrés, ±3° max par défaut)
-- **Translation** (`-t`, `--translation`) : Déplace l'image (déplacement X,Y, ±25px max par défaut)
-- **Contraste** (`-c`, `--contrast`) : Modifie le contraste (0-100%, plage effective 0.8-1.2)
-- **Luminosité** (`-b`, `--brightness`) : Ajuste la luminosité (0-100%, plage effective 0.8-1.2)
-- **Bruit gaussien** (`-g`, `--gaussian`) : Ajoute du bruit gaussien (0-100%, intensité 4-6 max)
-- **Bruit sel et poivre** (`-s`, `--salt_pepper`) : Ajoute des pixels noirs et blancs aléatoires (0-100%, 6% max)
-- **Taches aléatoires** (`-p`, `--spot`) : Ajoute des taches noires (0-100%, 2-5 taches par défaut)
-- **Nombre de copies** (`-n`, `--nb_copy`) : Nombre de copies à générer (10 par défaut)
+3. **Mode coefficient de distorsion** : Applique une distorsion proportionnelle au coefficient
+   ```sh
+   ./build-cmake/modifier input.jpg -coef=0.5
+   ```
 
-### Exemples d'utilisation
+4. **Mode transformations spécifiques** : Applique uniquement les transformations spécifiées
+   ```sh
+   ./build-cmake/modifier input.jpg -sp=2,3 -cb=50,10 -r=5
+   ```
 
-#### Générer 5 copies avec des défauts aléatoires
+#### Options disponibles
+
+- `-sp=salt,pepper` : Bruit sel et poivre (pourcentage de pixels blancs, pourcentage de pixels noirs)
+- `-g=offset,dispersion` : Bruit gaussien (offset, dispersion)
+- `-cb=contrast,bright` : Contraste/luminosité (contrast: -100 à 100, bright: -100 à 100)
+- `-s=nb,min,max` : Taches d'encre (nombre, rayon minimum, rayon maximum)
+- `-r=angle` : Rotation en degrés
+- `-t=dx,dy` : Translation (déplacement horizontal, déplacement vertical)
+- `-seed=n` : Initialisation du générateur aléatoire
+- `-coef=n` : Coefficient global de distorsion (0 à 1)
+
+### Utilisation dans les benchmarks
+
+Le module est intégré au benchmark `gen-parse` qui évalue automatiquement la robustesse des marqueurs face à ces perturbations. La fonction `random_exec()` génère une combinaison aléatoire de ces effets, créant un environnement de test réaliste.
+
+Vous pouvez contrôler le comportement du module via l'option `--seed` :
+
 ```sh
-python tools/pdf_noiser/printer_emulator.py --nb_copy 5
-```
+# Utilisation avec une graine spécifique pour des résultats reproductibles
+./build-cmake/bench --benchmark gen-parse --nb-copies 5 --seed 12345
 
-#### Générer une copie avec une rotation spécifique
-```sh
-python tools/pdf_noiser/printer_emulator.py --rotation 2 --nb_copy 1
-```
-
-#### Combiner plusieurs transformations
-```sh
-python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brightness 60 --gaussian 30 --nb_copy 3
+# Utilisation avec une graine aléatoire (basée sur le temps) pour plus de variété
+./build-cmake/bench --benchmark gen-parse --nb-copies 5 --seed 0
 ```
 
 ## Structure du projet
@@ -386,6 +529,288 @@ python tools/pdf_noiser/printer_emulator.py --rotation 1.5 --contrast 75 --brigh
 ├── README.md                  # Ce fichier
 └── LICENSE                    # Fichier de licence
 ```
+
+### Architecture du projet et guide d'extension
+
+#### Vue d'ensemble de l'architecture
+
+Le projet est organisé selon une architecture modulaire qui facilite l'ajout de nouvelles fonctionnalités:
+
+1. **Système de génération de copies** - Crée des documents avec différents types de marqueurs
+2. **Système de détection/parsing** - Analyse les images pour détecter et interpréter les marqueurs
+3. **Système de benchmarking** - Évalue les performances des différents marqueurs et parseurs
+4. **Utilitaires partagés** - Fournit des fonctions communes utilisées par les différents modules
+
+Le flux de données typique est le suivant:
+```
+[Générateur de copies] → [Copies avec marqueurs] → [Simulateur de défauts] → [Parseurs] → [Analyse de résultats]
+```
+
+#### Composants principaux
+
+| Composant | Fichiers principaux | Description |
+|-----------|---------------------|-------------|
+| Définition des types de marqueurs | `external-tools/create_copy.h` | Énumération et structures définissant les types de marqueurs |
+| Générateur de copies | `external-tools/create_copy.cpp`, `typst_interface.cpp` | Interface entre C++ et Typst pour générer des copies |
+| Parseurs | `parser/*.cpp` | Implémentations de différentes méthodes de détection des marqueurs |
+| Système de benchmark | `benchmark.cpp`, `bench/*.cpp` | Infrastructure pour évaluer et comparer les performances |
+| Simulateur de défauts | `modifier.cpp`, `external-tools/modifier.h` | Fonctions pour simuler les défauts d'impression et de numérisation |
+| Utilitaires | `utils/*.cpp` | Fonctions partagées pour la manipulation d'images, JSON, etc. |
+
+#### Guide: Ajouter un nouveau type de marqueur
+
+Pour ajouter un nouveau type de marqueur (par exemple, un marqueur en forme d'étoile), suivez ces étapes:
+
+1. **Mettre à jour l'énumération `MarkerType`** dans `external-tools/create_copy.h`:
+
+   ```cpp
+   enum class MarkerType {
+       // Types existants...
+       STAR,        // Ajoutez votre nouveau type ici
+       NONE
+   };
+   ```
+
+2. **Ajouter le type aux unordered_maps de conversion** dans `external-tools/create_copy.cpp`:
+
+   ```cpp
+   const std::unordered_map<MarkerType, std::string> markerTypeToString = {
+       // Mappings existants...
+       { MarkerType::STAR, "star" },
+   };
+
+   const std::unordered_map<std::string, MarkerType> stringToMarkerType = {
+       // Mappings existants...
+       { "star", MarkerType::STAR },
+   };
+   ```
+
+3. **Créer un composant Typst** pour votre marqueur dans `typst/components/markers/star.typ`:
+
+   ```typ
+   #let star_marker(size: 10pt, outlined: false, content: none, fill_color: black) = {
+     // Implémentation du marqueur en forme d'étoile
+     let shape = polygon.regular(5, radius: size/2, stroke: outlined, fill: if outlined { none } else { fill_color })
+     if content != none {
+       // Ajouter du contenu encodé si nécessaire
+     }
+     shape
+   }
+   ```
+
+4. **Mettre à jour le système de sélection des marqueurs** dans `typst/components/markers/markers.typ`
+
+#### Guide: Implémenter un nouveau parseur
+
+Pour créer un nouveau parseur (par exemple, pour détecter des marqueurs en forme d'étoile), procédez comme suit:
+
+1. **Créer les fichiers d'en-tête et d'implémentation** dans `src/parser/`:
+
+   ```cpp
+   // star_parser.h
+   #ifndef STAR_PARSER_H
+   #define STAR_PARSER_H
+
+   std::optional<cv::Mat> star_parser(const cv::Mat& img,
+   #ifdef DEBUG
+                                      cv::Mat debug_img,
+   #endif
+                                      Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode);
+
+   #endif // STAR_PARSER_H
+
+   // star_parser.cpp
+   #include <common.h>
+   // Implémentez la fonction de détection de votre marqueur
+   ```
+
+2. **Mettre à jour l'énumération `ParserType`** dans `include/common.h`:
+
+   ```cpp
+   enum class ParserType { 
+       // Types existants...
+       STAR,
+       // ...
+   };
+   ```
+
+3. **Enregistrer le nouveau parseur** dans `utils/parser_helper.cpp`:
+
+   ```cpp
+   // Ajouter votre parser à la fonction string_to_parser_type
+   ParserType string_to_parser_type(const std::string& parser_type_str) {
+       // Parseurs existants...
+       if (parser_type_str == "STAR") return ParserType::STAR;
+       // ...
+   }
+
+   // Et à la fonction run_parser
+   std::optional<cv::Mat> run_parser(ParserType parser_type, const cv::Mat& img,
+   #ifdef DEBUG
+                                     cv::Mat& debug_img,
+   #endif
+                                     Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
+       switch (parser_type) {
+           // Cas existants...
+           case ParserType::STAR:
+               return star_parser(img, 
+   #ifdef DEBUG
+                                  debug_img,
+   #endif
+                                  meta, dst_corner_points, flag_barcode);
+           // ...
+       }
+   }
+   ```
+
+4. **Mettre à jour le système de build** dans `CMakeLists.txt` et/ou `meson.build`
+
+#### Guide: Ajouter un nouveau benchmark
+
+Pour créer un nouveau benchmark (par exemple, pour évaluer la robustesse aux taches d'encre):
+
+1. **Créer les fichiers d'en-tête et d'implémentation** dans `src/bench/`:
+
+   ```cpp
+   // ink_stain_robustness.h
+   #ifndef INK_STAIN_ROBUSTNESS_H
+   #define INK_STAIN_ROBUSTNESS_H
+
+   void ink_stain_robustness_benchmark(const std::unordered_map<std::string, Config>& config);
+
+   #endif
+
+   // ink_stain_robustness.cpp
+   // Implémentation du benchmark
+   ```
+
+2. **Ajouter le benchmark à l'unordered_map** dans `benchmark.cpp`:
+
+   ```cpp
+   std::vector<std::pair<std::string, Config>> ink_stain_config = {
+       // Configuration spécifique à ce benchmark
+   };
+
+   std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
+       // Benchmarks existants...
+       { "ink-stain-robustness", { "Ink Stain Robustness Benchmark", 
+                                   ink_stain_robustness_benchmark, 
+                                   ink_stain_config } },
+   };
+   ```
+
+3. **Mettre à jour le système de build** dans `CMakeLists.txt` et/ou `meson.build`
+
+#### Exemple pratique: Extension complète
+
+Voici un exemple complet d'extension du projet avec un nouveau type de marqueur et son parseur associé:
+
+**Étape 1: Définir le marqueur triangulaire**
+```cpp
+// Dans external-tools/create_copy.h
+enum class MarkerType {
+    // Types existants...
+    TRIANGLE,
+    NONE
+};
+
+// Dans external-tools/create_copy.cpp
+const std::unordered_map<MarkerType, std::string> markerTypeToString = {
+    // Mappings existants...
+    { MarkerType::TRIANGLE, "triangle" },
+};
+
+const std::unordered_map<std::string, MarkerType> stringToMarkerType = {
+    // Mappings existants...
+    { "triangle", MarkerType::TRIANGLE },
+};
+```
+
+**Étape 2: Implémenter le parseur triangulaire**
+```cpp
+// Dans src/parser/triangle_parser.h
+#ifndef TRIANGLE_PARSER_H
+#define TRIANGLE_PARSER_H
+
+std::optional<cv::Mat> triangle_parser(const cv::Mat& img,
+#ifdef DEBUG
+                                       cv::Mat debug_img,
+#endif
+                                       Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode);
+
+#endif
+
+// Dans src/parser/triangle_parser.cpp
+#include <common.h>
+#include "json_helper.h"
+#include "parser_helper.h"
+#include "triangle_parser.h"
+
+std::vector<cv::Point2f> detect_triangles(const cv::Mat& img, const cv::Point2i& offset) {
+    // Implémentation de la détection des triangles
+}
+
+std::optional<cv::Mat> triangle_parser(const cv::Mat& img,
+#ifdef DEBUG
+                                       cv::Mat debug_img,
+#endif
+                                       Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
+    // Implémentation du parseur
+}
+```
+
+**Étape 3: Mettre à jour le système de parseur**
+```cpp
+// Dans include/common.h
+enum class ParserType { 
+    // Types existants...
+    TRIANGLE,
+    // ...
+};
+
+// Dans utils/parser_helper.cpp
+ParserType string_to_parser_type(const std::string& parser_type_str) {
+    // Existant...
+    if (parser_type_str == "TRIANGLE") return ParserType::TRIANGLE;
+    // ...
+}
+
+std::optional<cv::Mat> run_parser(ParserType parser_type, const cv::Mat& img,
+#ifdef DEBUG
+                                  cv::Mat& debug_img,
+#endif
+                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
+    switch (parser_type) {
+        // Existant...
+        case ParserType::TRIANGLE:
+            return triangle_parser(img, 
+#ifdef DEBUG
+                                   debug_img,
+#endif
+                                   meta, dst_corner_points, flag_barcode);
+        // ...
+    }
+}
+```
+
+**Étape 4: Créer un benchmark pour évaluer le marqueur triangulaire**
+```cpp
+// Dans src/bench/triangle_benchmark.h et .cpp
+```
+
+**Étape 5: Tester la nouvelle implémentation**
+```sh
+# Génération d'une copie avec des marqueurs triangulaires
+./build/create-copie --tl triangle --tr triangle --bl triangle --br triangle
+
+# Analyse avec le parseur triangulaire
+./build/expl_pars output/ description.json copies/copy.png
+
+# Benchmark des performances du marqueur triangulaire
+./build/bench --benchmark gen-parse --parser-type TRIANGLE --marker-config "(triangle,triangle,triangle,triangle,none)"
+```
+
+En suivant ces guides, vous pourrez facilement étendre le projet avec de nouveaux types de marqueurs, de nouveaux parseurs et de nouveaux benchmarks, tout en maintenant la cohérence de l'architecture globale.
 
 ## Références techniques
 
