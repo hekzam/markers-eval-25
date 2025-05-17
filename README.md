@@ -75,10 +75,13 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 - `--unencoded-size <N>`        : Taille des marqueurs non encodés (par défaut: 3)
 - `--header-size <N>`           : Taille du marqueur d'entête (par défaut: 7)
 - `--stroke-width <N>`          : Largeur du trait des marqueurs (par défaut: 2)
-- `--margin <N>`                : Marge autour des marqueurs (par défaut: 3)
+- `--marker-margin <N>`                : Marge autour des marqueurs (par défaut: 3)
+- `--content-margin-x <N>`      : Marge horizontale pour le contenu en mm (par défaut: 10)
+- `--content-margin-y <N>`      : Marge verticale pour le contenu en mm (par défaut: 10)
 - `--grey-level <N>`            : Niveau de gris (0: noir, 255: blanc) (par défaut: 0)
 - `--dpi <N>`                   : Résolution en points par pouce (par défaut: 300)
 - `--generating-content <BOOL>` : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
+- `--seed <N>`                  : Graine pour la génération aléatoire du contenu (par défaut: 42)
 - `--filename <name>`           : Nom du fichier de sortie (par défaut: copy)
 - `--tl <type>`                 : Type de marqueur pour le coin supérieur gauche (par défaut: qrcode:encoded)
 - `--tr <type>`                 : Type de marqueur pour le coin supérieur droit (par défaut: qrcode:encoded)
@@ -107,7 +110,7 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 
 #### Configuration avancée avec différents marqueurs
 ```sh
-./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --dpi 600 --filename exam_high_res
+./create-copie.sh --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
 ```
 
 ## 📊 Exécution du benchmark
