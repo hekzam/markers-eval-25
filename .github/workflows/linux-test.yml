@@ -19,5 +19,5 @@ jobs:
           cmake --build build-cmake -j
       - name: test
         run: |
-          ./create-copie.sh
+          ./build-cmake/create-copy
           ./build-cmake/parser output copies/metadata/copy.json copies/copy.png
