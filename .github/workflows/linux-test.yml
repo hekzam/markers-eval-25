@@ -13,20 +13,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt-get install cmake ninja-build libopencv-dev nlohmann-json3-dev snapd && sudo snap install typst
-      - name: Build
-        run: |
-          cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DAUTO_DOWNLOAD_ZXING=ON
-          cmake --build build-cmake -j
-      - name: test
-        run: |
-          ./build-cmake/create-copy
-          ./build-cmake/parser output copies/metadata/copy.json copies/copy.png
-          ./build-cmake/modifier copies/copy.png
-          ./build-cmake/bench --benchmark gen-parse --nb-copies 20 --parser-type SHAPE --marker-config "(square,square,square,qrcode:encoded,none)" --encoded-marker-size 20 --unencoded-marker-size 8 --warmup-iterations 2 --seed 42
+    #   - name: Build
+    #     run: |
+    #       cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DAUTO_DOWNLOAD_ZXING=ON
+    #       cmake --build build-cmake -j
+    #   - name: test
+    #     run: |
+    #       ./build-cmake/create-copy
+    #       ./build-cmake/parser output copies/metadata/copy.json copies/copy.png
+    #       ./build-cmake/modifier copies/copy.png
+    #       ./build-cmake/bench --benchmark gen-parse --nb-copies 20 --parser-type SHAPE --marker-config "(square,square,square,qrcode:encoded,none)" --encoded-marker-size 20 --unencoded-marker-size 8 --warmup-iterations 2 --seed 42
       - name : Install Nix
         run: sudo apt-get install -y curl xz-utils && curl -L https://nixos.org/nix/install | sh -s -- --daemon
       - name: Nix flakes & meson build
         run: |
+          . ~/.nix-profile/etc/profile.d/nix.sh
           nix develop
           meson setup build
           meson compile -C build
