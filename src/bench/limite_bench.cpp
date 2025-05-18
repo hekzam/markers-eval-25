@@ -321,7 +321,7 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
         }
 
         // Permettre à l'utilisateur de spécifier explicitement le parseur
-        ParserType selected_parser = ParserType::QRCODE; // Parseur par défaut: QRCODE
+        ParserType selected_parser = ParserType::ZXING; // Parseur par défaut: QRCODE
 
         // Si le parseur est spécifié dans la configuration, l'utiliser
         if (config.find("parser-type") != config.end()) {
