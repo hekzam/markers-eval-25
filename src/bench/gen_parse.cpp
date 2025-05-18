@@ -186,7 +186,7 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
         }
 
         // Permettre à l'utilisateur de spécifier explicitement le parseur
-        ParserType selected_parser = ParserType::QRCODE; // Parseur par défaut: QRCODE
+        ParserType selected_parser = ParserType::ZXING; // Parseur par défaut: ZXING
 
         // Si le parseur est spécifié dans la configuration, l'utiliser
         if (config.find("parser-type") != config.end()) {
@@ -194,11 +194,11 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
             selected_parser = string_to_parser_type(parser_type_str);
 
             if (parser_type_str != parser_type_to_string(selected_parser)) {
-                std::cout << "Warning: Unknown parser type '" << parser_type_str << "', using default QRCODE parser."
+                std::cout << "Warning: Unknown parser type '" << parser_type_str << "', using default ZXING parser."
                           << std::endl;
             }
         } else {
-            std::cout << "Note: No parser type specified, using default QRCODE parser." << std::endl;
+            std::cout << "Note: No parser type specified, using default ZXING parser." << std::endl;
         }
 
         CsvMode csv_mode = CsvMode::OVERWRITE;

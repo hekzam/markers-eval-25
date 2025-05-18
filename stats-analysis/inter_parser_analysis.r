@@ -13,8 +13,8 @@ library(gridExtra)     # Pour organiser plusieurs graphiques
 #library(fmsb)         # Pour les graphiques en radar (décommenter si nécessaire)
 
 # Liste des parseurs à analyser (la même que dans le script principal)
-PARSEURS <- c("QRCODE", "CIRCLE", "SHAPE", 
-              "ARUCO", "CENTER_MARKER_PARSER")
+PARSEURS <- c("ZXING", "CIRCLE", "SHAPE", 
+              "ARUCO", "CENTER_PARSER")
 
 # Définir une palette de couleurs pour les parseurs
 COULEURS_PARSEURS <- brewer.pal(length(PARSEURS), "Set1")

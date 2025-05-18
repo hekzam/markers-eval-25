@@ -40,7 +40,7 @@ Si aucun fichier CSV n'est spécifié, le script utilisera par défaut `csv_by_p
 L'analyse attend un fichier CSV avec au moins les colonnes suivantes :
 
 - `File` : Le nom du fichier image analysé
-- `Parser` : Le type de parseur utilisé (ex: qrcode_parser, circle_parser, etc.)
+- `Parser` : Le type de parseur utilisé (ex: zxing_parser, circle_parser, etc.)
 - `Time_ms` : Le temps d'exécution en millisecondes
 - `Noise_Level` (optionnel) : Le niveau de bruit appliqué à l'image
 

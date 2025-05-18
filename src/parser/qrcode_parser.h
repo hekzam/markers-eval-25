@@ -1,8 +1,8 @@
-#ifndef QRCODE_PARSER_H
-#define QRCODE_PARSER_H
+#ifndef ZXING_PARSER_H
+#define ZXING_PARSER_H
 
 /**
- * @file qrcode_parser.h
+ * @file zxing_parser.h
  * @brief Module d'analyse et de détection de codes QR dans une image.
  *
  * Ce module permet d'identifier les codes QR présents dans une image
@@ -27,9 +27,9 @@
  * 
  * @return Une matrice de transformation optionnelle, ou vide en cas d'échec
  */
-std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
+std::optional<cv::Mat> zxing_parser(const cv::Mat& img,
 #ifdef DEBUG
                                      cv::Mat debug_img,
 #endif
                                      Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode);
-#endif // QRCODE_PARSER_H
+#endif // ZXING_PARSER_H

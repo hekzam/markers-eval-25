@@ -286,7 +286,7 @@ Spécifiez directement tous les paramètres dans votre commande :
 
 Exemple :
 ```sh
-./build-cmake/bench --benchmark gen-parse --nb-copies 5 --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" --parser-type QRCODE
+./build-cmake/bench --benchmark gen-parse --nb-copies 5 --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" --parser-type ZXING
 ```
 
 #### 2. Mode interactif
@@ -329,7 +329,7 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
    ```
 
    **Options spécifiques** :
-   - `--parser-type <type>` : Type de parseur à utiliser (QRCODE, ARUCO, CIRCLE, etc.)
+   - `--parser-type <type>` : Type de parseur à utiliser (ZXING, ARUCO, CIRCLE, etc.)
    - `--nb-copies <N>` : Nombre de copies à générer et analyser
    - `--seed <N>` : Graine pour la génération aléatoire (0 pour une graine basée sur le temps)
    - `--warmup-iterations <N>` : Nombre d'itérations d'échauffement avant les mesures
@@ -346,7 +346,7 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 
 Le système prend en charge plusieurs types de parseurs pour la détection et le traitement des marqueurs. Lors de l'utilisation de l'option `--parser-type` dans les benchmarks, vous pouvez spécifier l'un des parseurs suivants :
 
-1. **QRCODE** (par défaut) : Parseur standard pour les codes QR. Détecte les marqueurs QR code encodés avec l'identifiant de position (tl, tr, bl, br) et extrait les métadonnées.
+1. **ZXING** (par défaut) : Parseur standard pour les codes QR. Détecte les marqueurs QR code encodés avec l'identifiant de position (tl, tr, bl, br) et extrait les métadonnées.
 
 2. **EMPTY** : Parseur pour les codes QR sans identification de position. Utilise la disposition pour déterminer quelle position est occupée par quel marqueur.
 
@@ -354,7 +354,7 @@ Le système prend en charge plusieurs types de parseurs pour la détection et le
 
 4. **ARUCO** : Détecte les marqueurs ArUco (codes carrés spécifiques pour la réalité augmentée) et les utilise pour l'alignement. Nécessite un QR code pour les métadonnées.
 
-5. **CENTER_MARKER_PARSER** : Détecte les marqueurs à partir du centre de la page, utile lorsque les marqueurs ne sont pas positionnés dans les coins.
+5. **CENTER_PARSER** : Détecte les marqueurs à partir du centre de la page, utile lorsque les marqueurs ne sont pas positionnés dans les coins.
 
 6. **SHAPE** : Détecte les marqueurs basés sur des formes géométriques simples. Utilise un processus de détection des contours.
 
@@ -393,7 +393,7 @@ Les résultats des benchmarks sont sauvegardés dans le dossier `output/csv/` au
 
 #### Exemple 1 : Benchmark simple avec le parseur QR code
 ```sh
-./build-cmake/bench --benchmark gen-parse --nb-copies 3 --parser-type QRCODE
+./build-cmake/bench --benchmark gen-parse --nb-copies 3 --parser-type ZXING
 ```
 
 #### Exemple 2 : Analyse de consommation d'encre pour un marqueur spécifique

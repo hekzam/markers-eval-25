@@ -41,6 +41,6 @@ struct Parser {
 /**
  * @brief Types de parseurs disponibles pour l'analyse des marqueurs dans l'image
  */
-enum class ParserType { ARUCO, CIRCLE, QRCODE, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, EMPTY };
+enum class ParserType { ARUCO, CIRCLE, ZXING, SHAPE, CENTER_PARSER, DEFAULT_PARSER, EMPTY };
 
 #endif

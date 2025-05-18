@@ -1,5 +1,5 @@
-#ifndef QRCODE_EMPTY_PARSER_H
-#define QRCODE_EMPTY_PARSER_H
+#ifndef ZXING_EMPTY_PARSER_H
+#define ZXING_EMPTY_PARSER_H
 
 /**
  * @file qrcode_empty_parser.h
@@ -33,4 +33,4 @@ std::optional<cv::Mat> qrcode_empty_parser(const cv::Mat& img,
 #endif
                                            Metadata& meta, std::vector<cv::Point2f>& dst_corner_points,
                                            int flag_barcode);
-#endif // QRCODE_EMPTY_PARSER_H
+#endif // ZXING_EMPTY_PARSER_H

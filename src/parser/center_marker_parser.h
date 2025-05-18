@@ -1,5 +1,5 @@
-#ifndef CENTER_MARKER_PARSER_H
-#define CENTER_MARKER_PARSER_H
+#ifndef CENTER_PARSER_H
+#define CENTER_PARSER_H
 
 /**
  * @file center_marker_parser.h

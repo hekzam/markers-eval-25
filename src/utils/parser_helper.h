@@ -31,7 +31,7 @@ std::string parser_type_to_string(ParserType parser_type);
  * @brief Convertit une chaîne de caractères en type de parseur (ParserType)
  *
  * @param parser_type_str Chaîne de caractères représentant le type de parseur
- * @return ParserType Le type de parseur correspondant, ou ParserType::QRCODE par défaut
+ * @return ParserType Le type de parseur correspondant, ou ParserType::ZXING par défaut
  */
 ParserType string_to_parser_type(const std::string& parser_type_str);
 
@@ -53,7 +53,7 @@ struct DetectedBarcode {
  */
 std::vector<DetectedBarcode> identify_barcodes(const cv::Mat& img,
 #ifdef ENABLE_ZBAR
-                                               zbar_symbol_type_t flags = zbar::ZBAR_QRCODE
+                                               zbar_symbol_type_t flags = zbar::ZBAR_ZXING
 #else
                                                ZXing::BarcodeFormats flags = ZXing::BarcodeFormat::QRCode
 #endif

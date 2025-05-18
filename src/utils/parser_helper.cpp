@@ -8,7 +8,7 @@
 #include "math_utils.h"
 
 #include "default_parser.h"
-#include "qrcode_parser.h"
+#include "zxing_parser.h"
 #include "circle_parser.h"
 #include "qrcode_empty_parser.h"
 #include "center_marker_parser.h"
@@ -18,11 +18,11 @@
 
 std::unordered_map<ParserType, Parser> parsers = {
     { ParserType::DEFAULT_PARSER, { default_parser } },
-    { ParserType::QRCODE, { qrcode_parser } },
+    { ParserType::ZXING, { zxing_parser } },
     { ParserType::CIRCLE, { circle_parser } },
     { ParserType::ARUCO, { aruco_parser } },
     { ParserType::SHAPE, { shape_parser } },
-    { ParserType::CENTER_MARKER_PARSER, { center_marker_parser } },
+    { ParserType::CENTER_PARSER, { center_marker_parser } },
     { ParserType::EMPTY, { qrcode_empty_parser } },
 };
 
@@ -224,12 +224,12 @@ std::string parser_type_to_string(ParserType parser_type) {
             return "ARUCO";
         case ParserType::CIRCLE:
             return "CIRCLE";
-        case ParserType::QRCODE:
-            return "QRCODE";
+        case ParserType::ZXING:
+            return "ZXING";
         case ParserType::SHAPE:
             return "SHAPE";
-        case ParserType::CENTER_MARKER_PARSER:
-            return "CENTER_MARKER_PARSER";
+        case ParserType::CENTER_PARSER:
+            return "CENTER_PARSER";
         case ParserType::DEFAULT_PARSER:
             return "DEFAULT_PARSER";
         case ParserType::EMPTY:
@@ -243,9 +243,9 @@ ParserType string_to_parser_type(const std::string& parser_type_str) {
     static const std::unordered_map<std::string, ParserType> parser_type_map = {
         { "ARUCO", ParserType::ARUCO },
         { "CIRCLE", ParserType::CIRCLE },
-        { "QRCODE", ParserType::QRCODE },
+        { "ZXING", ParserType::ZXING },
         { "SHAPE", ParserType::SHAPE },
-        { "CENTER_MARKER_PARSER", ParserType::CENTER_MARKER_PARSER },
+        { "CENTER_PARSER", ParserType::CENTER_PARSER },
         { "DEFAULT_PARSER", ParserType::DEFAULT_PARSER },
         { "EMPTY", ParserType::EMPTY }
     };
@@ -255,7 +255,7 @@ ParserType string_to_parser_type(const std::string& parser_type_str) {
         return it->second;
     }
 
-    return ParserType::QRCODE; // Valeur par défaut
+    return ParserType::ZXING; // Valeur par défaut
 }
 
 std::optional<cv::Mat> run_parser(const ParserType& parser_type, cv::Mat img,

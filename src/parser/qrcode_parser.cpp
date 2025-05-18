@@ -7,7 +7,7 @@
 #include "parser_helper.h"
 #include "draw_helper.h"
 
-#include "qrcode_parser.h"
+#include "zxing_parser.h"
 
 int identify_corner_barcodes(std::vector<DetectedBarcode>& barcodes, std::vector<cv::Point2f>& corner_points,
                              std::vector<DetectedBarcode*>& corner_barcodes) {
@@ -63,7 +63,7 @@ int nb_corner_found(int found_mask) {
     return nb_found;
 }
 
-std::optional<cv::Mat> qrcode_parser(const cv::Mat& img,
+std::optional<cv::Mat> zxing_parser(const cv::Mat& img,
 #ifdef DEBUG
                                      cv::Mat debug_img,
 #endif
