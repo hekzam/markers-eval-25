@@ -25,149 +25,12 @@ struct CopyInfo {
 };
 
 /**
- * @brief Dessine un contour autour d'une boîte
- *
- * @param box La boîte atomique à dessiner
- * @param image L'image sur laquelle dessiner
- * @param src_size Dimensions de l'image source
- * @param dst_size Dimensions de l'image de destination
- * @param color Couleur du contour
- * @param thickness Épaisseur de la ligne
- */
-void draw_box_outline(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
-                      const cv::Point2f& dst_size, const cv::Scalar& color, int thickness = 2) {
-    std::vector<cv::Point> raster_box = convert_to_raster(
-        { cv::Point2f{ box->x, box->y }, cv::Point2f{ box->x + box->width, box->y },
-          cv::Point2f{ box->x + box->width, box->y + box->height }, cv::Point2f{ box->x, box->y + box->height } },
-        src_size, dst_size);
-    cv::polylines(image, raster_box, true, color, thickness);
-}
-
-/**
- * @brief Dessine un cercle au centre d'une boîte
- *
- * @param box La boîte atomique
- * @param image L'image sur laquelle dessiner
- * @param src_size Dimensions de l'image source
- * @param dst_size Dimensions de l'image de destination
- * @param color Couleur du cercle
- * @param radius Rayon du cercle
- * @param thickness Épaisseur du cercle (-1 pour rempli)
- */
-void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
-                     const cv::Point2f& dst_size, const cv::Scalar& color, int radius = 3, int thickness = -1) {
-    cv::Point center =
-        convert_to_raster({ cv::Point2f{ box->x + box->width / 2, box->y + box->height / 2 } }, src_size, dst_size)[0];
-    cv::circle(image, center, radius, color, thickness);
-}
-
-/**
- * @brief Calcule la distance euclidienne entre deux points
- *
- * @param p1 Premier point
- * @param p2 Second point
- * @return double Distance euclidienne entre les deux points
- */
-double euclidean_distance(const cv::Point2f& p1, const cv::Point2f& p2) {
-    return std::sqrt(std::pow(p2.x - p1.x, 2) + std::pow(p2.y - p1.y, 2));
-}
-
-/**
- * @brief Calcule les coordonnées des coins théoriques d'une page A4
- *
- * @param dst_img_size Dimensions de l'image cible en pixels
- * @return std::vector<cv::Point2f> Les quatre coins de la page dans l'ordre: haut-gauche, haut-droit, bas-gauche,
- * bas-droit
- */
-std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& dst_img_size) {
-    // Les coordonnées théoriques des coins d'une page A4 en mm (0,0 est en haut à gauche)
-    std::vector<cv::Point2f> theoretical_corners = {
-        { 0, 0 },                          // Haut-gauche
-        { dst_img_size.x, 0 },             // Haut-droit
-        { 0, dst_img_size.y },             // Bas-gauche
-        { dst_img_size.x, dst_img_size.y } // Bas-droit
-    };
-    return theoretical_corners;
-}
-
-/**
- * @brief Calcule l'erreur de précision entre les coins originaux et les coins calibrés
- *
- * @param dst_img_size Dimensions de l'image calibrée en pixels
- * @param transform_matrix Matrice de transformation appliquée à l'image
- * @param rectification_transform Matrice de transformation affine du parser
- * @param margin Marge d'erreur en pixels
- * @return std::vector<double> Erreurs de précision pour chaque coin (haut-gauche, haut-droit, bas-gauche, bas-droit) et
- * la moyenne en dernière position
- */
-std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, const cv::Mat& transform_matrix,
-                                              const cv::Mat& rectification_transform, float margin) {
-    std::vector<cv::Point2f> original_corners = calculate_theoretical_corners(dst_img_size);
-
-    std::vector<cv::Point2f> transformed_corner = original_corners;
-    for (auto& corner : transformed_corner) {
-        // Ajuster les coordonnées pour compenser la marge
-        if (corner.x < dst_img_size.x / 2)
-            corner.x += margin;
-        else
-            corner.x -= margin;
-
-        if (corner.y < dst_img_size.y / 2)
-            corner.y += margin;
-        else
-            corner.y -= margin;
-    }
-    cv::transform(transformed_corner, transformed_corner, transform_matrix);
-
-    cv::transform(transformed_corner, transformed_corner, rectification_transform);
-
-    std::vector<double> distances;
-    double total_distance = 0.0;
-
-    for (size_t i = 0; i < 4; i++) {
-        double distance = euclidean_distance(original_corners[i], transformed_corner[i]);
-
-        std::cout << "  Corner " << i << " - Original: (" << original_corners[i].x << ", " << original_corners[i].y
-                  << "), after Transformation: (" << transformed_corner[i].x << ", " << transformed_corner[i].y
-                  << "), Difference x: " << transformed_corner[i].x - original_corners[i].x
-                  << ", Difference y: " << transformed_corner[i].y - original_corners[i].y << ", Distance: " << distance
-                  << " pixels" << std::endl;
-
-        total_distance += distance;
-        distances.push_back(distance);
-    }
-
-    if (!distances.empty()) {
-        double avg_error = total_distance / distances.size();
-        std::cout << "  Average precision error: " << avg_error << " pixels" << std::endl;
-        distances.push_back(avg_error);
-        return distances;
-    }
-
-    return { -1.0, -1.0, -1.0, -1.0, -1.0 };
-}
-
-/**
- * @brief Obtient le chemin d'accès au fichier de métadonnées associé à une copie
- *
- * Cette fonction construit le chemin d'accès vers le fichier JSON de métadonnées
- * correspondant à une copie générée, en se basant sur son nom de fichier sans extension.
- * Les fichiers de métadonnées sont stockés dans le répertoire "./copies/metadata/".
- *
- * @param filename Nom du fichier de la copie (avec ou sans extension)
- * @return std::string Chemin complet vers le fichier de métadonnées JSON
- */
-std::string get_metadata_path(const std::string& filename) {
-    return "./copies/metadata/" + filename + ".json";
-}
-
-/**
  * @brief Vérifie et extrait les paramètres de configuration
  * @param config Map de configuration contenant les paramètres
  * @return Tuple contenant les paramètres validés
  * @throws std::invalid_argument Si un paramètre requis est manquant ou invalide
  */
-static std::tuple<int, int, int, int, int, int, int, CopyMarkerConfig, ParserType, int, CsvMode, std::string>
+static std::tuple<int, int, CopyStyleParams, CopyMarkerConfig, ParserType, int, CsvMode, std::string>
 validate_parameters(const std::unordered_map<std::string, Config>& config) {
     try {
         int warmup_iterations = std::get<int>(config.at("warmup-iterations").value);
@@ -219,9 +82,15 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
             std::cout << "CSV Filename: " << csv_filename << std::endl;
         }
 
-        return { warmup_iterations, nb_copies,   encoded_marker_size, unencoded_marker_size, header_marker_size,
-                 grey_level,        dpi,         copy_marker_config,  selected_parser,       master_seed,
-                 csv_mode,          csv_filename };
+        CopyStyleParams style_params;
+        style_params.encoded_marker_size = encoded_marker_size;
+        style_params.unencoded_marker_size = unencoded_marker_size;
+        style_params.header_marker_size = header_marker_size;
+        style_params.grey_level = grey_level;
+        style_params.dpi = dpi;
+
+        return { warmup_iterations, nb_copies,   style_params, copy_marker_config,
+                 selected_parser,   master_seed, csv_mode,     csv_filename };
     } catch (const std::out_of_range& e) {
         throw std::invalid_argument("Missing required parameter in configuration");
     } catch (const std::bad_variant_access& e) {
@@ -465,15 +334,8 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& s
 }
 
 void gen_parse(const std::unordered_map<std::string, Config>& config) {
-    auto [warmup_iterations, nb_copies, encoded_marker_size, unencoded_marker_size, header_marker_size, grey_level, dpi,
-          copy_marker_config, selected_parser, master_seed, csv_mode, csv_filename] = validate_parameters(config);
-
-    CopyStyleParams style_params;
-    style_params.encoded_marker_size = encoded_marker_size;
-    style_params.unencoded_marker_size = unencoded_marker_size;
-    style_params.header_marker_size = header_marker_size;
-    style_params.grey_level = grey_level;
-    style_params.dpi = dpi;
+    auto [warmup_iterations, nb_copies, style_params, copy_marker_config, selected_parser, master_seed, csv_mode,
+          csv_filename] = validate_parameters(config);
 
     BenchmarkSetup benchmark_setup = prepare_benchmark_directories("./output", true, true, csv_mode);
 

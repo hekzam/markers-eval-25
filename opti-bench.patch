@@ -1,8 +1,8 @@
 diff --git a/src/bench/gen_parse.cpp b/src/bench/gen_parse.cpp
-index ed6f5bb..96c16f3 100644
+index 5bd0ac2..2a8f12b 100644
 --- a/src/bench/gen_parse.cpp
 +++ b/src/bench/gen_parse.cpp
-@@ -319,7 +319,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies,
+@@ -266,7 +266,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& s
          random_exec(img, mat, unique_seed);
  
          std::string modified_filename = "./copies/" + copy_info.filename;
@@ -11,11 +11,35 @@ index ed6f5bb..96c16f3 100644
          std::cout << "  Saved modified image: " << modified_filename << std::endl;
  
  #ifdef DEBUG
+diff --git a/src/bench/limite_bench.cpp b/src/bench/limite_bench.cpp
+index 40e372e..4474fec 100644
+--- a/src/bench/limite_bench.cpp
++++ b/src/bench/limite_bench.cpp
+@@ -411,13 +411,13 @@ void limite_bench(const std::unordered_map<std::string, Config>& config) {
+                 int margin_size = 0;
+                 opt.tranformer(img, rng, current, mat, style_params, copy_marker_config, copy_name, margin_size);
+                 std::string copy_full_name = copy_name + ".png";
+-                cv::imwrite("./copies/" + copy_full_name, img);
++                // cv::imwrite("./copies/" + copy_full_name, img);
+                 std::cout << "  Copy " << copy_name << " created" << std::endl;
+-                img = cv::imread("./copies/" + copy_full_name, cv::IMREAD_GRAYSCALE);
+-                if (img.empty()) {
+-                    std::cerr << "Error: Could not read image " << copy_full_name << std::endl;
+-                    continue;
+-                }
++                // img = cv::imread("./copies/" + copy_full_name, cv::IMREAD_GRAYSCALE);
++                // if (img.empty()) {
++                //     std::cerr << "Error: Could not read image " << copy_full_name << std::endl;
++                //     continue;
++                // }
+ 
+                 // std::string local_copy_name = copy_name + "_" + std::to_string(i + 1) + ".png";
+                 std::string local_copy_name = copy_full_name;
 diff --git a/src/utils/benchmark_helper.cpp b/src/utils/benchmark_helper.cpp
-index 175a472..13565db 100644
+index 5bda3ff..61f134f 100644
 --- a/src/utils/benchmark_helper.cpp
 +++ b/src/utils/benchmark_helper.cpp
-@@ -24,7 +24,7 @@ void save_image(cv::Mat img, const std::filesystem::path& output_dir,
+@@ -25,7 +25,7 @@ void save_image(cv::Mat img, const std::filesystem::path& output_dir,
      char* output_img_fname = nullptr;
      int nb = asprintf(&output_img_fname, "%s/%s%s", output_dir.c_str(), prefix.c_str(), output_img_path_fname.c_str());
      (void) nb;

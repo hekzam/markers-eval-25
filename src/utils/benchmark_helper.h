@@ -92,5 +92,12 @@ struct BenchmarkSetup {
  */
 BenchmarkSetup prepare_benchmark_directories(const std::string& output_dir, bool include_success_column = false,
                                              bool create_subimg_dir = false, CsvMode csv_mode = CsvMode::OVERWRITE);
+void draw_box_outline(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
+                      const cv::Point2f& dst_size, const cv::Scalar& color, int thickness = 2);
+void draw_box_center(const std::shared_ptr<AtomicBox>& box, cv::Mat& image, const cv::Point2f& src_size,
+                     const cv::Point2f& dst_size, const cv::Scalar& color, int radius = 3, int thickness = -1);
+std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, const cv::Mat& transform_matrix,
+                                              const cv::Mat& rectification_transform, float margin);
+std::string get_metadata_path(const std::string& filename);
 
 #endif

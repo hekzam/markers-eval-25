@@ -19,6 +19,7 @@
 #include "utils/cli_helper.h"
 #include "bench/config_analysis.h"
 #include "bench/gen_parse.h"
+#include "bench/limite_bench.h"
 #include "external-tools/create_copy.h"
 
 /**
@@ -90,8 +91,10 @@ struct BenchmarkConfig {
  * (nom complet, fonction d'exécution, configuration par défaut).
  */
 std::unordered_map<std::string, BenchmarkConfig> benchmark_map = {
-    { "config-analysis", { "Ink consumption and total area benchmark", config_analysis_benchmark, config_analysis_config } },
-    { "gen-parse", { "Generation and parsing benchmark", gen_parse, default_config } }
+    { "config-analysis",
+      { "Ink consumption and total area benchmark", config_analysis_benchmark, config_analysis_config } },
+    { "gen-parse", { "Generation and parsing benchmark", gen_parse, default_config } },
+    { "limite-bench", { "Limite benchmark", limite_bench, default_config } },
 };
 
 /**

@@ -83,6 +83,9 @@ void translate_img(cv::Mat& img, int dx, int dy);
  * @param coef Coefficient d'intensité des modifications
  */
 void distorsion_coef_exec(cv::Mat& img, cv::Mat& modification_matrix, float coef);
+void apply_jpeg_compression(cv::Mat& img, int quality);
+
+void simulate_printer_effects(cv::Mat& img, cv::RNG& rng, float intensity);
 
 /**
  * @brief Exécute une série de transformations aléatoires sur une image
