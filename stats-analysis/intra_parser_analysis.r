@@ -10,8 +10,8 @@ library(tidyr)
 library(fs) # Pour la gestion des dossiers
 
 # Liste des parseurs à analyser
-PARSEURS <- c("QRCODE", "CIRCLE", "SHAPE", 
-              "ARUCO", "CENTER_MARKER_PARSER")
+PARSEURS <- c("ZXING", "CIRCLE", "SHAPE", 
+              "ARUCO", "CENTER_PARSER")
 
 # Fonction pour créer des dossiers s'ils n'existent pas
 creer_dossiers <- function() {

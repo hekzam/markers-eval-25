@@ -1,5 +1,5 @@
 /**
- * @file typst_interface.cpp
+ * @file gen_copies.cpp
  * @brief Interface entre Typst et le générateur de copies
  *
  * Ce module permet d'interfacer le système de génération de documents Typst

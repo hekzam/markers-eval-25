@@ -10,7 +10,6 @@
 #include "benchmark_helper.h"
 #include "../external-tools/create_copy.h"
 #include "../utils/cli_helper.h"
-#include "benchmark.hpp"
 #include "csv_utils.h"
 #include "math_utils.h"
 

@@ -14,7 +14,7 @@
 #include "math_utils.h"
 #include "draw_helper.h"
 
-#include "qrcode_parser.h"
+#include "zxing_parser.h"
 
 std::optional<cv::Mat> qrcode_empty_parser(const cv::Mat& img,
 #ifdef DEBUG

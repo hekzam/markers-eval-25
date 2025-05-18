@@ -13,8 +13,8 @@ library(gridExtra)     # Pour organiser plusieurs graphiques
 #library(fmsb)         # Pour les graphiques en radar (décommenter si nécessaire)
 
 # Liste des parseurs à analyser (la même que dans le script principal)
-PARSEURS <- c("QRCODE", "CIRCLE", "SHAPE", 
-              "ARUCO", "CENTER_MARKER_PARSER")
+PARSEURS <- c("ZXING", "CIRCLE", "SHAPE", 
+              "ARUCO", "CENTER_PARSER")
 
 # Définir une palette de couleurs pour les parseurs
 COULEURS_PARSEURS <- brewer.pal(length(PARSEURS), "Set1")
@@ -430,57 +430,47 @@ graphique_violin_temps <- function(donnees_list) {
   return(list(temps = p))
 }
 
-# 6. Pareto optimisation (front de Pareto) temps/précision ou temps/fiabilité
-# Remplace le graphique Pareto classique par un front de Pareto
-# Affiche les parseurs non dominés (meilleur compromis temps/précision ou temps/fiabilité)
-graphique_pareto_temps <- function(donnees_list) {
+# 6. Front de Pareto global : temps/précision pour chaque (Parser_Type, Copy_Config)
+# Un point = une combinaison unique (Parser_Type, Copy_Config)
+graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled = FALSE) {
   donnees <- donnees_list$donnees
-  # Calculer les moyennes par parseur
+  if (!donnees_list$has_precision) {
+    cat("Front de Pareto non disponible : données de précision manquantes\n")
+    return(NULL)
+  }
+  # On ne garde que les lignes valides
+  donnees <- donnees %>% filter(!is.na(Parsing_Time_ms), !is.na(Precision_Error_Avg_px), Precision_Error_Avg_px != -1)
+
+  # Un point par combinaison unique (Parser_Type, Copy_Config)
   stats <- donnees %>%
-    group_by(Parser_Type) %>%
+    group_by(Parser_Type, Copy_Config) %>%
     summarise(
       Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
-      Precision_Moyenne = if ("Precision_Error_Avg_px" %in% colnames(donnees)) mean(Precision_Error_Avg_px[Precision_Error_Avg_px != -1], na.rm = TRUE) else NA,
-      Fiabilite = if ("Parsing_Success" %in% colnames(donnees)) sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100 else NA,
+      Precision_Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
+      Parsing_Success = mean(Parsing_Success, na.rm = TRUE),
       .groups = "drop"
     )
+  stats$Label <- paste0(stats$Parser_Type, " | ", stats$Copy_Config)
 
-  # Choix des axes : priorité à la précision si dispo, sinon fiabilité
-  if (!all(is.na(stats$Precision_Moyenne))) {
-    xvar <- "Temps_Moyen"
-    yvar <- "Precision_Moyenne"
-    xlabel <- "Temps moyen de parsing (ms)"
-    ylabel <- "Erreur de précision moyenne (px, plus bas = mieux)"
-    titre <- "Front de Pareto : Temps vs Précision"
-    # Plus bas = mieux pour les deux axes
-    # Front = non dominés (aucun autre parseur n'est à la fois plus rapide ET plus précis)
-    is_dominated <- function(i) {
-      any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Precision_Moyenne < stats$Precision_Moyenne[i])
-    }
-    front <- !sapply(1:nrow(stats), is_dominated)
-  } else if (!all(is.na(stats$Fiabilite))) {
-    xvar <- "Temps_Moyen"
-    yvar <- "Fiabilite"
-    xlabel <- "Temps moyen de parsing (ms)"
-    ylabel <- "Taux de succès (%)"
-    titre <- "Front de Pareto : Temps vs Fiabilité"
-    # Plus bas temps, plus haut taux de succès
-    is_dominated <- function(i) {
-      any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Fiabilite > stats$Fiabilite[i])
-    }
-    front <- !sapply(1:nrow(stats), is_dominated)
-  } else {
-    stop("Impossible de générer le front de Pareto : ni précision ni fiabilité disponibles.")
+  # Calcul du front de Pareto (minimiser X et Y)
+  is_dominated <- function(i) {
+    any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Precision_Moyenne < stats$Precision_Moyenne[i])
   }
-
+  front <- !sapply(1:nrow(stats), is_dominated)
   stats$Pareto <- ifelse(front, "Front de Pareto", "Dominé")
 
-  # Plot
-  p <- ggplot(stats, aes_string(x = xvar, y = yvar, color = "Pareto", label = "Parser_Type")) +
-    geom_point(size = 5, alpha = 0.8) +
-    geom_text(vjust = -1, fontface = "bold") +
-    scale_color_manual(values = c("Front de Pareto" = "red", "Dominé" = "grey")) +
-    labs(title = titre, x = xlabel, y = ylabel, color = "Statut") +
+  # Coloration : Parsing_Success si dispo, sinon Parser_Type
+  color_col <- if ("Parsing_Success" %in% colnames(stats)) "Parsing_Success" else "Parser_Type"
+
+  p <- ggplot(stats, aes(x = Temps_Moyen, y = Precision_Moyenne, color = .data[[color_col]], shape = Pareto, label = Label)) +
+    geom_point(size = 3, alpha = 0.8) +
+    geom_text(vjust = -1, size = 2.5, check_overlap = TRUE) +
+    scale_color_gradient(low = "grey", high = "green", na.value = "red") +
+    labs(title = ifelse(scaled, "Front de Pareto global (échelle limitée) : Temps vs Précision", "Front de Pareto global : Temps vs Précision"),
+         x = "Temps moyen de parsing (ms)",
+         y = "Erreur de précision moyenne (px, plus bas = mieux)",
+         color = ifelse(color_col == "Parsing_Success", "Taux de succès", "Parseur"),
+         shape = "Statut") +
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
@@ -491,11 +481,97 @@ graphique_pareto_temps <- function(donnees_list) {
   # Relier les points du front de Pareto
   pareto_points <- stats[front, ]
   if (nrow(pareto_points) > 1) {
+    pareto_points <- pareto_points[order(pareto_points$Temps_Moyen, decreasing = FALSE), ]
+    p <- p + geom_path(data = pareto_points, aes(x = Temps_Moyen, y = Precision_Moyenne), color = "red", size = 1.2, inherit.aes = FALSE)
+  }
+
+  # Version scaled : limite l'axe X et Y à Q3+1.5*IQR
+  if (scaled) {
+    Q1_x <- quantile(stats$Temps_Moyen, 0.25, na.rm = TRUE)
+    Q3_x <- quantile(stats$Temps_Moyen, 0.75, na.rm = TRUE)
+    IQR_x <- Q3_x - Q1_x
+    max_x <- Q3_x + 1.5 * IQR_x
+    min_x <- max(0, Q1_x - 1.5 * IQR_x)
+    Q1_y <- quantile(stats$Precision_Moyenne, 0.25, na.rm = TRUE)
+    Q3_y <- quantile(stats$Precision_Moyenne, 0.75, na.rm = TRUE)
+    IQR_y <- Q3_y - Q1_y
+    max_y <- Q3_y + 1.5 * IQR_y
+    min_y <- max(0, Q1_y - 1.5 * IQR_y)
+    p <- p + coord_cartesian(xlim = c(min_x, max_x), ylim = c(min_y, max_y))
+  }
+
+  nom_fichier <- ifelse(scaled, "analysis_results/inter_parseurs/front_pareto_global_scaled.png", "analysis_results/inter_parseurs/front_pareto_global.png")
+  ggsave(nom_fichier, p, width = 13, height = 8, bg = "white")
+  if (interactive()) print(p)
+  return(p)
+}
+
+# 6c. Pareto optimisation (front de Pareto) temps/précision ou temps/fiabilité pour tous les couples parseur/config
+# Un point par (parseur, config), front de Pareto global
+
+graphique_pareto_temps_parseur_config <- function(donnees_list) {
+  donnees <- donnees_list$donnees
+  if (!donnees_list$has_config) {
+    cat("Front de Pareto global parseur/config non disponible : données de configuration manquantes\n")
+    return(NULL)
+  }
+  # Calculer les moyennes par couple (parseur, config)
+  stats <- donnees %>%
+    group_by(Parser_Type, Copy_Config) %>%
+    summarise(
+      Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
+      Precision_Moyenne = if ("Precision_Error_Avg_px" %in% colnames(donnees)) mean(Precision_Error_Avg_px[Precision_Error_Avg_px != -1], na.rm = TRUE) else NA,
+      Fiabilite = if ("Parsing_Success" %in% colnames(donnees)) sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100 else NA,
+      .groups = "drop"
+    )
+  # Choix des axes : priorité à la précision si dispo, sinon fiabilité
+  if (!all(is.na(stats$Precision_Moyenne))) {
+    xvar <- "Temps_Moyen"
+    yvar <- "Precision_Moyenne"
+    xlabel <- "Temps moyen de parsing (ms)"
+    ylabel <- "Erreur de précision moyenne (px, plus bas = mieux)"
+    titre <- "Front de Pareto global : Temps vs Précision (tous parseurs/configs)"
+    # Plus bas = mieux pour les deux axes
+    is_dominated <- function(i) {
+      any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Precision_Moyenne < stats$Precision_Moyenne[i])
+    }
+    front <- !sapply(1:nrow(stats), is_dominated)
+  } else if (!all(is.na(stats$Fiabilite))) {
+    xvar <- "Temps_Moyen"
+    yvar <- "Fiabilite"
+    xlabel <- "Temps moyen de parsing (ms)"
+    ylabel <- "Taux de succès (%)"
+    titre <- "Front de Pareto global : Temps vs Fiabilité (tous parseurs/configs)"
+    # Plus bas temps, plus haut taux de succès
+    is_dominated <- function(i) {
+      any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Fiabilite > stats$Fiabilite[i])
+    }
+    front <- !sapply(1:nrow(stats), is_dominated)
+  } else {
+    stop("Impossible de générer le front de Pareto : ni précision ni fiabilité disponibles.")
+  }
+  stats$Pareto <- ifelse(front, "Front de Pareto", "Dominé")
+  # Pour l'affichage, concaténer parseur et config
+  stats$Label <- paste0(stats$Parser_Type, " | ", stats$Copy_Config)
+  # Plot
+  p <- ggplot(stats, aes_string(x = xvar, y = yvar, color = "Pareto", label = "Label")) +
+    geom_point(size = 4, alpha = 0.8) +
+    geom_text(vjust = -1, fontface = "bold", size = 3) +
+    scale_color_manual(values = c("Front de Pareto" = "red", "Dominé" = "grey")) +
+    labs(title = titre, x = xlabel, y = ylabel, color = "Statut") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "top"
+    )
+  # Relier les points du front de Pareto
+  pareto_points <- stats[front, ]
+  if (nrow(pareto_points) > 1) {
     pareto_points <- pareto_points[order(pareto_points[[xvar]], decreasing = FALSE), ]
     p <- p + geom_path(data = pareto_points, aes_string(x = xvar, y = yvar), color = "red", size = 1.2)
   }
-
-  ggsave("analysis_results/inter_parseurs/pareto_temps_moyens.png", p, width = 10, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/pareto_temps_moyens_global_parseur_config.png", p, width = 13, height = 8, bg = "white")
   if (interactive()) print(p)
   return(p)
 }
@@ -553,7 +629,7 @@ graphique_erreurs_coins <- function(donnees_list) {
   cat(paste0("Graphique des erreurs par coin : ", nb_points_filtres, " points aberrants filtrés (", 
              pourcentage_filtre, "% des données)\n"))
   
-  # Créer le graphique SANS filtrer les valeurs aberrantes
+  # Créer le graphique SANS filtrage des valeurs aberrantes
   p <- ggplot(donnees_coins, aes(x = Coin, y = Erreur, fill = Parser_Type)) +
     geom_boxplot(alpha = 0.7) +
     scale_fill_manual(values = COULEURS_PARSEURS) +
@@ -1037,7 +1113,8 @@ analyse_comparative_inter_parseurs <- function(chemin_csv) {
     evolution_performances = graphique_evolution_performances(donnees_list),
     scatter_temps_precision = graphique_scatter_temps_precision(donnees_list),
     violin_temps = graphique_violin_temps(donnees_list),
-    pareto_temps = graphique_pareto_temps(donnees_list),
+    front_pareto_global = graphique_pareto_temps_global(donnees_list, lisser = FALSE, scaled = FALSE),
+    front_pareto_global_scaled = graphique_pareto_temps_global(donnees_list, lisser = FALSE, scaled = TRUE),
     erreurs_coins = graphique_erreurs_coins(donnees_list),
     tableau_performances = generer_tableau_performances(donnees_list),
     radar_performance = graphique_radar_performance(donnees_list),

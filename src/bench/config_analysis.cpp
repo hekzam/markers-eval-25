@@ -234,7 +234,7 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
     if (dot_pos != std::string::npos) {
         base_filename = base_filename.substr(0, dot_pos);
     }
-    
+
     std::string metadata_path = "./copies/metadata/" + base_filename + ".json";
     std::ifstream atomic_boxes_file(metadata_path);
     if (!atomic_boxes_file.is_open()) {
