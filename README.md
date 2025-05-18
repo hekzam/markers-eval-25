@@ -115,11 +115,7 @@ Une fois la compilation terminée, vous pouvez générer des copies d'examen ave
 Utilisez la commande suivante pour générer des copies avec des options personnalisées :
 
 ```sh
-# Si vous avez compilé avec CMake
 ./build-cmake/create-copie [options]
-
-# Si vous avez compilé avec Meson
-./build/create-copie [options]
 ```
 
 Les copies générées sont sauvegardées dans le dossier **copies/**.
@@ -206,11 +202,7 @@ Le programme `expl_pars` (Exploratory Parser) est un outil d'analyse d'images qu
 ### Utilisation
 
 ```sh
-# Si vous avez compilé avec CMake
 ./build-cmake/expl_pars <output_dir> <atomic_boxes.json> <image1> [image2] [image3] ...
-
-# Si vous avez compilé avec Meson
-./build/expl_pars <output_dir> <atomic_boxes.json> <image1> [image2] [image3] ...
 ```
 
 - `output_dir` : Répertoire où seront enregistrés les résultats
@@ -273,11 +265,7 @@ Les zones de type "marker" avec des positions "tl", "tr", "bl", "br" définissen
 #### Utilisation avec des images modifiées
 
 ```sh
-# Modifier d'abord une image
 ./build-cmake/modifier copies/copie1.png -r=5 -cb=10,5
-
-# Puis analyser l'image modifiée
-./build-cmake/expl_pars output/ description.json calibrated_img.png
 ```
 
 ## Exécution du benchmark
@@ -293,11 +281,7 @@ Vous disposez de deux méthodes pour exécuter les benchmarks :
 Spécifiez directement tous les paramètres dans votre commande :
 
 ```sh
-# Si vous avez compilé avec CMake
 ./build-cmake/bench --benchmark [nom-du-benchmark] [autres-options]
-
-# Si vous avez compilé avec Meson
-./build/bench --benchmark [nom-du-benchmark] [autres-options]
 ```
 
 Exemple :
@@ -310,11 +294,7 @@ Exemple :
 Exécutez simplement la commande en spécifiant au minimum le type de benchmark :
 
 ```sh
-# Si vous avez compilé avec CMake
 ./build-cmake/bench --benchmark [nom-du-benchmark]
-
-# Si vous avez compilé avec Meson
-./build/bench --benchmark [nom-du-benchmark]
 ```
 
 Le programme vous guidera ensuite pour saisir les autres paramètres via une interface interactive dans le terminal.
@@ -326,11 +306,7 @@ Le programme vous guidera ensuite pour saisir les autres paramètres via une int
 Vous pouvez également exécuter une série de benchmarks depuis un fichier texte contenant les commandes :
 
 ```sh
-# Si vous avez compilé avec CMake
 ./build-cmake/bench --batch-file [chemin-vers-fichier]
-
-# Si vous avez compilé avec Meson
-./build/bench --batch-file [chemin-vers-fichier]
 ```
 
 Chaque ligne du fichier doit contenir un type de benchmark et ses options. Les lignes vides ou commençant par `#` sont ignorées.
@@ -451,11 +427,7 @@ Le module offre plusieurs transformations et dégradations qui peuvent être app
 L'outil peut être utilisé directement en ligne de commande pour traiter des images individuelles :
 
 ```sh
-# Si vous avez compilé avec CMake
 ./build-cmake/modifier <chemin_image> [options]
-
-# Si vous avez compilé avec Meson
-./build/modifier <chemin_image> [options]
 ```
 
 #### Modes d'utilisation

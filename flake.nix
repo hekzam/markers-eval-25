@@ -39,6 +39,7 @@
 
             # Dépendances propagées dont les utilisateurs de ce paquet auront besoin
             propagatedBuildInputs = with pkgs; [
+              python3
               typst
             ];
 
