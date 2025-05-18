@@ -180,6 +180,18 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 ./build-cmake/create-copie --tl circle:outlined --tr circle:outlined --bl none --br qrcode:encoded --header qrcode:encoded --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
 ```
 
+### Flux de travail de génération
+
+1. Le processus commence par l'exécution du programme `create-copie` qui analyse les arguments de la ligne de commande via `gen_copies.cpp`.
+2. Les arguments sont convertis en paramètres de style (`CopyStyleParams`) et en configuration de marqueurs (`CopyMarkerConfig`).
+3. La fonction `create_copy` dans `create_copy.cpp` est alors appelée avec ces paramètres.
+4. Cette fonction:
+   - Crée les répertoires nécessaires (`./copies` et `./copies/metadata`)
+   - Construit une chaîne de paramètres à transmettre à Typst
+   - Exécute la commande `typst compile` pour générer le fichier PDF/PNG
+   - Exécute la commande `typst query` pour extraire les métadonnées (positions des zones/marqueurs)
+5. Les métadonnées sont sauvegardées dans `./copies/metadata/` au format JSON pour une utilisation ultérieure.
+
 ## Outil d'analyse d'images (expl_pars)
 
 Le programme `expl_pars` (Exploratory Parser) est un outil d'analyse d'images qui permet de détecter les marqueurs, redresser les images, et extraire des zones spécifiques pour leur traitement ultérieur.
@@ -415,7 +427,7 @@ Les résultats des benchmarks sont sauvegardés dans le dossier `output/csv/` au
 
 #### Exemple 3 : Benchmark complet avec options avancées
 ```sh
-./build-cmake/bench --benchmark gen-parse --nb-copies 10 --parser-type QRCODE --marker-config "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded)" --encoded-marker-size 15 --warmup-iterations 2 --seed 42
+./build-cmake/bench --benchmark gen-parse --nb-copies 20 --parser-type SHAPE --marker-config "(square,square,square,qrcode:encoded,none)" --encoded-marker-size 20 --unencoded-marker-size 8 --warmup-iterations 2 --seed 42
 ```
 
 ## Module de modification d'images
@@ -501,31 +513,30 @@ Vous pouvez contrôler le comportement du module via l'option `--seed` :
 │   └── common.h               # Définitions de structures communes
 ├── src/                       # Code source C++ principal
 │   ├── bench/                 # Code source des benchmarks
-│   ├── benchmark.cpp          # Outil de benchmarking
-│   ├── expl_pars.cpp          # Parseur principal
-│   ├── typst_interface.cpp    # Interface avec Typst
+│   │   ├── config_analysis.cpp # Analyse des configurations
+│   │   └── gen_parse.cpp      # Génération et parsing de marqueurs
+│   ├── external-tools/        # Outils externes
+│   │   ├── create_copy.cpp    # Création de copies d'examen
+│   │   ├── create_copy.h      # Définitions pour création de copies
+│   │   ├── modifier_constants.h # Constantes pour modifications
+│   │   ├── modifier.cpp       # Application de modifications d'image
+│   │   └── modifier.h         # Définitions pour modifications
+│   ├── parser/                # Implémentations des parseurs de marqueurs
 │   ├── utils/                 # Utilitaires partagés
-│   ├── parser/                # Implémentation des parseurs de marqueurs
-│   └── external-tools/        # Outils externes (création de copies)
+│   ├── benchmark.cpp          # Point d'entrée pour les benchmarks
+│   ├── expl_pars.cpp          # Point d'entrée pour parser des copies individuelles
+│   ├── modifier_cli.cpp           # Outil de simulation de défauts d'image pour tester la robustesse des marqueurs
+│   └── gen_copies.cpp    # Interface entre les arguments CLI et le générateur de copies
 ├── tools/                     # Scripts et utilitaires
 │   ├── format.py              # Formatter de code (clang-format)
 │   └── pdf_noiser/            # Outils de simulation de défauts
-│       └── printer_emulator.py # Simulateur de défauts d'impression/scan
+│       └── printer_emulator.py # Simulateur de défauts d'impression/scan en Python
 ├── typst/                     # Sources de templates Typst
-│   ├── components/            # Composants réutilisables (marqueurs, conteneurs)
-│   ├── common/                # Variables et utilitaires communs
-│   ├── content/               # Contenu des formulaires
-│   ├── src/                   # Scripts de génération
-│   ├── style/                 # Configuration de style
-│   └── template.typ           # Template principal
 ├── stats-analysis/            # Scripts et outils d'analyse statistique
 ├── copies/                    # Dossier de sortie pour les copies générées
 ├── output/                    # Dossier de sortie pour les résultats d'analyse
 ├── build-cmake/               # Répertoire de build CMake (généré)
 ├── build/                     # Répertoire de build Meson (généré)
-├── CMakeLists.txt             # Configuration du projet CMake
-├── meson.build                # Configuration du projet Meson
-├── meson_options.txt          # Options de configuration Meson
 ├── README.md                  # Ce fichier
 └── LICENSE                    # Fichier de licence
 ```
@@ -551,7 +562,7 @@ Le flux de données typique est le suivant:
 | Composant | Fichiers principaux | Description |
 |-----------|---------------------|-------------|
 | Définition des types de marqueurs | `external-tools/create_copy.h` | Énumération et structures définissant les types de marqueurs |
-| Générateur de copies | `external-tools/create_copy.cpp`, `typst_interface.cpp` | Interface entre C++ et Typst pour générer des copies |
+| Générateur de copies | `external-tools/create_copy.cpp`, `gen_copies.cpp` | Interface entre C++ et Typst pour générer des copies |
 | Parseurs | `parser/*.cpp` | Implémentations de différentes méthodes de détection des marqueurs |
 | Système de benchmark | `benchmark.cpp`, `bench/*.cpp` | Infrastructure pour évaluer et comparer les performances |
 | Simulateur de défauts | `modifier.cpp`, `external-tools/modifier.h` | Fonctions pour simuler les défauts d'impression et de numérisation |
@@ -585,20 +596,15 @@ Pour ajouter un nouveau type de marqueur (par exemple, un marqueur en forme d'é
    };
    ```
 
-3. **Créer un composant Typst** pour votre marqueur dans `typst/components/markers/star.typ`:
+3. **Créer un composant Typst** pour votre marqueur dans `typst/components/star.typ`:
 
    ```typ
    #let star_marker(size: 10pt, outlined: false, content: none, fill_color: black) = {
-     // Implémentation du marqueur en forme d'étoile
-     let shape = polygon.regular(5, radius: size/2, stroke: outlined, fill: if outlined { none } else { fill_color })
-     if content != none {
-       // Ajouter du contenu encodé si nécessaire
-     }
-     shape
+     // Implémentation du marqueur en
    }
    ```
 
-4. **Mettre à jour le système de sélection des marqueurs** dans `typst/components/markers/markers.typ`
+4. **Mettre à jour le système de sélection des marqueurs** dans `typst/components/corner_markers.typ`
 
 #### Guide: Implémenter un nouveau parseur
 
@@ -613,9 +619,9 @@ Pour créer un nouveau parseur (par exemple, pour détecter des marqueurs en for
 
    std::optional<cv::Mat> star_parser(const cv::Mat& img,
    #ifdef DEBUG
-                                      cv::Mat debug_img,
+                                       cv::Mat debug_img,
    #endif
-                                      Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode);
+                                       Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode);
 
    #endif // STAR_PARSER_H
 
@@ -663,8 +669,6 @@ Pour créer un nouveau parseur (par exemple, pour détecter des marqueurs en for
    }
    ```
 
-4. **Mettre à jour le système de build** dans `CMakeLists.txt` et/ou `meson.build`
-
 #### Guide: Ajouter un nouveau benchmark
 
 Pour créer un nouveau benchmark (par exemple, pour évaluer la robustesse aux taches d'encre):
@@ -699,118 +703,70 @@ Pour créer un nouveau benchmark (par exemple, pour évaluer la robustesse aux t
    };
    ```
 
-3. **Mettre à jour le système de build** dans `CMakeLists.txt` et/ou `meson.build`
+## Architecture Typst
 
-#### Exemple pratique: Extension complète
+Typst est un système moderne de composition de documents utilisé dans ce projet pour générer les copies d'examen avec les différents types de marqueurs. Voici la structure du répertoire typst/ telle qu'organisée dans le projet :
 
-Voici un exemple complet d'extension du projet avec un nouveau type de marqueur et son parseur associé:
-
-**Étape 1: Définir le marqueur triangulaire**
-```cpp
-// Dans external-tools/create_copy.h
-enum class MarkerType {
-    // Types existants...
-    TRIANGLE,
-    NONE
-};
-
-// Dans external-tools/create_copy.cpp
-const std::unordered_map<MarkerType, std::string> markerTypeToString = {
-    // Mappings existants...
-    { MarkerType::TRIANGLE, "triangle" },
-};
-
-const std::unordered_map<std::string, MarkerType> stringToMarkerType = {
-    // Mappings existants...
-    { "triangle", MarkerType::TRIANGLE },
-};
+```
+typst/
+├── assets/                  # Ressources graphiques pour les marqueurs
+│   ├── 4x4_1000-*.svg       # Marqueurs ArUco
+│   ├── cross.svg            # Marqueur en forme de croix
+│   ├── marker-custom.svg    # Marqueur personnalisé
+│   └── qr_eye.svg           # Marqueur en forme d'œil de QR code
+├── common/                  # Utilitaires et variables partagées
+│   ├── global_variables.typ # Variables d'état globales
+│   └── utils.typ            # Fonctions utilitaires
+├── components/              # Composants réutilisables
+│   ├── barcode.typ          # Génération de codes-barres avec Tiaoma
+│   ├── container.typ        # Conteneur générique avec métadonnées
+│   ├── corner_markers.typ   # Placement des marqueurs dans les coins
+│   └── id-consent-box.typ   # Zone de consentement/identification
+├── content/                 # Contenu des copies d'examen
+├── src/                     # Scripts de génération
+│   └── gen_copy.typ         # Générateur de copies
+├── style/                   # Configuration de style
+└── template.typ             # Template principal appelé par C++
 ```
 
-**Étape 2: Implémenter le parseur triangulaire**
-```cpp
-// Dans src/parser/triangle_parser.h
-#ifndef TRIANGLE_PARSER_H
-#define TRIANGLE_PARSER_H
+### Fonctionnement de la génération de documents
 
-std::optional<cv::Mat> triangle_parser(const cv::Mat& img,
-#ifdef DEBUG
-                                       cv::Mat debug_img,
-#endif
-                                       Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode);
+Le processus de génération avec Typst fonctionne comme suit :
 
-#endif
+**Entrée via template.typ** : Point d'entrée principal appelé directement par les commandes C++ via `typst compile`.
 
-// Dans src/parser/triangle_parser.cpp
-#include <common.h>
-#include "json_helper.h"
-#include "parser_helper.h"
-#include "triangle_parser.h"
+**Génération des copies** : La fonction `gen-copies` dans `src/gen_copy.typ` configure la page et place les marqueurs.
 
-std::vector<cv::Point2f> detect_triangles(const cv::Mat& img, const cv::Point2i& offset) {
-    // Implémentation de la détection des triangles
-}
+**Placement des marqueurs** : Les marqueurs sont placés dans les coins et en-tête via les fonctions dans `components/corner_markers.typ`.
 
-std::optional<cv::Mat> triangle_parser(const cv::Mat& img,
-#ifdef DEBUG
-                                       cv::Mat debug_img,
-#endif
-                                       Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
-    // Implémentation du parseur
-}
+**Encodage des données** : Les codes QR et autres marqueurs encodables contiennent l'ID de l'examen, le numéro de page et de copie, générés via `components/barcode.typ`.
+
+**Métadonnées JSON** : Pendant la génération, les positions des marqueurs et des boîtes utilisateurs sont enregistrées dans un état `atomic-boxes` qui est ensuite exporté au format JSON via la balise `<atomic-boxes>` pour être utilisé par le système de parsing.
+
+### Génération et utilisation des contenus d'examen
+
+Le système inclut également un mécanisme sophistiqué pour générer le contenu pédagogique des copies d'examen :
+
+**Contenus modulaires** : Le contenu est organisé en modules distincts dans le répertoire `content/` :
+- `content.typ` : Contenu standard d'examen
+- `presentation-grid.typ` : Grilles de présentation structurées
+- `understanding.typ` : Questions de compréhension
+
+**Sélection aléatoire du contenu** : Lors de la génération, la fonction `get-random-content()` dans `src/gen_copy.typ` utilise le paramètre `seed` pour sélectionner aléatoirement un type de contenu parmi les modules disponibles :
+
+```typ
+let blocks = (
+  content,
+  understanding-1,
+  understanding-2,
+  presentation-grid-1,
+  presentation-grid-2
+)
 ```
 
-**Étape 3: Mettre à jour le système de parseur**
-```cpp
-// Dans include/common.h
-enum class ParserType { 
-    // Types existants...
-    TRIANGLE,
-    // ...
-};
+**Positionnement avec marges** : Le contenu est encapsulé dans la fonction `content-with-margins()` qui applique les marges appropriées pour éviter les chevauchements avec les marqueurs placés dans les coins.
 
-// Dans utils/parser_helper.cpp
-ParserType string_to_parser_type(const std::string& parser_type_str) {
-    // Existant...
-    if (parser_type_str == "TRIANGLE") return ParserType::TRIANGLE;
-    // ...
-}
-
-std::optional<cv::Mat> run_parser(ParserType parser_type, const cv::Mat& img,
-#ifdef DEBUG
-                                  cv::Mat& debug_img,
-#endif
-                                  Metadata& meta, std::vector<cv::Point2f>& dst_corner_points, int flag_barcode) {
-    switch (parser_type) {
-        // Existant...
-        case ParserType::TRIANGLE:
-            return triangle_parser(img, 
-#ifdef DEBUG
-                                   debug_img,
-#endif
-                                   meta, dst_corner_points, flag_barcode);
-        // ...
-    }
-}
-```
-
-**Étape 4: Créer un benchmark pour évaluer le marqueur triangulaire**
-```cpp
-// Dans src/bench/triangle_benchmark.h et .cpp
-```
-
-**Étape 5: Tester la nouvelle implémentation**
-```sh
-# Génération d'une copie avec des marqueurs triangulaires
-./build/create-copie --tl triangle --tr triangle --bl triangle --br triangle
-
-# Analyse avec le parseur triangulaire
-./build/expl_pars output/ description.json copies/copy.png
-
-# Benchmark des performances du marqueur triangulaire
-./build/bench --benchmark gen-parse --parser-type TRIANGLE --marker-config "(triangle,triangle,triangle,triangle,none)"
-```
-
-En suivant ces guides, vous pourrez facilement étendre le projet avec de nouveaux types de marqueurs, de nouveaux parseurs et de nouveaux benchmarks, tout en maintenant la cohérence de l'architecture globale.
+**Contrôle via paramètres** : Le paramètre `should-generate-content` permet de générer des copies avec ou sans contenu. Ce mode "sans contenu" est particulièrement utile pour les tests et benchmarks qui se concentrent uniquement sur les marqueurs.
 
 ## Références techniques
 

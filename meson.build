@@ -29,13 +29,13 @@ src_bench_files = [
 ]
 
 src_modifieur_files = [
-    'src/modifier.cpp',
+    'src/modifier_cli.cpp',
     'src/utils/math_utils.cpp',
     'src/external-tools/modifier.cpp'
 ]
 
-src_typst_interface_files = [
-    'src/typst_interface.cpp',
+src_gen_copies_files = [
+    'src/gen_copies.cpp',
     'src/external-tools/create_copy.cpp'
 ]
 
@@ -60,7 +60,7 @@ executable('bench',
            dependencies : deps)
 
 executable('create-copy',
-           src_typst_interface_files,
+           src_gen_copies_files,
            include_directories : inc_dirs,
            dependencies : deps)
 

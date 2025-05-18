@@ -52,13 +52,13 @@ set(SRC_BENCH
 )
 
 set(SRC_MODIFIEUR
-    src/modifier.cpp
+    src/modifier_cli.cpp
     src/utils/math_utils.cpp
     src/external-tools/modifier.cpp
 )
 
 set(SRC_CREATE_COPY
-    src/typst_interface.cpp
+    src/gen_copies.cpp
     src/external-tools/create_copy.cpp
 )
 

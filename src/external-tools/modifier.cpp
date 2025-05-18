@@ -5,8 +5,6 @@
 #include "modifier_constants.h"
 #include "modifier.h"
 
-#include "modifier.h"
-
 void add_salt_pepper_noise(cv::Mat& img, cv::RNG rng, float max_pepper, float max_salt) {
     int amount1 = img.rows * img.cols * max_pepper / 100; // /100 pour passer un pourcentage entier en paramètre
     int amount2 = img.rows * img.cols * max_salt / 100;

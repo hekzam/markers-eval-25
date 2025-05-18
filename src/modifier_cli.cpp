@@ -1,5 +1,5 @@
 /**
- * @file modifier.cpp
+ * @file modifier_cli.cpp
  * @brief Utilitaire en ligne de commande pour appliquer des transformations d'image
  *
  * Cet outil permet d'appliquer diverses transformations et dégradations à une image
