@@ -165,12 +165,12 @@ std::vector<std::pair<std::string, option>> all_config = {
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
                   create_copy(style, marker_config, copy_name, false);
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
-                  int pixel_offset = std::max(img.cols, img.rows) - std::min(img.cols, img.rows);
-                  pixel_offset /= 2;
+                  margin_size = std::max(img.cols, img.rows) - std::min(img.cols, img.rows);
+                  margin_size /= 2;
                   int height = img.rows;
                   int width = img.cols;
-                  cv::copyMakeBorder(img, img, pixel_offset, pixel_offset, pixel_offset, pixel_offset,
-                                     cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+                  cv::copyMakeBorder(img, img, margin_size, margin_size, margin_size, margin_size, cv::BORDER_CONSTANT,
+                                     cv::Scalar(255, 255, 255));
                   affine_transformation = rotate_center(std::get<float>(param), width / 2.0f, height / 2.0f);
                   affine_transformation = affine_transformation(cv::Rect(0, 0, 3, 2));
                   rotate_img(img, std::get<float>(param));
