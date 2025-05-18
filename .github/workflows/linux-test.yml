@@ -19,7 +19,8 @@ jobs:
           cmake --build build-cmake -j
       - name: test
         run: |
-          ./build-cmake/create-copy
-          ./build-cmake/parser output copies/metadata/copy.json copies/copy.png
-          ./build-cmake/modifier copies/copy.png
-          ./build-cmake/bench --benchmark gen-parse --nb-copies 20 --parser-type SHAPE --marker-config "(square,square,square,qrcode:encoded,none)" --encoded-marker-size 20 --unencoded-marker-size 8 --warmup-iterations 2 --seed 42
+          cd build-cmake
+          ./create-copy
+          ./parser output copies/metadata/copy.json copies/copy.png
+          ./modifier copies/copy.png
+          ./bench --benchmark gen-parse --nb-copies 20 --parser-type SHAPE --marker-config "(square,square,square,qrcode:encoded,none)" --encoded-marker-size 20 --unencoded-marker-size 8 --warmup-iterations 2 --seed 42
