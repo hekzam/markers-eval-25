@@ -9,7 +9,6 @@
 #include <benchmark_helper.h>
 #include <math_utils.h>
 #include <json_helper.h>
-#include <benchmark.hpp>
 #include <draw_helper.h>
 
 #include "limite_bench.h"
