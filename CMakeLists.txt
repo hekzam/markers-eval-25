@@ -52,13 +52,13 @@ set(SRC_BENCH
 )
 
 set(SRC_MODIFIEUR
-    src/modifier.cpp
+    src/modifier_cli.cpp
     src/utils/math_utils.cpp
     src/external-tools/modifier.cpp
 )
 
-set(SRC_TYPST_INTERFACE
-    src/typst_interface.cpp
+set(SRC_CREATE_COPY
+    src/gen_copies.cpp
     src/external-tools/create_copy.cpp
 )
 
@@ -83,14 +83,14 @@ set(INCLUDE_DIRS
     "include"
 )
 include_directories(parser PRIVATE ${INCLUDE_DIRS})
-include_directories(benchmark PRIVATE ${INCLUDE_DIRS})
-include_directories(typst_interface PRIVATE ${INCLUDE_DIRS})
+include_directories(bench PRIVATE ${INCLUDE_DIRS})
+include_directories(create-copy PRIVATE ${INCLUDE_DIRS})
 include_directories(modifier PRIVATE ${INCLUDE_DIRS})
 
 # Create the executable
 add_executable(parser ${SRC} ${UTILS_SRC} ${PARSER_SRC})
-add_executable(benchmark ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC} ${BENCHMARK_SRC})
-add_executable(typst_interface ${SRC_TYPST_INTERFACE})
+add_executable(bench ${SRC_BENCH} ${UTILS_SRC} ${PARSER_SRC} ${BENCHMARK_SRC})
+add_executable(create-copy ${SRC_CREATE_COPY})
 add_executable(modifier ${SRC_MODIFIEUR})
 
 # Link the dependencies
@@ -100,13 +100,13 @@ target_link_libraries(parser
         nlohmann_json::nlohmann_json
 )
 
-target_link_libraries(benchmark
+target_link_libraries(bench
     PRIVATE
         ${OpenCV_LIBS}
         nlohmann_json::nlohmann_json
 )
 
-target_link_libraries(typst_interface
+target_link_libraries(create-copy
     PRIVATE
         ${OpenCV_LIBS}
         nlohmann_json::nlohmann_json
@@ -120,10 +120,10 @@ target_link_libraries(modifier
 
 if(ENABLE_ZBAR)
 target_link_libraries(parser PRIVATE ${ZBAR_LINK_LIBRARIES})
-target_link_libraries(benchmark PRIVATE ${ZBAR_LINK_LIBRARIES})
-target_link_libraries(typst_interface PRIVATE ${ZBAR_LINK_LIBRARIES})
+target_link_libraries(bench PRIVATE ${ZBAR_LINK_LIBRARIES})
+target_link_libraries(create-copy PRIVATE ${ZBAR_LINK_LIBRARIES})
 else()
 target_link_libraries(parser PRIVATE ZXing::ZXing)
-target_link_libraries(benchmark PRIVATE ZXing::ZXing)
-target_link_libraries(typst_interface PRIVATE ZXing::ZXing)
+target_link_libraries(bench PRIVATE ZXing::ZXing)
+target_link_libraries(create-copy PRIVATE ZXing::ZXing)
 endif()

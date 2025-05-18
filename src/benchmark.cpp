@@ -35,9 +35,9 @@ std::vector<std::pair<std::string, Config>> default_config = {
         "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
     { "parser-type",
       { "Parser type",
-        "The type of parser to use (ARUCO, CIRCLE, QRCODE, CUSTOM_MARKER, SHAPE, CENTER_MARKER_PARSER, DEFAULT_PARSER, "
+        "The type of parser to use (ARUCO, CIRCLE, ZXING, SHAPE, CENTER_PARSER, DEFAULT_PARSER, "
         "EMPTY)",
-        std::string("QRCODE") } },
+        std::string("ZXING") } },
     { "encoded-marker-size", { "Encoded marker size", "The size of the encoded markers", 13 } },
     { "unencoded-marker-size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
     { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },

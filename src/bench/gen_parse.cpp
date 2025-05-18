@@ -16,7 +16,6 @@
 #include "utils/parser_helper.h"
 #include "utils/math_utils.h"
 #include "utils/draw_helper.h"
-#include "benchmark.hpp"
 #include "gen_parse.h"
 #include <modifier.h>
 
@@ -76,7 +75,6 @@ double euclidean_distance(const cv::Point2f& p1, const cv::Point2f& p2) {
 /**
  * @brief Calcule les coordonnées des coins théoriques d'une page A4
  *
- * @param src_img_size Dimensions théoriques de l'image source (210x297 mm)
  * @param dst_img_size Dimensions de l'image cible en pixels
  * @return std::vector<cv::Point2f> Les quatre coins de la page dans l'ordre: haut-gauche, haut-droit, bas-gauche,
  * bas-droit
@@ -95,7 +93,6 @@ std::vector<cv::Point2f> calculate_theoretical_corners(const cv::Point2f& dst_im
 /**
  * @brief Calcule l'erreur de précision entre les coins originaux et les coins calibrés
  *
- * @param src_img_size Dimensions théoriques de l'image source (210x297 mm)
  * @param dst_img_size Dimensions de l'image calibrée en pixels
  * @param transform_matrix Matrice de transformation appliquée à l'image
  * @param rectification_transform Matrice de transformation affine du parser
@@ -150,6 +147,16 @@ std::vector<double> calculate_precision_error(const cv::Point2f& dst_img_size, c
     return { -1.0, -1.0, -1.0, -1.0, -1.0 };
 }
 
+/**
+ * @brief Obtient le chemin d'accès au fichier de métadonnées associé à une copie
+ *
+ * Cette fonction construit le chemin d'accès vers le fichier JSON de métadonnées
+ * correspondant à une copie générée, en se basant sur son nom de fichier sans extension.
+ * Les fichiers de métadonnées sont stockés dans le répertoire "./copies/metadata/".
+ *
+ * @param filename Nom du fichier de la copie (avec ou sans extension)
+ * @return std::string Chemin complet vers le fichier de métadonnées JSON
+ */
 std::string get_metadata_path(const std::string& filename) {
     return "./copies/metadata/" + filename + ".json";
 }
@@ -179,7 +186,7 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
         }
 
         // Permettre à l'utilisateur de spécifier explicitement le parseur
-        ParserType selected_parser = ParserType::QRCODE; // Parseur par défaut: QRCODE
+        ParserType selected_parser = ParserType::ZXING; // Parseur par défaut: ZXING
 
         // Si le parseur est spécifié dans la configuration, l'utiliser
         if (config.find("parser-type") != config.end()) {
@@ -187,11 +194,11 @@ validate_parameters(const std::unordered_map<std::string, Config>& config) {
             selected_parser = string_to_parser_type(parser_type_str);
 
             if (parser_type_str != parser_type_to_string(selected_parser)) {
-                std::cout << "Warning: Unknown parser type '" << parser_type_str << "', using default QRCODE parser."
+                std::cout << "Warning: Unknown parser type '" << parser_type_str << "', using default ZXING parser."
                           << std::endl;
             }
         } else {
-            std::cout << "Note: No parser type specified, using default QRCODE parser." << std::endl;
+            std::cout << "Note: No parser type specified, using default ZXING parser." << std::endl;
         }
 
         CsvMode csv_mode = CsvMode::OVERWRITE;
@@ -241,9 +248,9 @@ void warmup_copy(int warmup_iterations, const CopyStyleParams& style_params,
 
         CopyStyleParams local_style_params = style_params;
         local_style_params.seed = warmup_seed;
-        
+
         create_copy(local_style_params, copy_marker_config, warmup_copy_name, false);
-        std::cout << "  Warmup iteration " << (i + 1) << "/" << warmup_iterations 
+        std::cout << "  Warmup iteration " << (i + 1) << "/" << warmup_iterations
                   << " completed with seed: " << warmup_seed << std::endl;
     }
 }
@@ -285,32 +292,32 @@ void warmup_parsing(int warmup_iterations, const cv::Point2f& src_img_size, Pars
         std::cout << "No warmup iterations requested." << std::endl;
         return;
     }
-    
+
     for (int i = 0; i < warmup_iterations; i++) {
         std::string warmup_copy_name = "warmup" + std::to_string(i + 1);
         std::string warmup_filename = warmup_copy_name + ".png";
         std::cout << "Parsing warmup copy: " << warmup_filename << "..." << std::endl;
-        
+
         // Récupérer le fichier de métadonnées pour cette copie d'échauffement
         std::string json_path = get_metadata_path(warmup_copy_name);
         std::cout << "  Loading metadata from: " << json_path << std::endl;
-        
+
         // Vérifier si le fichier JSON existe
         if (!std::filesystem::exists(json_path)) {
             std::cerr << "  Error: Metadata file not found for warmup: " << json_path << std::endl;
             continue;
         }
-        
+
         // Lire les métadonnées spécifiques à cette copie d'échauffement
         json atomic_boxes_json = parse_json_file(json_path);
         if (atomic_boxes_json.empty()) {
             std::cerr << "  Error: Failed to parse metadata for warmup: " << json_path << std::endl;
             continue;
         }
-        
+
         std::vector<std::optional<std::shared_ptr<AtomicBox>>> corner_markers;
         std::vector<std::vector<std::shared_ptr<AtomicBox>>> user_boxes_per_page;
-        
+
         auto atomic_boxes = json_to_atomicBox(atomic_boxes_json);
         differentiate_atomic_boxes(atomic_boxes, corner_markers, user_boxes_per_page);
 
@@ -329,9 +336,9 @@ void warmup_parsing(int warmup_iterations, const cv::Point2f& src_img_size, Pars
                                                       cv::Mat(),
 #endif
                                                       meta, dst_corner_points, copy_config_to_flag(copy_marker_config));
-        
-        std::cout << "  Warmup parsing " << (i + 1) << "/" << warmup_iterations 
-                  << " completed with " << (transform.has_value() ? "success" : "failure") << std::endl;
+
+        std::cout << "  Warmup parsing " << (i + 1) << "/" << warmup_iterations << " completed with "
+                  << (transform.has_value() ? "success" : "failure") << std::endl;
     }
 }
 

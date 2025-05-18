@@ -1,39 +1,35 @@
 {
+  # Sources/dépendances externes
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
-
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";  # Paquets Nix standard de la branche instable
+    flake-utils.url = "github:numtide/flake-utils";       # Utilitaires pour écrire des flakes
+    flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";  # Pour la compatibilité avec Nix sans flake
   };
 
-  outputs = { self, nixpkgs, flake-utils,flake-compat }:
+  # Définition des sorties de ce flake
+  outputs = { self, nixpkgs, flake-utils, flake-compat }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
       in rec {
+        # Définition des paquets fournis par ce flake
         packages = rec {
           nixpkgs = pkgs;
-          parser = pkgs.stdenv.mkDerivation {
-            pname = "hekzam-parser";
+          
+          # Dérivation du paquet principal
+          main = pkgs.stdenv.mkDerivation {
+            pname = "hekzam-marker";
             version = if (self ? rev) then self.shortRev else self.dirtyShortRev;
-
-            # src = pkgs.lib.sourceByRegex ./. [
-            #   "^(src|include)"
-            #   "^(src|include)/.*\.(h|hpp)"
-            #   "^(src|include)/.*\.(c|cpp)"
-            #   "^(typst).*"
-            #   "^.*\.sh"
-            #   "^CMakeLists\.txt"
-            # ];
             src = ./.;
             
+            # Dépendances de construction
             nativeBuildInputs = with pkgs; [
-              # cmake
               ninja
               pkg-config
               meson
             ];
 
+            # Dépendances d'exécution
             buildInputs = with pkgs; [
               opencv
               zxing-cpp
@@ -41,36 +37,35 @@
               (lib.getDev zbar)
             ];
 
+            # Dépendances propagées dont les utilisateurs de ce paquet auront besoin
             propagatedBuildInputs = with pkgs; [
+              python3
               typst
             ];
 
-            # cmakeFlags = [
-            #   "-G Ninja"
-            #   "-DCMAKE_BUILD_TYPE=Release"
-            #   "-DENABLE_ZBAR=ON"
-            # ];
-
+            # Étapes d'installation
             installPhase = ''
               mkdir -p $out/bin
-              cp -r ./benchmarker $out/bin/benchmark
-              cp -r ./typst_interface $out/bin/typst_interface
+              cp -r ./bench $out/bin/bench
+              cp -r ./create-copy $out/bin/create-copy
               cp -r ./modifier $out/bin/modifier
               cp -r ./parser $out/bin/parser
 
               # cp -r ./* $out/bin
-              if [ -f $out/bin/benchmarker ]; then
-                mv $out/bin/benchmarker $out/bin/benchmark
+              if [ -f $out/bin/bench ]; then
+                mv $out/bin/bench $out/bin/bench
               fi
             '';
           };
 
+          # Paquet d'analyse pour le traitement statistique
           analysis = pkgs.stdenv.mkDerivation {
             pname = "hekzam-analysis";
             version = if (self ? rev) then self.shortRev else self.dirtyShortRev;
 
             src = ./stats-analysis;
             
+            # Dépendances pour l'analyse statistique
             buildInputs = with pkgs; [
               python3
               R
@@ -84,33 +79,40 @@
 
             installPhase = ''
               mkdir -p $out/bin
-              cp -r ./benchmarker $out/bin/benchmark
-              cp -r ./typst_interface $out/bin/typst_interface
+              cp -r ./bench $out/bin/bench
+              cp -r ./create-copy $out/bin/create-copy
               cp -r ./modifier $out/bin/modifier
               cp -r ./parser $out/bin/parser
 
               # cp -r ./* $out/bin
-              if [ -f $out/bin/benchmarker ]; then
-                mv $out/bin/benchmarker $out/bin/benchmark
+              if [ -f $out/bin/bench ]; then
+                mv $out/bin/bench $out/bin/bench
               fi
             '';
           };
 
-          default = parser;
+          # Définir le paquet par défaut comme étant le principal
+          default = main;
         };
 
+        # Environnements de développement
         devShells = {
-          default = packages.parser.overrideAttrs (oldAttrs: {
+          # L'environnement de développement par défaut étend le paquet principal avec des outils de développement
+          default = packages.main.overrideAttrs (oldAttrs: {
             nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
               pkgs.gdb
               pkgs.llvmPackages_latest.clang-tools
             ];
           });
+          
+          # Environnement de test avec seulement le paquet principal
           test = pkgs.mkShell {
             packages = [
-              packages.parser
-             ];   
+              packages.main
+            ];   
           };
+          
+          # Environnement pour l'analyse statistique
           stats-analysis = pkgs.callPackage ./stats-analysis/shell.nix {
             inherit pkgs;
           };

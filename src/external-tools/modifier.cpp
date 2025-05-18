@@ -5,8 +5,6 @@
 #include "modifier_constants.h"
 #include "modifier.h"
 
-#include "modifier.h"
-
 void add_salt_pepper_noise(cv::Mat& img, cv::RNG rng, float max_pepper, float max_salt) {
     int amount1 = img.rows * img.cols * max_pepper / 100; // /100 pour passer un pourcentage entier en paramètre
     int amount2 = img.rows * img.cols * max_salt / 100;
@@ -30,9 +28,9 @@ void add_salt_pepper_noise(cv::Mat& img, cv::RNG rng, float max_pepper, float ma
  * @brief Ajout de bruit gaussien
  *
  * @param img Image à modifier
- * @param contrast contrast = 1 : Pas de changement; contrast > 1 : Augmente le contraste; 0 < contrast < 1 : Réduit le
- * contraste
- * @param bright bright = 0 : Neutre; bright > 0 : Éclaircit; bright < 0 : Assombrit
+ * @param rng Générateur de nombres aléatoires
+ * @param dispersion Niveau de dispersion du bruit
+ * @param offset Décalage pour le bruit
  *
  */
 
