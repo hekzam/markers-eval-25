@@ -41,7 +41,8 @@ src_gen_copies_files = [
 
 benchmark_src = [
     'src/bench/gen_parse.cpp',
-    'src/bench/config_analysis.cpp'
+    'src/bench/config_analysis.cpp',
+    'src/bench/limite_bench.cpp',
 ]
 
 utils_src = run_command('find', 'src/utils', '-name', '*.cpp', '-o', '-name', '*.h', check: true).stdout().strip().split('\n')
