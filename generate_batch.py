@@ -45,8 +45,8 @@ if gen_parse_bench:
 
 config_analysis_bench = True
 if config_analysis_bench:
-    for config in set_config:
-        line.append(f"config-analysis --header-marker-size {header_marker_size} --marker-config {config} --unencoded-marker-size {unencoded_marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename config-analysis.csv {"" if first else "--csv-mode append"}\n")
+    for config_ in set_config:
+        line.append(f"config-analysis --header-marker-size {header_marker_size} --marker-config {config_} --unencoded-marker-size {unencoded_marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename config-analysis.csv {"" if first else "--csv-mode append"}\n")
         first = False
 
 limite_bench = True
