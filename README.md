@@ -319,6 +319,45 @@ config-analysis --marker-config "(datamatrix:encoded,datamatrix:encoded,datamatr
 gen-parse --nb-copies 2 --marker-config "(circle:outlined,circle:outlined,circle:outlined,circle:outlined,none)"
 ```
 
+#### 4. Génération automatique de fichiers batch
+
+Pour faciliter l'exécution de tests à grande échelle, vous pouvez utiliser le script Python `generate_batch.py` qui génère automatiquement un fichier batch contenant plusieurs commandes de benchmark basées sur les configurations définies dans `all_config.json`.
+
+Le fichier `all_config.json` contient une liste de paires `[configuration_marqueur, type_parseur]` qui seront utilisées pour générer les commandes.
+
+```sh
+# Exécuter le script de génération de batch
+python3 generate_batch.py
+```
+
+**Configuration du script :**
+
+Vous pouvez modifier les variables suivantes dans le script avant de l'exécuter :
+
+```python
+nb_copies_per_config = 20  # Nombre de copies pour chaque configuration
+header_marker_size = 10    # Taille du marqueur d'en-tête
+unencoded_marker_size = 8  # Taille du marqueur non encodé
+encoded_marker_size = 20   # Taille du marqueur encodé
+dpi = 200                  # Résolution en DPI pour la génération
+```
+
+**Types de benchmarks générés :**
+
+Le script peut générer des commandes pour différents types de benchmarks :
+- `gen_parse_bench = True` : Active la génération de commandes pour le benchmark gen-parse
+- `config_analysis_bench = True` : Active la génération de commandes pour le benchmark config-analysis
+- `limite_bench = True` : Active la génération de commandes pour le benchmark limite
+- `random_bench = True` : Mélange aléatoirement l'ordre des commandes générées
+
+**Résultat et utilisation :**
+
+Le script crée un fichier `batch.txt` qui peut être utilisé directement avec l'option `--batch-file` :
+
+```sh
+./build-cmake/bench --batch-file batch.txt
+```
+
 #### Types de benchmark disponibles
 
 Voici les différents types de benchmarks que vous pouvez exécuter :
