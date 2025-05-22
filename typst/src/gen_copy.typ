@@ -22,7 +22,7 @@
     understanding-1,
     understanding-2,
     presentation-grid-1,
-    presentation-grid-2
+    presentation-grid-2,
   )
 
   let (rng,arr) = integers-f(rng, low: 0, high: blocks.len(), size: 1)
@@ -95,7 +95,7 @@
       let place-corner = (corner) => {
         let pos = positions.at(corner)
         
-        if marker-config.at(corner) != "none" {
+        if marker-config.at(corner) != "#" {
           place(
             dx: pos.x,
             dy: pos.y,
@@ -114,7 +114,7 @@
       }
 
       // Place le marqueur d'en-tête au centre haut de la page
-      if marker-config.at("header") != "none" {
+      if marker-config.at("header") != "#" {
         place-header-marker(marker-config.at("header"), style-params)
       }
       

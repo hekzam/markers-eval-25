@@ -33,7 +33,7 @@ std::vector<std::pair<std::string, Config>> default_config = {
     { "warmup-iterations", { "Warm-up iterations", "Number of warm-up iterations to run before benchmarking", 0 } },
     { "marker-config",
       { "Marker configuration", "The configuration of the markers to use",
-        "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
+        "(qrcode:enc,qrcode:enc,qrcode:enc,qrcode:enc,#)" } },
     { "parser-type",
       { "Parser type",
         "The type of parser to use (ARUCO, CIRCLE, ZXING, SHAPE, CENTER_PARSER, DEFAULT_PARSER, "
@@ -58,7 +58,7 @@ std::vector<std::pair<std::string, Config>> default_config = {
 std::vector<std::pair<std::string, Config>> config_analysis_config = {
     { "marker-config",
       { "Marker configuration", "The configuration of the markers to use",
-        "(qrcode:encoded,qrcode:encoded,qrcode:encoded,qrcode:encoded,none)" } },
+        "(qrcode:enc,qrcode:enc,qrcode:enc,qrcode:enc,#)" } },
     { "encoded-marker-size", { "Encoded marker size", "The size of the encoded markers", 13 } },
     { "unencoded-marker-size", { "Unencoded marker size", "The size of the unencoded markers", 10 } },
     { "header-marker-size", { "Header marker size", "The size of the header marker", 7 } },

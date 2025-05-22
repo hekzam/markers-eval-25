@@ -59,10 +59,10 @@
  */
 #let create-tiaoma-barcode(prefix-position, type, unencoded-marker-size, encoded-marker-size, color) = {
   let (copy-i, page-i) = get-indexes()
-  let barcode-data = (prefix-position, ..if type.contains("encoded") {
+  let barcode-data = (prefix-position, ..if type.contains("enc") {
     (str(copy-i), str(page-i), get-exam-id())
   })
-  let marker-size = if type.contains("encoded") {
+  let marker-size = if type.contains("enc") {
     encoded-marker-size
   } else {
     unencoded-marker-size
@@ -108,8 +108,8 @@
 #let create-corner-marker(prefix-position, type, style-params) = {
   if type == none { return none }
   let color = luma(style-params.grey_level)
-  let fill-color = if type.contains("outline") { white } else { color }
-  let stroke-width = if type.contains("outline") { style-params.stroke_width } else { 0mm }
+  let fill-color = if type.contains("out") { white } else { color }
+  let stroke-width = if type.contains("out") { style-params.stroke_width } else { 0mm }
   let enc-marker-size = style-params.encoded_marker_size
   let un-marker-size = style-params.unencoded_marker_size
 

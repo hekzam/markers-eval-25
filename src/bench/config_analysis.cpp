@@ -207,7 +207,10 @@ void config_analysis_benchmark(const std::unordered_map<std::string, Config>& co
     std::string copy_name = "copy-" + std::to_string(random_suffix);
     style_params.seed = random_suffix;
 
-    create_copy(style_params, copy_marker_config, copy_name);
+    bool copy_success = create_copy(style_params, copy_marker_config, copy_name);
+    if (!copy_success) {
+        throw std::runtime_error("Failed to create copy: " + copy_name);
+    }
 
     std::filesystem::path image_path;
     bool found_image = false;

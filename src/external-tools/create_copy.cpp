@@ -31,7 +31,7 @@ const std::unordered_map<std::string, MarkerType> stringToMarkerType = { { "qrco
                                                                          { "qreye", MarkerType::QR_EYE },
                                                                          { "cross", MarkerType::CROSS },
                                                                          { "custom", MarkerType::CUSTOM },
-                                                                         { "none", MarkerType::NONE },
+                                                                         { "#", MarkerType::NONE },
                                                                          { "", MarkerType::NONE } };
 } // namespace
 
@@ -45,16 +45,16 @@ std::string toString(MarkerType type) {
 
 std::string Marker::toString() const {
     if (type == MarkerType::NONE) {
-        return "none";
+        return "#";
     }
 
     std::string result = ::toString(type);
 
     if (outlined) {
-        result += "-outlined";
+        result += "-out";
     }
     if (encoded) {
-        result += "-encoded";
+        result += "-enc";
     }
     return result;
 }
@@ -68,7 +68,7 @@ MarkerType markerTypeFromString(const std::string& typeStr) {
 }
 
 Marker Marker::parseMarker(const std::string& spec) {
-    if (spec.empty() || spec == "none") {
+    if (spec.empty() || spec == "#") {
         return Marker();
     }
 
@@ -76,19 +76,19 @@ Marker Marker::parseMarker(const std::string& spec) {
     bool encoded = false;
     bool outlined = false;
 
-    size_t encodedPos = spec.find("-encoded");
+    size_t encodedPos = spec.find("-enc");
     if (encodedPos != std::string::npos) {
         encoded = true;
         type = spec.substr(0, encodedPos);
     } else {
-        encodedPos = spec.find(":encoded");
+        encodedPos = spec.find(":enc");
         if (encodedPos != std::string::npos) {
             encoded = true;
             type = spec.substr(0, encodedPos);
         }
     }
 
-    size_t outlinedPos = spec.find("-outlined");
+    size_t outlinedPos = spec.find("-out");
     if (outlinedPos != std::string::npos) {
         outlined = true;
         if (encodedPos != std::string::npos && outlinedPos < encodedPos) {
@@ -97,7 +97,7 @@ Marker Marker::parseMarker(const std::string& spec) {
             type = spec.substr(0, outlinedPos);
         }
     } else {
-        outlinedPos = spec.find(":outlined");
+        outlinedPos = spec.find(":out");
         if (outlinedPos != std::string::npos) {
             outlined = true;
             if (encodedPos != std::string::npos && outlinedPos < encodedPos) {
