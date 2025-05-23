@@ -263,6 +263,7 @@ graphique_evolution_performances <- function(donnees_list) {
 }
 
 # 4. Scatter plot pour explorer la relation entre temps et précision
+# Ajout d'un jitter scatter plot pour éviter la surimpression des points
 graphique_scatter_temps_precision <- function(donnees_list) {
   donnees <- donnees_list$donnees
 
@@ -275,10 +276,48 @@ graphique_scatter_temps_precision <- function(donnees_list) {
     return(NULL)
   }
 
-  # On ne filtre plus les outliers, mais on les garde pour la version complète
-  donnees_non_outliers <- list()
   plots <- list()
   plots_scaled <- list()
+
+  # Scatter plot global avec jitter pour tous les parseurs
+  p_jitter <- ggplot(donnees %>% filter(Precision_Error_Avg_px != -1),
+                     aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Parser_Type, shape = Parser_Type)) +
+    geom_jitter(width = 0.2, height = 0.2, size = 2, alpha = 0.7) +
+    scale_color_manual(values = COULEURS_PARSEURS) +
+    labs(title = "Jitter scatter plot : Temps vs Précision pour tous les parseurs",
+         subtitle = "Chaque point = une mesure (jitter pour éviter la surimpression)",
+         x = "Temps de parsing (ms)",
+         y = "Erreur de précision moyenne (pixels)",
+         color = "Parseur", shape = "Parseur") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    ) +
+    expand_limits(x = 0, y = 0)
+  ggsave("analysis_results/inter_parseurs/jitter_scatter_temps_vs_precision_all.png", p_jitter, width = 12, height = 8, bg = "white")
+  plots$jitter_global <- p_jitter
+
+  # Version scaled (zoom sur la zone centrale)
+  Q1_temps <- quantile(donnees$Parsing_Time_ms, 0.25, na.rm = TRUE)
+  Q3_temps <- quantile(donnees$Parsing_Time_ms, 0.75, na.rm = TRUE)
+  IQR_temps <- Q3_temps - Q1_temps
+  min_temps <- Q1_temps - 1.5 * IQR_temps
+  max_temps <- Q3_temps + 1.5 * IQR_temps
+
+  Q1_precision <- quantile(donnees$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
+  Q3_precision <- quantile(donnees$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
+  IQR_precision <- Q3_precision - Q1_precision
+  min_precision <- Q1_precision - 1.5 * IQR_precision
+  max_precision <- Q3_precision + 1.5 * IQR_precision
+
+  p_jitter_scaled <- p_jitter +
+    coord_cartesian(xlim = c(min_temps, max_temps), ylim = c(min_precision, max_precision)) +
+    labs(subtitle = "Jitter scatter plot (échelle limitée)")
+  ggsave("analysis_results/inter_parseurs/jitter_scatter_temps_vs_precision_all_scaled.png", p_jitter_scaled, width = 12, height = 8, bg = "white")
+  plots_scaled$jitter_global <- p_jitter_scaled
 
   for (parseur in unique(donnees$Parser_Type)) {
     donnees_parseur <- donnees %>% filter(Parser_Type == parseur & Precision_Error_Avg_px != -1)
@@ -330,6 +369,62 @@ graphique_scatter_temps_precision <- function(donnees_list) {
   return(list(plots = plots, plots_scaled = plots_scaled))
 }
 
+# 4. Scatter plot pour explorer la distribution des temps et des précisions (jitter plot séparés)
+graphique_jitter_temps_precision_sep <- function(donnees_list) {
+  donnees <- donnees_list$donnees
+
+  if (!donnees_list$has_precision) {
+    cat("Jitter plot non disponible : données de précision manquantes\n")
+    return(NULL)
+  }
+  if (!donnees_list$has_config) {
+    cat("Jitter plot par parseur/config non disponible : données de configuration manquantes\n")
+    return(NULL)
+  }
+
+  # Jitter plot pour le temps de parsing
+  p_jitter_temps <- ggplot(donnees, aes(x = Parser_Type, y = Parsing_Time_ms, color = Parser_Type)) +
+    geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.7) +
+    scale_color_manual(values = COULEURS_PARSEURS) +
+    labs(title = "Jitter plot : Temps de parsing par parseur",
+         x = "Parseur",
+         y = "Temps de parsing (ms)",
+         color = "Parseur") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    ) +
+    expand_limits(y = 0)
+
+  # Jitter plot pour la précision
+  p_jitter_precision <- ggplot(donnees %>% filter(Precision_Error_Avg_px != -1),
+                              aes(x = Parser_Type, y = Precision_Error_Avg_px, color = Parser_Type)) +
+    geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.7) +
+    scale_color_manual(values = COULEURS_PARSEURS) +
+    labs(title = "Jitter plot : Précision par parseur",
+         x = "Parseur",
+         y = "Erreur de précision moyenne (pixels)",
+         color = "Parseur") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    ) +
+    expand_limits(y = 0)
+
+  ggsave("analysis_results/inter_parseurs/jitter_temps_par_parseur.png", p_jitter_temps, width = 10, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/jitter_precision_par_parseur.png", p_jitter_precision, width = 10, height = 7, bg = "white")
+
+  if (interactive()) {
+    print(p_jitter_temps)
+    print(p_jitter_precision)
+  }
+  return(list(jitter_temps = p_jitter_temps, jitter_precision = p_jitter_precision))
+}
+
 # 5. Violin plots pour comparer la distribution des temps d'exécution
 graphique_violin_temps <- function(donnees_list) {
   donnees <- donnees_list$donnees
@@ -348,7 +443,8 @@ graphique_violin_temps <- function(donnees_list) {
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "none"
-    )
+    ) +
+    expand_limits(y = 0)
   
   # Enregistrer le graphique
   ggsave("analysis_results/inter_parseurs/violin_temps_execution.png", p, width = 10, height = 6, bg = "white")
@@ -394,7 +490,8 @@ graphique_violin_temps <- function(donnees_list) {
         plot.title = element_text(face = "bold", size = 14, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "none"
-      )
+      ) +
+      expand_limits(y = 0)
 
     # Enregistrer le graphique non filtré
     ggsave("analysis_results/inter_parseurs/violin_erreur_precision.png", p2, width = 10, height = 6, bg = "white")
@@ -414,7 +511,8 @@ graphique_violin_temps <- function(donnees_list) {
         plot.title = element_text(face = "bold", size = 14, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "none"
-      )
+      ) +
+      expand_limits(y = 0)
 
     # Enregistrer la version avec ylim
     ggsave("analysis_results/inter_parseurs/violin_erreur_precision_scaled.png", p3, width = 10, height = 6, bg = "white")
@@ -447,11 +545,8 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
     summarise(
       Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
       Precision_Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
-      Parsing_Success = mean(Parsing_Success, na.rm = TRUE),
       .groups = "drop"
     )
-  stats$Label <- paste0(stats$Parser_Type, " | ", stats$Copy_Config)
-
   # Calcul du front de Pareto (minimiser X et Y)
   is_dominated <- function(i) {
     any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Precision_Moyenne < stats$Precision_Moyenne[i])
@@ -459,30 +554,37 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
   front <- !sapply(1:nrow(stats), is_dominated)
   stats$Pareto <- ifelse(front, "Front de Pareto", "Dominé")
 
-  # Coloration : Parsing_Success si dispo, sinon Parser_Type
-  color_col <- if ("Parsing_Success" %in% colnames(stats)) "Parsing_Success" else "Parser_Type"
+  # Palette de couleurs pour les configurations
+  configs <- unique(stats$Copy_Config)
+  n_configs <- length(configs)
+  if (n_configs <= 8) {
+    palette_configs <- setNames(RColorBrewer::brewer.pal(n_configs, "Set2"), configs)
+  } else {
+    palette_configs <- setNames(colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_configs), configs)
+  }
 
-  p <- ggplot(stats, aes(x = Temps_Moyen, y = Precision_Moyenne, color = .data[[color_col]], shape = Pareto, label = Label)) +
-    geom_point(size = 3, alpha = 0.8) +
-    geom_text(vjust = -1, size = 2.5, check_overlap = TRUE) +
-    scale_color_gradient(low = "grey", high = "green", na.value = "red") +
+  p <- ggplot(stats, aes(x = Temps_Moyen, y = Precision_Moyenne, color = Copy_Config, shape = Pareto)) +
+    geom_point(size = 3, alpha = 0.85) +
+    scale_color_manual(values = palette_configs, name = "Configuration") +
+    scale_shape_manual(values = c("Dominé" = 16, "Front de Pareto" = 17), name = "Statut") +
     labs(title = ifelse(scaled, "Front de Pareto global (échelle limitée) : Temps vs Précision", "Front de Pareto global : Temps vs Précision"),
          x = "Temps moyen de parsing (ms)",
          y = "Erreur de précision moyenne (px, plus bas = mieux)",
-         color = ifelse(color_col == "Parsing_Success", "Taux de succès", "Parseur"),
+         color = "Configuration",
          shape = "Statut") +
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "top"
-    )
+    ) +
+    expand_limits(x = 0, y = 0)
 
-  # Relier les points du front de Pareto
+  # Tracé du front de Pareto (ligne fine rouge)
   pareto_points <- stats[front, ]
   if (nrow(pareto_points) > 1) {
     pareto_points <- pareto_points[order(pareto_points$Temps_Moyen, decreasing = FALSE), ]
-    p <- p + geom_path(data = pareto_points, aes(x = Temps_Moyen, y = Precision_Moyenne), color = "red", size = 1.2, inherit.aes = FALSE)
+    p <- p + geom_path(data = pareto_points, aes(x = Temps_Moyen, y = Precision_Moyenne), color = "red", size = 0.8, inherit.aes = FALSE)
   }
 
   # Version scaled : limite l'axe X et Y à Q3+1.5*IQR
@@ -564,7 +666,9 @@ graphique_pareto_temps_parseur_config <- function(donnees_list) {
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "top"
-    )
+    ) +
+    expand_limits(x = 0, y = 0)
+
   # Relier les points du front de Pareto
   pareto_points <- stats[front, ]
   if (nrow(pareto_points) > 1) {
@@ -644,7 +748,8 @@ graphique_erreurs_coins <- function(donnees_list) {
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
-    )
+    ) +
+    expand_limits(y = 0)
 
   # Enregistrer le graphique
   ggsave("analysis_results/inter_parseurs/comparaison_erreurs_coins.png", p, width = 12, height = 7, bg = "white")
@@ -669,7 +774,8 @@ graphique_erreurs_coins <- function(donnees_list) {
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
-    )
+    ) +
+    expand_limits(y = 0)
   
   # Enregistrer le graphique à échelle ajustée
   ggsave("analysis_results/inter_parseurs/comparaison_erreurs_coins_scaled.png", p_scaled, width = 12, height = 7, bg = "white")
@@ -702,7 +808,8 @@ graphique_erreurs_coins <- function(donnees_list) {
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
-    )
+    ) +
+    expand_limits(y = 0)
   
   # Enregistrer le graphique
   ggsave("analysis_results/inter_parseurs/moyennes_erreurs_coins.png", p2, width = 12, height = 7, bg = "white")
@@ -781,6 +888,7 @@ generer_tableau_performances <- function(donnees_list) {
 
 # 9. Triple boxplot pour comparer les performances globales
 # Remplace le radar plot par trois boxplots côte à côte (Rapidité, Précision, Fiabilité)
+# Version zoomée et sans fiabilité sur le même graphe
 graphique_radar_performance <- function(donnees_list) {
   donnees <- donnees_list$donnees
 
@@ -789,7 +897,6 @@ graphique_radar_performance <- function(donnees_list) {
     return(NULL)
   }
 
-  # Liste des parseurs présents dans les données
   parseurs <- unique(donnees$Parser_Type)
   result_plots <- list()
 
@@ -797,6 +904,7 @@ graphique_radar_performance <- function(donnees_list) {
     donnees_parseur <- donnees %>% filter(Parser_Type == parseur)
     if (nrow(donnees_parseur) == 0) next
 
+    # Version classique : rapidité, précision, fiabilité
     donnees_long <- donnees_parseur %>%
       mutate(Succes_Pourcent = if ("Parsing_Success" %in% colnames(donnees_parseur)) as.numeric(Parsing_Success) * 100 else NA) %>%
       select(Parser_Type, Parsing_Time_ms, Precision_Error_Avg_px, Succes_Pourcent) %>%
@@ -812,11 +920,12 @@ graphique_radar_performance <- function(donnees_list) {
     )
     donnees_long <- donnees_long[!is.na(donnees_long$Valeur), ]
 
+    # Boxplot classique (avec fiabilité)
     p <- ggplot(donnees_long, aes(x = Metrique, y = Valeur, fill = Metrique)) +
       geom_boxplot(alpha = 0.7, outlier.shape = NA) +
       scale_fill_brewer(palette = "Set1") +
       labs(title = paste0("Triple boxplot des performances - ", parseur),
-           subtitle = "Rapidité (ms), Précision (px, plus bas = mieux)", "Fiabilité (%)",
+           subtitle = "Rapidité (ms), Précision (px, plus bas = mieux)",
            x = "Métrique", y = "Valeur") +
       theme_minimal() +
       theme(
@@ -824,11 +933,41 @@ graphique_radar_performance <- function(donnees_list) {
         axis.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "none",
         strip.text = element_text(face = "bold", size = 12)
-      )
-
+      ) +
+      expand_limits(y = 0)
     chemin <- paste0("analysis_results/inter_parseurs/triple_boxplot_", parseur, ".png")
     ggsave(chemin, p, width = 8, height = 6, bg = "white")
     result_plots[[parseur]] <- p
+
+    # Version zoomée : uniquement rapidité et précision, axes limités
+    donnees_zoom <- donnees_long %>% filter(Metrique != "Fiabilité (%)")
+    # Calcul des bornes pour chaque métrique
+    stats_zoom <- donnees_zoom %>% group_by(Metrique) %>%
+      summarise(
+        Q1 = quantile(Valeur, 0.25, na.rm = TRUE),
+        Q3 = quantile(Valeur, 0.75, na.rm = TRUE),
+        IQR = Q3 - Q1,
+        .groups = "drop"
+      )
+    ylim_zoom <- c(0, max(stats_zoom$Q3 + 1.5 * stats_zoom$IQR, na.rm = TRUE))
+    p_zoom <- ggplot(donnees_zoom, aes(x = Metrique, y = Valeur, fill = Metrique)) +
+      geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+      scale_fill_brewer(palette = "Set1") +
+      coord_cartesian(ylim = ylim_zoom) +
+      labs(title = paste0("Triple boxplot (zoomé, sans fiabilité) - ", parseur),
+           subtitle = "Rapidité (ms), Précision (px, plus bas = mieux) (échelle limitée)",
+           x = "Métrique", y = "Valeur") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        axis.title = element_text(face = "bold", color = "darkblue"),
+        legend.position = "none",
+        strip.text = element_text(face = "bold", size = 12)
+      ) +
+      expand_limits(y = 0)
+    chemin_zoom <- paste0("analysis_results/inter_parseurs/triple_boxplot_", parseur, "_zoom.png")
+    ggsave(chemin_zoom, p_zoom, width = 8, height = 6, bg = "white")
+    result_plots[[paste0(parseur, "_zoom")]] <- p_zoom
   }
 
   return(result_plots)
@@ -979,6 +1118,9 @@ graphique_courbes_gaussiennes <- function(donnees_list) {
   donnees <- donnees_list$donnees
   
   # --- Graphique pour les temps d'exécution : SANS filtrage ---
+  # On calcule les bornes globales pour tous les parseurs
+  min_temps <- min(donnees$Parsing_Time_ms, na.rm = TRUE)
+  max_temps <- max(donnees$Parsing_Time_ms, na.rm = TRUE)
   p_temps <- ggplot(donnees, aes(x = Parsing_Time_ms, fill = Parser_Type, color = Parser_Type)) +
     geom_histogram(aes(y = ..density..), alpha = 0.3, position = "identity", bins = 30) +
     geom_density(alpha = 0.6) +
@@ -1098,6 +1240,40 @@ graphique_courbes_gaussiennes <- function(donnees_list) {
   return(list(temps = p_temps, temps_scaled = p_temps_scaled))
 }
 
+# 12. Scatter plot temps vs précision avec ellipse de confiance/statistique par type de transformation (bench "limite")
+graphique_scatter_limite_ellipse <- function(donnees_list) {
+  donnees <- donnees_list$donnees
+  # Vérifier la présence des colonnes nécessaires
+  if (!all(c("Parsing_Time_ms", "Precision_Error_Avg_px", "Modification_Type") %in% colnames(donnees))) {
+    cat("Graphique scatter plot limite/ellipse non disponible : colonnes manquantes\n")
+    return(NULL)
+  }
+  # Filtrer les valeurs aberrantes
+  donnees <- donnees %>% filter(!is.na(Parsing_Time_ms), !is.na(Precision_Error_Avg_px), Precision_Error_Avg_px != -1)
+  # Plot
+  p <- ggplot(donnees, aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Modification_Type, fill = Modification_Type)) +
+    geom_point(alpha = 0.7, size = 2) +
+    stat_ellipse(type = "norm", alpha = 0.2, geom = "polygon", show.legend = FALSE) +
+    labs(title = "Scatter plot : Temps vs Précision (bench limite)",
+         subtitle = "Ellipse de confiance/statistique par type de transformation",
+         x = "Temps de parsing (ms)",
+         y = "Erreur de précision moyenne (pixels)",
+         color = "Type de transformation", fill = "Type de transformation") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    ) +
+    expand_limits(x = 0, y = 0)
+  ggsave("analysis_results/inter_parseurs/scatter_limite_ellipse.png", p, width = 12, height = 8, bg = "white")
+
+  if (interactive()) {
+    print(p)
+  }
+  return(p)
+}
+
 # 11. Fonction d'analyse principale qui exécute toutes les analyses
 analyse_comparative_inter_parseurs <- function(chemin_csv) {
   # Créer le dossier pour les résultats
@@ -1119,7 +1295,9 @@ analyse_comparative_inter_parseurs <- function(chemin_csv) {
     tableau_performances = generer_tableau_performances(donnees_list),
     radar_performance = graphique_radar_performance(donnees_list),
     perf_par_config = graphique_perf_par_config(donnees_list),
-    courbes_gaussiennes = graphique_courbes_gaussiennes(donnees_list)
+    courbes_gaussiennes = graphique_courbes_gaussiennes(donnees_list),
+    jitter_temps_precision_sep = graphique_jitter_temps_precision_sep(donnees_list),
+    scatter_limite_ellipse = graphique_scatter_limite_ellipse(donnees_list) # Ajout du plot bench limite
   )
   
 
