@@ -83,11 +83,11 @@ struct Marker {
      * @brief Analyse une spécification de marqueur et crée l'objet Marker correspondant
      *
      * Cette fonction prend une chaîne de caractères qui décrit un marqueur
-     * (par exemple "qrcode:encoded" ou "circle:outlined") et retourne
+     * (par exemple "qrcode-e" ou "circle-o") et retourne
      * un objet Marker configuré selon cette spécification.
      *
-     * @param spec Chaîne de spécification du marqueur au format "type[:encoded][:outlined]"
-     * @return Marker Objet Marker configuré selon la spécification, ou marqueur vide si spec est vide ou "none"
+     * @param spec Chaîne de spécification du marqueur au format "type[-e][-o]"
+     * @return Marker Objet Marker configuré selon la spécification, ou marqueur vide si spec est vide ou "#"
      */
     static Marker parseMarker(const std::string& spec);
 };
@@ -147,9 +147,33 @@ struct CopyMarkerConfig {
  * @return std::ostream& Référence au flux de sortie
  */
 inline std::ostream& operator<<(std::ostream& outs, const CopyMarkerConfig& config) {
-    outs << ("(" + config.top_left.toString() + " | " + config.top_right.toString() + " | " +
-             config.bottom_left.toString() + " | " + config.bottom_right.toString() + " | " + config.header.toString() +
-             ")");
+    std::vector<Marker> markers = {config.top_left, config.top_right, config.bottom_left, config.bottom_right, config.header};
+    std::string result = "";
+    
+    int count = 1;
+    Marker currentMarker = markers[0];
+    
+    for (size_t i = 1; i < markers.size(); ++i) {
+        if (markers[i].toString() == currentMarker.toString()) {
+            count++;
+        } else {
+            if (count > 1) {
+                result += std::to_string(count) + "*" + (currentMarker.toString()) + " | ";
+            } else {
+                result += (currentMarker.toString()) + " | ";
+            }
+            currentMarker = markers[i];
+            count = 1;
+        }
+    }
+    
+    if (count > 1) {
+        result += std::to_string(count) + "*" + (currentMarker.toString());
+    } else {
+        result += (currentMarker.toString());
+    }
+    
+    outs << result;
     return outs;
 }
 
@@ -166,8 +190,8 @@ struct CopyStyleParams {
     int dpi = 300;                  // Résolution de l'image en points par pouce (DPI)
     bool generating_content = true; // Si true, génère du contenu aléatoire, sinon ne génère pas de contenu
     int seed = 42;                  // Graine pour la génération aléatoire du contenu
-    int content_margin_x = 10;      // Marge horizontale en mm pour le contenu par rapport aux bords
-    int content_margin_y = 10;      // Marge verticale en mm pour le contenu par rapport aux bords
+    int content_margin_x = 5;      // Marge horizontale en mm pour le contenu par rapport aux bords
+    int content_margin_y = 5;      // Marge verticale en mm pour le contenu par rapport aux bords
 
     /**
      * @brief Constructeur avec paramètres optionnels
@@ -185,7 +209,7 @@ struct CopyStyleParams {
      * @param cmy Marge verticale du contenu (content_margin_y)
      */
     CopyStyleParams(int ems = 15, int ums = 3, int hms = 7, int sw = 1, int mm = 3, int gl = 0, int dpi = 300,
-                    bool gc = true, int s = 42, int cmx = 10, int cmy = 10)
+                    bool gc = true, int s = 42, int cmx = 5, int cmy = 5)
         : encoded_marker_size(ems), unencoded_marker_size(ums), header_marker_size(hms), stroke_width(sw),
           marker_margin(mm), grey_level(gl), dpi(dpi), generating_content(gc), seed(s), 
           content_margin_x(cmx), content_margin_y(cmy) {

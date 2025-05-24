@@ -38,9 +38,6 @@
   == Topic 3: Backfilling under an Energy Budget
   Is there a difference between an energy budget and a power budget? If so, what are they?
   #container("3-diff-power-energy-budget", 100%, 3cm)
-
-  What is a powercap ?
-  #container("3-powercap", 100%, 3cm)
 ]
 
 #let understanding-2 = [

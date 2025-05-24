@@ -8,11 +8,11 @@
   let clean = types-str.trim().slice(1, -1)
   let parts = clean.split(",").map(x => { x.trim() })
   (
-    top-left: parts.at(0, default: "none"),
-    top-right: parts.at(1, default: "none"),
-    bottom-left: parts.at(2, default: "none"),
-    bottom-right: parts.at(3, default: "none"),
-    header: parts.at(4, default: "none"),
+    top-left: parts.at(0, default: "#"),
+    top-right: parts.at(1, default: "#"),
+    bottom-left: parts.at(2, default: "#"),
+    bottom-right: parts.at(3, default: "#"),
+    header: parts.at(4, default: "#"),
   )
 }
 

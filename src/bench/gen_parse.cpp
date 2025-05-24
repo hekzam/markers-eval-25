@@ -6,6 +6,7 @@
 #include <tuple>
 #include <chrono>
 #include <random>
+#include <cmath>
 
 #include <common.h>
 
@@ -144,9 +145,15 @@ std::vector<CopyInfo> bench_copy(int nb_copies, const CopyStyleParams& style_par
         CopyStyleParams local_style_params = style_params;
         local_style_params.seed = content_seed;
 
-        auto create_copy_lambda = [&]() { create_copy(local_style_params, copy_marker_config, copy_name, false); };
+        bool copy_success = false;
+        auto create_copy_lambda = [&]() { copy_success = create_copy(local_style_params, copy_marker_config, copy_name, false); };
 
         double milliseconds = Benchmark::measure("  Generation time", create_copy_lambda);
+        
+        if (!copy_success) {
+            std::cerr << "Error: Failed to create copy " << i << "/" << nb_copies << " with filename: " << filename << std::endl;
+            throw std::runtime_error("Copy creation failed, stopping benchmark");
+        }
 
         generated_copies.push_back({ filename, milliseconds });
     }
@@ -221,8 +228,8 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& s
 
     auto add_error_to_csv = [&](const CopyInfo& copy_info, int seed = -1) {
         benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, 0, 0,
-                                parser_type_to_string(selected_parser), copy_marker_config, seed, -1.0, -1.0, -1.0,
-                                -1.0, -1.0 });
+                                parser_type_to_string(selected_parser), copy_marker_config, seed, 
+                                std::nan(""), std::nan(""), std::nan(""), std::nan(""), std::nan("") });
     };
 
     for (const auto& copy_info : generated_copies) {
@@ -300,12 +307,21 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& s
         save_debug_img(debug_img, output_dir, output_img_path_fname);
 #endif
 
-        std::vector<double> precision_errors = { -1.0, -1.0, -1.0, -1.0, -1.0 }; // -1.0 pour indiquer une erreur
+        std::vector<double> precision_errors = { 
+            std::nan(""), std::nan(""), std::nan(""), std::nan(""), std::nan("")
+        };
         if (parsing_success) {
             auto calibrated_img_col = redress_image(img, affine_transform.value());
 
             precision_errors =
                 calculate_precision_error(dst_img_size, mat, affine_transform.value(), MARGIN_COPY_MODIFIED);
+            
+            if (!std::isnan(precision_errors.back()) && precision_errors.back() >= 100) {
+                for (auto& error : precision_errors) {
+                    error = std::nan("");
+                }
+            }
+            
             std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_errors.back()
                       << " pixels" << std::endl;
 
@@ -325,7 +341,6 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& s
             save_image(calibrated_img_col, output_dir, output_img_path_fname);
         }
 
-        // Écrire les résultats dans le CSV
         benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, parsing_milliseconds,
                                 parsing_success ? 1 : 0, parser_type_to_string(selected_parser), copy_marker_config,
                                 unique_seed, precision_errors.back(), precision_errors[0], precision_errors[1],

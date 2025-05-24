@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <string>
 #include <variant>
+#include <cmath>
 #include <common.h>
 #include "external-tools/modifier.h"
 #include <cli_helper.h>
@@ -53,7 +54,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   simulate_printer_effects(img, rng, std::get<float>(param));
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
@@ -69,7 +73,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   add_salt_pepper_noise(img, rng, std::get<float>(param), std::get<float>(param));
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
@@ -92,7 +99,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   add_gaussian_noise(img, rng, std::get<0>(std::get<std::tuple<float, float>>(param)),
                                      std::get<1>(std::get<std::tuple<float, float>>(param)));
@@ -116,7 +126,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   contrast_brightness_modifier(img, std::get<0>(std::get<std::tuple<int, int>>(param)),
                                                std::get<1>(std::get<std::tuple<int, int>>(param)));
@@ -144,7 +157,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   add_ink_stain(img, rng, std::get<0>(std::get<std::tuple<int, int, int>>(param)),
                                 std::get<1>(std::get<std::tuple<int, int, int>>(param)),
@@ -162,7 +178,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   margin_size = std::max(img.cols, img.rows) - std::min(img.cols, img.rows);
                   margin_size /= 2;
@@ -192,7 +211,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   auto [dx, dy] = std::get<std::tuple<int, int>>(param);
                   margin_size = std::max(std::abs(dx), std::abs(dy));
@@ -214,7 +236,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               },
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   apply_jpeg_compression(img, std::get<int>(param));
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
@@ -232,7 +257,10 @@ std::vector<std::pair<std::string, option>> all_config = {
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
                   style.encoded_marker_size = std::get<int>(param);
                   style.header_marker_size = std::get<int>(param);
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
               } } },
@@ -248,7 +276,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
                   style.unencoded_marker_size = std::get<int>(param);
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
               } } },
@@ -264,7 +295,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
                   style.grey_level = std::get<int>(param);
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
               } } },
@@ -280,7 +314,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
                   style.dpi = std::get<int>(param);
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
               } } },
@@ -296,7 +333,10 @@ std::vector<std::pair<std::string, option>> all_config = {
               [](cv::Mat& img, cv::RNG& rng, param_t param, cv::Mat& affine_transformation, CopyStyleParams style,
                  CopyMarkerConfig marker_config, std::string copy_name, int& margin_size) {
                   style.stroke_width = std::get<int>(param);
-                  create_copy(style, marker_config, copy_name, false);
+                  bool copy_success = create_copy(style, marker_config, copy_name, false);
+                  if (!copy_success) {
+                      throw std::runtime_error("Failed to create copy: " + copy_name);
+                  }
                   img = cv::imread("./copies/" + copy_name + ".png", cv::IMREAD_GRAYSCALE);
                   affine_transformation = cv::Mat::eye(2, 3, CV_32F);
               } } },
@@ -389,7 +429,10 @@ void limite_bench(const std::unordered_map<std::string, Config>& config) {
 
     for (int i = 0; i < warmup_iterations; i++) {
         std::string warmup_copy_name = "warmup" + std::to_string(i + 1);
-        create_copy(style_params, copy_marker_config, warmup_copy_name, false);
+        bool copy_success = create_copy(style_params, copy_marker_config, warmup_copy_name, false);
+        if (!copy_success) {
+            throw std::runtime_error("Failed to create warmup copy: " + warmup_copy_name);
+        }
         std::cout << "  Warmup iteration " << (i + 1) << "/" << warmup_iterations << " completed" << std::endl;
     }
 
@@ -459,13 +502,21 @@ void limite_bench(const std::unordered_map<std::string, Config>& config) {
                 save_debug_img(debug_img, output_dir, output_img_path_fname);
 #endif
 
-                std::vector<double> precision_errors = { -1.0, -1.0, -1.0, -1.0,
-                                                         -1.0 }; // -1.0 pour indiquer une erreur
+                std::vector<double> precision_errors = { 
+                    std::nan(""), std::nan(""), std::nan(""), std::nan(""), std::nan("")
+                };
                 if (parsing_success) {
                     auto calibrated_img_col = redress_image(img, affine_transform.value());
 
                     precision_errors =
                         calculate_precision_error(dst_img_size, mat, affine_transform.value(), margin_size);
+                    
+                    if (!std::isnan(precision_errors.back()) && precision_errors.back() >= 100) {
+                        for (auto& error : precision_errors) {
+                            error = std::nan("");
+                        }
+                    }
+                    
                     std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_errors.back()
                               << " pixels" << std::endl;
 
