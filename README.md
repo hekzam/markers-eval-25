@@ -62,6 +62,8 @@ Le projet propose plusieurs environnements de développement Nix, tous utilisant
 ```sh
 # Entrer dans l'environnement Nix
 nix develop
+# Ou pour lancer l'environnement spécifique pour l'analyse des CSV
+nix develop .#analysis
 
 # Configurer le projet avec Meson (utilisé automatiquement par nix-shell)
 meson setup build
@@ -70,18 +72,6 @@ meson setup build
 meson compile -C build
 
 # Les exécutables seront disponibles dans le dossier `build`
-```
-
-#### Utilisation sans flakes
-
-Pour ceux qui préfèrent ne pas utiliser les flakes :
-
-```sh
-# Environnement de développement principal (utilise Meson pour la compilation)
-nix-shell --pure
-
-# Environnement pour l'analyse statistique
-cd stats-analysis && nix-shell --pure
 ```
 
 ## Génération de la documentation
