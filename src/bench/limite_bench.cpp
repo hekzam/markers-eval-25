@@ -510,6 +510,13 @@ void limite_bench(const std::unordered_map<std::string, Config>& config) {
 
                     precision_errors =
                         calculate_precision_error(dst_img_size, mat, affine_transform.value(), margin_size);
+                    
+                    if (!std::isnan(precision_errors.back()) && precision_errors.back() >= 100) {
+                        for (auto& error : precision_errors) {
+                            error = std::nan("");
+                        }
+                    }
+                    
                     std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_errors.back()
                               << " pixels" << std::endl;
 
