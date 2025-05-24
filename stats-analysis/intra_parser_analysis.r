@@ -46,6 +46,107 @@ filtrer_par_parseur <- function(donnees, nom_parseur) {
   return(donnees_filtrees)
 }
 
+# Nouvelle fonction pour générer le graphique barres_precision_par_config pour un parseur
+generer_barres_precision_par_config <- function(donnees, nom_parseur) {
+  # Vérifier la présence des colonnes nécessaires
+  if (!("Copy_Config" %in% colnames(donnees)) || !("Precision_Error_Avg_px" %in% colnames(donnees))) {
+    cat("Graphique barres_precision_par_config non généré : colonnes manquantes pour", nom_parseur, "\n")
+    return(NULL)
+  }
+  # Filtrer les valeurs aberrantes (-1)
+  donnees_precision <- donnees %>% filter(Precision_Error_Avg_px != -1)
+  # Calculer les statistiques par configuration
+  stats_config <- donnees_precision %>%
+    group_by(Copy_Config) %>%
+    summarise(
+      Erreur_Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
+      Erreur_Ecart_Type = sd(Precision_Error_Avg_px, na.rm = TRUE),
+      .groups = "drop"
+    )
+  # Créer le graphique
+  p <- ggplot(stats_config, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Copy_Config)) +
+    geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+    geom_errorbar(aes(
+      ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
+      ymax = Erreur_Moyenne + Erreur_Ecart_Type
+    ),
+    width = 0.2) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(title = paste0("Erreur moyenne de précision par configuration - ", nom_parseur),
+         x = "Configuration",
+         y = "Erreur moyenne (pixels)",
+         fill = "Configuration") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    ) +
+    scale_y_continuous(limits = c(0, NA))
+  # Sauvegarder dans le dossier du parseur
+  dossier_parseur <- paste0("analysis_results/", nom_parseur)
+  ggsave(paste0(dossier_parseur, "/barres_precision_par_config_", nom_parseur, ".png"), p, width = 12, height = 7, bg = "white")
+  if (interactive()) print(p)
+  return(p)
+}
+
+# Nouvelle fonction pour générer les scatter plots temps vs précision pour un parseur
+generer_scatter_temps_vs_precision <- function(donnees, nom_parseur) {
+  if (!("Precision_Error_Avg_px" %in% colnames(donnees)) || !("Parsing_Time_ms" %in% colnames(donnees))) {
+    cat("Scatter plot temps vs précision non généré : colonnes manquantes pour", nom_parseur, "\n")
+    return(NULL)
+  }
+  if (!("Copy_Config" %in% colnames(donnees))) {
+    cat("Scatter plot temps vs précision non généré : colonne Copy_Config manquante pour", nom_parseur, "\n")
+    return(NULL)
+  }
+  donnees_valides <- donnees %>% filter(!is.na(Parsing_Time_ms), !is.na(Precision_Error_Avg_px), Precision_Error_Avg_px != -1)
+  if (nrow(donnees_valides) == 0) return(NULL)
+  dossier_parseur <- paste0("analysis_results/", nom_parseur)
+
+  # Scatter plot complet
+  p <- ggplot(donnees_valides, aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Copy_Config)) +
+    geom_point(size = 3, alpha = 0.7) +
+    scale_color_brewer(palette = "Set2") +
+    labs(title = paste0("Temps vs Précision pour ", nom_parseur),
+         subtitle = "Toutes les configurations (tous points, outliers inclus)",
+         x = "Temps de parsing (ms)",
+         y = "Erreur de précision moyenne (pixels)",
+         color = "Config") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    )
+  ggsave(paste0(dossier_parseur, "/scatter_temps_vs_precision_", nom_parseur, ".png"), p, width = 10, height = 8, bg = "white")
+
+  # Scatter plot scaled (zoom sur la zone centrale)
+  Q1_temps <- quantile(donnees_valides$Parsing_Time_ms, 0.25, na.rm = TRUE)
+  Q3_temps <- quantile(donnees_valides$Parsing_Time_ms, 0.75, na.rm = TRUE)
+  IQR_temps <- Q3_temps - Q1_temps
+  min_temps <- Q1_temps - 1.5 * IQR_temps
+  max_temps <- Q3_temps + 1.5 * IQR_temps
+
+  Q1_precision <- quantile(donnees_valides$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
+  Q3_precision <- quantile(donnees_valides$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
+  IQR_precision <- Q3_precision - Q1_precision
+  min_precision <- Q1_precision - 1.5 * IQR_precision
+  max_precision <- Q3_precision + 1.5 * IQR_precision
+
+  p_scaled <- p +
+    coord_cartesian(xlim = c(min_temps, max_temps), ylim = c(min_precision, max_precision)) +
+    labs(subtitle = "Zoom sur la zone centrale (Q1-1.5*IQR à Q3+1.5*IQR)")
+  ggsave(paste0(dossier_parseur, "/scatter_temps_vs_precision_", nom_parseur, "_scaled.png"), p_scaled, width = 10, height = 8, bg = "white")
+
+  if (interactive()) {
+    print(p)
+    print(p_scaled)
+  }
+  return(list(normal = p, scaled = p_scaled))
+}
+
 # Fonction pour analyser les données d'un parseur spécifique
 analyser_donnees_parseur <- function(donnees, nom_parseur) {
   cat(paste("\nAnalyse du parseur:", nom_parseur, "\n"))
@@ -310,6 +411,8 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
   sink()
   
   # Retourner les données pour d'autres analyses potentielles
+  generer_barres_precision_par_config(donnees, nom_parseur)
+  generer_scatter_temps_vs_precision(donnees, nom_parseur)
   return(donnees)
 }
 

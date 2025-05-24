@@ -330,49 +330,50 @@ graphique_scatter_temps_precision <- function(donnees_list) {
   ggsave("analysis_results/inter_parseurs/jitter_scatter_temps_vs_precision_all_scaled.png", p_jitter_scaled, width = 12, height = 8, bg = "white")
   plots_scaled$jitter_global <- p_jitter_scaled
 
-  for (parseur in unique(donnees$Parser_Type)) {
-    donnees_parseur <- donnees %>% filter(Parser_Type == parseur & Precision_Error_Avg_px != -1)
-    if (nrow(donnees_parseur) == 0) next
-
-    # Calcul des bornes pour la version zoomée
-    Q1_temps <- quantile(donnees_parseur$Parsing_Time_ms, 0.25, na.rm = TRUE)
-    Q3_temps <- quantile(donnees_parseur$Parsing_Time_ms, 0.75, na.rm = TRUE)
-    IQR_temps <- Q3_temps - Q1_temps
-    min_temps <- Q1_temps - 1.5 * IQR_temps
-    max_temps <- Q3_temps + 1.5 * IQR_temps
-
-    Q1_precision <- quantile(donnees_parseur$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
-    Q3_precision <- quantile(donnees_parseur$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
-    IQR_precision <- Q3_precision - Q1_precision
-    min_precision <- Q1_precision - 1.5 * IQR_precision
-    max_precision <- Q3_precision + 1.5 * IQR_precision
-
-    # Plot complet (tous les points)
-    p <- ggplot(donnees_parseur, aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Copy_Config)) +
-      geom_point(size = 3, alpha = 0.7) +
-      scale_color_brewer(palette = "Set2") +
-      labs(title = paste0("Temps vs Précision pour ", parseur),
-           subtitle = "Toutes les configurations (tous points, outliers inclus)",
-           x = "Temps de parsing (ms)",
-           y = "Erreur de précision moyenne (pixels)",
-           color = "Config") +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
-        axis.title = element_text(face = "bold", color = "darkblue"),
-        legend.title = element_text(face = "bold", color = "darkblue"),
-        legend.position = "right"
-      )
-    ggsave(paste0("analysis_results/inter_parseurs/scatter_temps_vs_precision_", parseur, ".png"), p, width = 10, height = 8, bg = "white")
-    plots[[parseur]] <- p
-
-    # Plot zoomé (scaled)
-    p_scaled <- p +
-      coord_cartesian(xlim = c(min_temps, max_temps), ylim = c(min_precision, max_precision)) +
-      labs(subtitle = "Zoom sur la zone centrale (Q1-1.5*IQR à Q3+1.5*IQR)")
-    ggsave(paste0("analysis_results/inter_parseurs/scatter_temps_vs_precision_", parseur, "_scaled.png"), p_scaled, width = 10, height = 8, bg = "white")
-    plots_scaled[[parseur]] <- p_scaled
-  }
+  # Suppression de la génération des scatter plots individuels par parseur
+  # for (parseur in unique(donnees$Parser_Type)) {
+  #   donnees_parseur <- donnees %>% filter(Parser_Type == parseur & Precision_Error_Avg_px != -1)
+  #   if (nrow(donnees_parseur) == 0) next
+  #
+  #   # Calcul des bornes pour la version zoomée
+  #   Q1_temps <- quantile(donnees_parseur$Parsing_Time_ms, 0.25, na.rm = TRUE)
+  #   Q3_temps <- quantile(donnees_parseur$Parsing_Time_ms, 0.75, na.rm = TRUE)
+  #   IQR_temps <- Q3_temps - Q1_temps
+  #   min_temps <- Q1_temps - 1.5 * IQR_temps
+  #   max_temps <- Q3_temps + 1.5 * IQR_temps
+  #
+  #   Q1_precision <- quantile(donnees_parseur$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
+  #   Q3_precision <- quantile(donnees_parseur$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
+  #   IQR_precision <- Q3_precision - Q1_precision
+  #   min_precision <- Q1_precision - 1.5 * IQR_precision
+  #   max_precision <- Q3_precision + 1.5 * IQR_precision
+  #
+  #   # Plot complet (tous les points)
+  #   p <- ggplot(donnees_parseur, aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Copy_Config)) +
+  #     geom_point(size = 3, alpha = 0.7) +
+  #     scale_color_brewer(palette = "Set2") +
+  #     labs(title = paste0("Temps vs Précision pour ", parseur),
+  #          subtitle = "Toutes les configurations (tous points, outliers inclus)",
+  #          x = "Temps de parsing (ms)",
+  #          y = "Erreur de précision moyenne (pixels)",
+  #          color = "Config") +
+  #     theme_minimal() +
+  #     theme(
+  #       plot.title = element_text(face = "bold", size = 14, color = "navy"),
+  #       axis.title = element_text(face = "bold", color = "darkblue"),
+  #       legend.title = element_text(face = "bold", color = "darkblue"),
+  #       legend.position = "right"
+  #     )
+  #   ggsave(paste0("analysis_results/inter_parseurs/scatter_temps_vs_precision_", parseur, ".png"), p, width = 10, height = 8, bg = "white")
+  #   plots[[parseur]] <- p
+  #
+  #   # Plot zoomé (scaled)
+  #   p_scaled <- p +
+  #     coord_cartesian(xlim = c(min_temps, max_temps), ylim = c(min_precision, max_precision)) +
+  #     labs(subtitle = "Zoom sur la zone centrale (Q1-1.5*IQR à Q3+1.5*IQR)")
+  #   ggsave(paste0("analysis_results/inter_parseurs/scatter_temps_vs_precision_", parseur, "_scaled.png"), p_scaled, width = 10, height = 8, bg = "white")
+  #   plots_scaled[[parseur]] <- p_scaled
+  # }
   if (interactive()) {
     for (p in plots) print(p)
     for (p in plots_scaled) print(p)
@@ -1050,29 +1051,9 @@ graphique_perf_par_config <- function(donnees_list) {
       coord_flip() +
       scale_y_continuous(limits = c(0, NA))
     
-    # Enregistrer le graphique de précision global
+    # Enregistrer le graphique
     ggsave("analysis_results/inter_parseurs/barres_precision_par_config.png", p_precision, width = 12, height = 7, bg = "white")
     graphiques$precision <- p_precision
-
-    # Générer un graphique par parseur
-    for (parser in unique(stats_config$Parser_Type)) {
-      stats_config_parser <- stats_config %>% filter(Parser_Type == parser)
-      p_precision_parser <- ggplot(stats_config_parser, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Copy_Config)) +
-        geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
-        geom_errorbar(aes(ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0), 
-                         ymax = Erreur_Moyenne + Erreur_Ecart_Type),
-                     position = position_dodge(width = 0.9), width = 0.2) +
-        scale_fill_brewer(palette = "Set2") +
-        labs(title = paste0("Erreur moyenne de précision par configuration - ", parser),
-             fill = "Configuration") +
-        theme_minimal() +
-        theme(
-        ) +
-        scale_y_continuous(limits = c(0, NA))
-      # PAS de coord_flip ici
-      ggsave(paste0("analysis_results/inter_parseurs/barres_precision_par_config_", parser, ".png"), p_precision_parser, width = 12, height = 7, bg = "white")
-      graphiques[[paste0("precision_", parser)]] <- p_precision_parser
-    }
   }
   
   if (interactive()) {
