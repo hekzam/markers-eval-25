@@ -10,7 +10,7 @@ library(tidyr)
 library(fs)
 library(RColorBrewer)  # Pour plus d'options de couleurs
 library(gridExtra)     # Pour organiser plusieurs graphiques
-#library(fmsb)         # Pour les graphiques en radar (décommenter si nécessaire)
+#library(fmsb)         # Pour les graphiiques en radar (décommenter si nécessaire)
 
 # Liste des parseurs à analyser (la même que dans le script principal)
 PARSEURS <- c("ZXING", "CIRCLE", "SHAPE", 
@@ -35,6 +35,15 @@ charger_donnees <- function(chemin_csv) {
   
   # Lecture du fichier CSV
   donnees <- read.csv(chemin_csv, stringsAsFactors = FALSE)
+
+  # Ajouter Parsing_Success_Effective : TRUE si Parsing_Success==TRUE et Precision_Error_Avg_px n'est pas NA/NaN, sinon FALSE
+  if ("Parsing_Success" %in% colnames(donnees)) {
+    if ("Precision_Error_Avg_px" %in% colnames(donnees)) {
+      donnees$Parsing_Success_Effective <- donnees$Parsing_Success & !is.na(donnees$Precision_Error_Avg_px) & !is.nan(donnees$Precision_Error_Avg_px)
+    } else {
+      donnees$Parsing_Success_Effective <- donnees$Parsing_Success
+    }
+  }
   
   # Vérifier si les colonnes nécessaires existent
   if (!all(c("File", "Parsing_Time_ms", "Parser_Type") %in% colnames(donnees))) {
@@ -144,9 +153,10 @@ graphique_barres_performance <- function(donnees_list) {
     # Créer le graphique à barres de précision
     p_precision <- ggplot(precision_parseurs, aes(x = Parser_Type, y = Erreur_Moyenne, fill = Parser_Type)) +
       geom_bar(stat = "identity", alpha = 0.7) +
-      geom_errorbar(aes(ymin = Erreur_Moyenne - Erreur_Ecart_Type, 
-                       ymax = Erreur_Moyenne + Erreur_Ecart_Type),
-                   width = 0.2) +
+      geom_errorbar(aes(
+        ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
+        ymax = Erreur_Moyenne + Erreur_Ecart_Type
+      ), width = 0.2) +
       scale_fill_manual(values = COULEURS_PARSEURS) +
       labs(title = "Comparaison de l'erreur de précision moyenne entre parseurs",
            subtitle = "Erreur moyenne en pixels avec écart-type",
@@ -157,7 +167,8 @@ graphique_barres_performance <- function(donnees_list) {
         plot.title = element_text(face = "bold", size = 14, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "none"
-      )
+      ) +
+      scale_y_continuous(limits = c(0, NA))
     
     # Ajouter à la liste de graphiques
     graphiques$precision <- p_precision
@@ -172,11 +183,11 @@ graphique_barres_performance <- function(donnees_list) {
   
   # Si les données de succès existent, créer un graphique de taux de succès
   if (donnees_list$has_success) {
-    # Calculer le taux de succès par parseur
+    # Calculer le taux de succès par parseur (utiliser Parsing_Success_Effective)
     succes_parseurs <- donnees %>%
       group_by(Parser_Type) %>%
       summarise(
-        Taux_Succes = sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100,
+        Taux_Succes = sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100,
         .groups = "drop"
       )
     
@@ -213,7 +224,7 @@ graphique_barres_performance <- function(donnees_list) {
       succes_config <- donnees %>%
         group_by(Parser_Type, Copy_Config) %>%
         summarise(
-          Taux_Succes = sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100,
+          Taux_Succes = sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100,
           .groups = "drop"
         )
       
@@ -554,6 +565,9 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
   front <- !sapply(1:nrow(stats), is_dominated)
   stats$Pareto <- ifelse(front, "Front de Pareto", "Dominé")
 
+  # Ajout du label à afficher à côté du point
+  stats$Label <- paste0(stats$Parser_Type, " | ", stats$Copy_Config)
+
   # Palette de couleurs pour les configurations
   configs <- unique(stats$Copy_Config)
   n_configs <- length(configs)
@@ -565,6 +579,8 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
 
   p <- ggplot(stats, aes(x = Temps_Moyen, y = Precision_Moyenne, color = Copy_Config, shape = Pareto)) +
     geom_point(size = 3, alpha = 0.85) +
+    # Ajout des labels à côté des points, couleur identique au point
+    geom_text(aes(label = Label, color = Copy_Config), hjust = -0.1, vjust = 0.5, size = 3, show.legend = FALSE) +
     scale_color_manual(values = palette_configs, name = "Configuration") +
     scale_shape_manual(values = c("Dominé" = 16, "Front de Pareto" = 17), name = "Statut") +
     labs(title = ifelse(scaled, "Front de Pareto global (échelle limitée) : Temps vs Précision", "Front de Pareto global : Temps vs Précision"),
@@ -623,7 +639,7 @@ graphique_pareto_temps_parseur_config <- function(donnees_list) {
     summarise(
       Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
       Precision_Moyenne = if ("Precision_Error_Avg_px" %in% colnames(donnees)) mean(Precision_Error_Avg_px[Precision_Error_Avg_px != -1], na.rm = TRUE) else NA,
-      Fiabilite = if ("Parsing_Success" %in% colnames(donnees)) sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100 else NA,
+      Fiabilite = if ("Parsing_Success_Effective" %in% colnames(donnees)) sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100 else NA,
       .groups = "drop"
     )
   # Choix des axes : priorité à la précision si dispo, sinon fiabilité
@@ -865,10 +881,10 @@ generer_tableau_performances <- function(donnees_list) {
     tableau_succes <- donnees %>%
       group_by(Parser_Type) %>%
       summarise(
-        Taux_Succes = paste0(round(sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100, 2), "%"),
+        Taux_Succes = paste0(round(sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100, 2), "%"),
         Nb_Total = n(),
-        Nb_Succes = sum(Parsing_Success == TRUE, na.rm = TRUE),
-        Nb_Echec = sum(Parsing_Success == FALSE, na.rm = TRUE),
+        Nb_Succes = sum(Parsing_Success_Effective == TRUE, na.rm = TRUE),
+        Nb_Echec = sum(Parsing_Success_Effective == FALSE, na.rm = TRUE),
         .groups = "drop"
       )
     
@@ -889,6 +905,8 @@ generer_tableau_performances <- function(donnees_list) {
 # 9. Triple boxplot pour comparer les performances globales
 # Remplace le radar plot par trois boxplots côte à côte (Rapidité, Précision, Fiabilité)
 # Version zoomée et sans fiabilité sur le même graphe
+# MODIFIÉ : Un seul graph pour tous les parseurs, sans fiabilité
+
 graphique_radar_performance <- function(donnees_list) {
   donnees <- donnees_list$donnees
 
@@ -897,80 +915,39 @@ graphique_radar_performance <- function(donnees_list) {
     return(NULL)
   }
 
-  parseurs <- unique(donnees$Parser_Type)
-  result_plots <- list()
-
-  for (parseur in parseurs) {
-    donnees_parseur <- donnees %>% filter(Parser_Type == parseur)
-    if (nrow(donnees_parseur) == 0) next
-
-    # Version classique : rapidité, précision, fiabilité
-    donnees_long <- donnees_parseur %>%
-      mutate(Succes_Pourcent = if ("Parsing_Success" %in% colnames(donnees_parseur)) as.numeric(Parsing_Success) * 100 else NA) %>%
-      select(Parser_Type, Parsing_Time_ms, Precision_Error_Avg_px, Succes_Pourcent) %>%
-      pivot_longer(
-        cols = c(Parsing_Time_ms, Precision_Error_Avg_px, Succes_Pourcent),
-        names_to = "Metrique", values_to = "Valeur"
-      )
-
-    donnees_long$Metrique <- factor(
-      donnees_long$Metrique,
-      levels = c("Parsing_Time_ms", "Precision_Error_Avg_px", "Succes_Pourcent"),
-      labels = c("Rapidité (ms, plus bas = mieux)", "Précision (px, plus bas = mieux)", "Fiabilité (%)")
+  # Regrouper toutes les données en format long, sans fiabilité
+  donnees_long <- donnees %>%
+    select(Parser_Type, Parsing_Time_ms, Precision_Error_Avg_px) %>%
+    pivot_longer(
+      cols = c(Parsing_Time_ms, Precision_Error_Avg_px),
+      names_to = "Metrique", values_to = "Valeur"
     )
-    donnees_long <- donnees_long[!is.na(donnees_long$Valeur), ]
 
-    # Boxplot classique (avec fiabilité)
-    p <- ggplot(donnees_long, aes(x = Metrique, y = Valeur, fill = Metrique)) +
-      geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-      scale_fill_brewer(palette = "Set1") +
-      labs(title = paste0("Triple boxplot des performances - ", parseur),
-           subtitle = "Rapidité (ms), Précision (px, plus bas = mieux)",
-           x = "Métrique", y = "Valeur") +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
-        axis.title = element_text(face = "bold", color = "darkblue"),
-        legend.position = "none",
-        strip.text = element_text(face = "bold", size = 12)
-      ) +
-      expand_limits(y = 0)
-    chemin <- paste0("analysis_results/inter_parseurs/triple_boxplot_", parseur, ".png")
-    ggsave(chemin, p, width = 8, height = 6, bg = "white")
-    result_plots[[parseur]] <- p
+  donnees_long$Metrique <- factor(
+    donnees_long$Metrique,
+    levels = c("Parsing_Time_ms", "Precision_Error_Avg_px"),
+    labels = c("Rapidité (ms, plus bas = mieux)", "Précision (px, plus bas = mieux)")
+  )
+  donnees_long <- donnees_long[!is.na(donnees_long$Valeur), ]
 
-    # Version zoomée : uniquement rapidité et précision, axes limités
-    donnees_zoom <- donnees_long %>% filter(Metrique != "Fiabilité (%)")
-    # Calcul des bornes pour chaque métrique
-    stats_zoom <- donnees_zoom %>% group_by(Metrique) %>%
-      summarise(
-        Q1 = quantile(Valeur, 0.25, na.rm = TRUE),
-        Q3 = quantile(Valeur, 0.75, na.rm = TRUE),
-        IQR = Q3 - Q1,
-        .groups = "drop"
-      )
-    ylim_zoom <- c(0, max(stats_zoom$Q3 + 1.5 * stats_zoom$IQR, na.rm = TRUE))
-    p_zoom <- ggplot(donnees_zoom, aes(x = Metrique, y = Valeur, fill = Metrique)) +
-      geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-      scale_fill_brewer(palette = "Set1") +
-      coord_cartesian(ylim = ylim_zoom) +
-      labs(title = paste0("Triple boxplot (zoomé, sans fiabilité) - ", parseur),
-           subtitle = "Rapidité (ms), Précision (px, plus bas = mieux) (échelle limitée)",
-           x = "Métrique", y = "Valeur") +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
-        axis.title = element_text(face = "bold", color = "darkblue"),
-        legend.position = "none",
-        strip.text = element_text(face = "bold", size = 12)
-      ) +
-      expand_limits(y = 0)
-    chemin_zoom <- paste0("analysis_results/inter_parseurs/triple_boxplot_", parseur, "_zoom.png")
-    ggsave(chemin_zoom, p_zoom, width = 8, height = 6, bg = "white")
-    result_plots[[paste0(parseur, "_zoom")]] <- p_zoom
-  }
-
-  return(result_plots)
+  # Boxplot combiné pour tous les parseurs
+  p <- ggplot(donnees_long, aes(x = Metrique, y = Valeur, fill = Parser_Type)) +
+    geom_boxplot(alpha = 0.7, outlier.shape = NA, position = position_dodge(width = 0.8)) +
+    scale_fill_manual(values = COULEURS_PARSEURS) +
+    labs(title = "Comparaison des performances globales (tous parseurs)",
+         subtitle = "Rapidité (ms) et Précision (px, plus bas = mieux)",
+         x = "Métrique", y = "Valeur", fill = "Parseur") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "top",
+      strip.text = element_text(face = "bold", size = 12)
+    ) +
+    expand_limits(y = 0)
+  ggsave("analysis_results/inter_parseurs/triple_boxplot_global.png", p, width = 10, height = 7, bg = "white")
+  if (interactive()) print(p)
+  return(p)
 }
 
 # 10. Graphique combiné pour visualiser les performances par configuration et par parseur
@@ -1013,7 +990,7 @@ graphique_perf_par_config <- function(donnees_list) {
     succes_config <- donnees %>%
       group_by(Parser_Type, Copy_Config) %>%
       summarise(
-        Taux_Succes = sum(Parsing_Success == TRUE, na.rm = TRUE) / n() * 100,
+        Taux_Succes = sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100,
         .groups = "drop"
       )
     
@@ -1051,9 +1028,11 @@ graphique_perf_par_config <- function(donnees_list) {
   if (donnees_list$has_precision) {
     p_precision <- ggplot(stats_config, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Parser_Type)) +
       geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
-      geom_errorbar(aes(ymin = Erreur_Moyenne - Erreur_Ecart_Type, 
-                       ymax = Erreur_Moyenne + Erreur_Ecart_Type),
-                   position = position_dodge(width = 0.9), width = 0.2) +
+      geom_errorbar(aes(
+        ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
+        ymax = Erreur_Moyenne + Erreur_Ecart_Type
+      ),
+      position = position_dodge(width = 0.9), width = 0.2) +
       scale_fill_manual(values = COULEURS_PARSEURS) +
       labs(title = "Erreur moyenne de précision par configuration",
            subtitle = "Avec barres d'erreur représentant l'écart-type",
@@ -1068,7 +1047,8 @@ graphique_perf_par_config <- function(donnees_list) {
         legend.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "right"
       ) +
-      coord_flip()
+      coord_flip() +
+      scale_y_continuous(limits = c(0, NA))
     
     # Enregistrer le graphique de précision global
     ggsave("analysis_results/inter_parseurs/barres_precision_par_config.png", p_precision, width = 12, height = 7, bg = "white")
@@ -1079,24 +1059,16 @@ graphique_perf_par_config <- function(donnees_list) {
       stats_config_parser <- stats_config %>% filter(Parser_Type == parser)
       p_precision_parser <- ggplot(stats_config_parser, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Copy_Config)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
-        geom_errorbar(aes(ymin = Erreur_Moyenne - Erreur_Ecart_Type, 
+        geom_errorbar(aes(ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0), 
                          ymax = Erreur_Moyenne + Erreur_Ecart_Type),
                      position = position_dodge(width = 0.9), width = 0.2) +
         scale_fill_brewer(palette = "Set2") +
         labs(title = paste0("Erreur moyenne de précision par configuration - ", parser),
-             subtitle = "Avec barres d'erreur représentant l'écart-type",
-             x = NULL, # Pas de label sous le graphique
-             y = "Erreur moyenne (pixels)",
              fill = "Configuration") +
         theme_minimal() +
         theme(
-          plot.title = element_text(face = "bold", size = 14, color = "navy"),
-          axis.title = element_text(face = "bold", color = "darkblue"),
-          axis.text.x = element_blank(), # Masque les labels de configuration
-          axis.ticks.x = element_blank(), # Masque les ticks
-          legend.title = element_text(face = "bold", color = "darkblue"),
-          legend.position = "right"
-        )
+        ) +
+        scale_y_continuous(limits = c(0, NA))
       # PAS de coord_flip ici
       ggsave(paste0("analysis_results/inter_parseurs/barres_precision_par_config_", parser, ".png"), p_precision_parser, width = 12, height = 7, bg = "white")
       graphiques[[paste0("precision_", parser)]] <- p_precision_parser
