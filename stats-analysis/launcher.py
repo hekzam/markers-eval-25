@@ -53,20 +53,21 @@ def lancer_script_r(script_path, csv_path):
 
 def afficher_menu():
     """
-    Affiche un menu pour choisir entre les deux scripts.
+    Affiche un menu pour choisir entre les trois scripts.
     """
     print("\n===== MENU DE SÉLECTION DES PARSERS =====")
     print("1. Lancer intra_parser.r")
-    print("2. Lancer inter_parser.r")
+    print("2. Lancer inter_parser.r") 
+    print("3. Lancer limite.r")
     print("q. Quitter")
-    choix = input("\nEntrez votre choix (1, 2 ou q) : ")
+    choix = input("\nEntrez votre choix (1, 2, 3 ou q) : ")
     return choix
 
 def main():
     # Créer un analyseur d'arguments
     parser = argparse.ArgumentParser(description="Lance l'analyse R sur le fichier CSV.")
     parser.add_argument("--csv", help="Spécifier un fichier CSV", default="../output/csv/test1.csv")
-    parser.add_argument("--script", help="Spécifier le script à lancer (intra/inter)", choices=["intra", "inter"])
+    parser.add_argument("--script", help="Spécifier le script à lancer (intra/inter/limite)", choices=["intra", "inter", "limite"])
     parser.add_argument("--mode", help="Mode d'exécution: interactif ou direct", choices=["interactif", "direct"], default="interactif")
     args = parser.parse_args()
     
@@ -86,8 +87,10 @@ def main():
         # Exécution directe si le script est spécifié
         if args.script == "intra":
             script_principal = "intra_parser_analysis.r"
-        else:
+        elif args.script == "inter":
             script_principal = "inter_parser_analysis.r"
+        else:  # limite
+            script_principal = "limite.r"
         
         # Exécuter le script spécifié
         print(f"\nLANCEMENT DE L'ANALYSE ({args.script})")
@@ -119,6 +122,15 @@ def main():
                     print("\nL'analyse inter a été complétée avec succès!")
                 else:
                     print("\nL'analyse inter a échoué.")
+                    
+            elif choix == "3":
+                script_principal = "limite.r"
+                success = lancer_script_r(script_dir / script_principal, script_dir / csv_principal)
+                
+                if success:
+                    print("\nL'analyse limite a été complétée avec succès!")
+                else:
+                    print("\nL'analyse limite a échoué.")
                 
             elif choix.lower() == "q":
                 print("\nFin du programme. Au revoir!")
