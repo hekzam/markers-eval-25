@@ -254,8 +254,9 @@ graphique_barres_performance <- function(donnees_list) {
   return(graphiques)
 }
 
-# 3. Graphiques linéaires pour comparer l'évolution des performances
+# Graphs removed as requested (comparaison_groupe, comparaison_moyenne, precision_erreur_moyenne, taux parsing except taux succes config, temp_execution_copies)
 graphique_evolution_performances <- function(donnees_list) {
+  return(NULL)  # Function disabled as requested
   donnees <- donnees_list$donnees
   
   # Si la colonne de configuration existe, on peut l'utiliser comme variable continue
@@ -330,7 +331,7 @@ graphique_scatter_temps_precision <- function(donnees_list) {
   ggsave("analysis_results/inter_parseurs/jitter_scatter_temps_vs_precision_all_scaled.png", p_jitter_scaled, width = 12, height = 8, bg = "white")
   plots_scaled$jitter_global <- p_jitter_scaled
 
-  # Suppression de la génération des scatter plots individuels par parseur
+  # Suppression de la génération des scatter plots individuels par parseur -> migration sur intra_parser
   # for (parseur in unique(donnees$Parser_Type)) {
   #   donnees_parseur <- donnees %>% filter(Parser_Type == parseur & Precision_Error_Avg_px != -1)
   #   if (nrow(donnees_parseur) == 0) next
@@ -930,23 +931,25 @@ graphique_radar_performance <- function(donnees_list) {
     labels = c("Rapidité (ms, plus bas = mieux)", "Précision (px, plus bas = mieux)")
   )
   donnees_long <- donnees_long[!is.na(donnees_long$Valeur), ]
+  # Créer une variable de position pour regrouper les métriques par parseur
+  donnees_long$Parser_Type <- factor(donnees_long$Parser_Type, levels = PARSEURS)
+  donnees_long$Metrique <- factor(donnees_long$Metrique)
 
-  # Boxplot combiné pour tous les parseurs
-  p <- ggplot(donnees_long, aes(x = Metrique, y = Valeur, fill = Parser_Type)) +
-    geom_boxplot(alpha = 0.7, outlier.shape = NA, position = position_dodge(width = 0.8)) +
-    scale_fill_manual(values = COULEURS_PARSEURS) +
-    labs(title = "Comparaison des performances globales (tous parseurs)",
-         subtitle = "Rapidité (ms) et Précision (px, plus bas = mieux)",
-         x = "Métrique", y = "Valeur", fill = "Parseur") +
+  p <- ggplot(donnees_long, aes(x = Parser_Type, y = Valeur, fill = Metrique)) +    geom_boxplot(alpha = 0.7, outlier.shape = NA, position = position_dodge(width = 0.8)) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(title = "Comparaison des performances globales par parseur",
+         subtitle = "Pour chaque parseur : rapidité (ms) et précision (px, plus bas = mieux)",
+         x = "Parseur", y = "Valeur", fill = "Métrique") +
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(angle = 30, hjust = 1),
       legend.position = "top",
       strip.text = element_text(face = "bold", size = 12)
     ) +
     expand_limits(y = 0)
-  ggsave("analysis_results/inter_parseurs/triple_boxplot_global.png", p, width = 10, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/triple_boxplot_global.png", p, width = 12, height = 7, bg = "white")
   if (interactive()) print(p)
   return(p)
 }
