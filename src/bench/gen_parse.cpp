@@ -315,13 +315,6 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& s
 
             precision_errors =
                 calculate_precision_error(dst_img_size, mat, affine_transform.value(), MARGIN_COPY_MODIFIED);
-            
-            if (!std::isnan(precision_errors.back()) && precision_errors.back() >= 100) {
-                for (auto& error : precision_errors) {
-                    error = std::nan("");
-                }
-            }
-            
             std::cout << "  Precision error: " << std::fixed << std::setprecision(3) << precision_errors.back()
                       << " pixels" << std::endl;
 
@@ -341,6 +334,7 @@ void bench_parsing(std::vector<CopyInfo>& generated_copies, const cv::Point2f& s
             save_image(calibrated_img_col, output_dir, output_img_path_fname);
         }
 
+        // Écrire les résultats dans le CSV
         benchmark_csv.add_row({ copy_info.filename, copy_info.generation_time, parsing_milliseconds,
                                 parsing_success ? 1 : 0, parser_type_to_string(selected_parser), copy_marker_config,
                                 unique_seed, precision_errors.back(), precision_errors[0], precision_errors[1],
