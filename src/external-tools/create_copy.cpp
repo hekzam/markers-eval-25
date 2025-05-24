@@ -51,10 +51,10 @@ std::string Marker::toString() const {
     std::string result = ::toString(type);
 
     if (outlined) {
-        result += "-out";
+        result += "-o";
     }
     if (encoded) {
-        result += "-enc";
+        result += "-e";
     }
     return result;
 }
@@ -76,19 +76,19 @@ Marker Marker::parseMarker(const std::string& spec) {
     bool encoded = false;
     bool outlined = false;
 
-    size_t encodedPos = spec.find("-enc");
+    size_t encodedPos = spec.find("-e");
     if (encodedPos != std::string::npos) {
         encoded = true;
         type = spec.substr(0, encodedPos);
     } else {
-        encodedPos = spec.find(":enc");
+        encodedPos = spec.find("-e");
         if (encodedPos != std::string::npos) {
             encoded = true;
             type = spec.substr(0, encodedPos);
         }
     }
 
-    size_t outlinedPos = spec.find("-out");
+    size_t outlinedPos = spec.find("-o");
     if (outlinedPos != std::string::npos) {
         outlined = true;
         if (encodedPos != std::string::npos && outlinedPos < encodedPos) {
@@ -97,7 +97,7 @@ Marker Marker::parseMarker(const std::string& spec) {
             type = spec.substr(0, outlinedPos);
         }
     } else {
-        outlinedPos = spec.find(":out");
+        outlinedPos = spec.find("-o");
         if (outlinedPos != std::string::npos) {
             outlined = true;
             if (encodedPos != std::string::npos && outlinedPos < encodedPos) {

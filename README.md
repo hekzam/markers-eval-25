@@ -115,7 +115,7 @@ Une fois la compilation terminée, vous pouvez générer des copies d'examen ave
 Utilisez la commande suivante pour générer des copies avec des options personnalisées :
 
 ```sh
-./build-cmake/create-copie [options]
+./build-cmake/create-copy [options]
 ```
 
 Les copies générées sont sauvegardées dans le dossier **copies/**.
@@ -146,39 +146,39 @@ Les copies générées sont sauvegardées dans le dossier **copies/**.
 - `--generating-content <BOOL>` : Générer le contenu dans le document (1/true ou 0/false) (par défaut: 1)
 - `--seed <N>`                  : Graine pour la génération aléatoire du contenu (par défaut: 42)
 - `--filename <name>`           : Nom du fichier de sortie (par défaut: copy)
-- `--tl <type>`                 : Type de marqueur pour le coin supérieur gauche (par défaut: qrcode:enc)
-- `--tr <type>`                 : Type de marqueur pour le coin supérieur droit (par défaut: qrcode:enc)
-- `--bl <type>`                 : Type de marqueur pour le coin inférieur gauche (par défaut: qrcode:enc)
-- `--br <type>`                 : Type de marqueur pour le coin inférieur droit (par défaut: qrcode:enc)
+- `--tl <type>`                 : Type de marqueur pour le coin supérieur gauche (par défaut: qrcode-e)
+- `--tr <type>`                 : Type de marqueur pour le coin supérieur droit (par défaut: qrcode-e)
+- `--bl <type>`                 : Type de marqueur pour le coin inférieur gauche (par défaut: qrcode-e)
+- `--br <type>`                 : Type de marqueur pour le coin inférieur droit (par défaut: qrcode-e)
 - `--header <type>`             : Type de marqueur pour l'en-tête (par défaut: #)
 - `--verbose`                   : Affiche tous les messages de sortie des commandes de typst (par défaut: non affiché)
 
 #### Format des types de marqueurs
 
 ```
-  Format: type[:enc][:out]
-  - type:out     : Marqueur non rempli (uniquement pour formes géométriques simples)
-  - type:enc      : Marqueur avec données encodées
+  Format: type[-e][-o]
+  - type-o     : Marqueur non rempli (uniquement pour formes géométriques simples)
+  - type-e      : Marqueur avec données encodées
   - #              : Aucun marqueur à cette position
 ```
 
-> **Note sur l'encodage :** Par défaut, les marqueurs encodables contiennent uniquement l'information de leur position (coin supérieur gauche, supérieur droit, etc.). Avec l'option `:enc`, le marqueur encodera également le numéro de la page, de la copie ainsi que le nom de l'examen.
+> **Note sur l'encodage :** Par défaut, les marqueurs encodables contiennent uniquement l'information de leur position (coin supérieur gauche, supérieur droit, etc.). Avec l'option `-e`, le marqueur encodera également le numéro de la page, de la copie ainsi que le nom de l'examen.
 
 ### Exemples
 
 #### Exemple simple avec des QR codes
 ```sh
-./build-cmake/create-copie --tl qrcode --tr qrcode --bl qrcode --br qrcode --header qrcode
+./build-cmake/create-copy --tl qrcode --tr qrcode --bl qrcode --br qrcode --header qrcode
 ```
 
 #### Configuration avancée avec différents marqueurs
 ```sh
-./build-cmake/create-copie --tl circle:out --tr circle:out --bl # --br qrcode:enc --header qrcode:enc --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
+./build-cmake/create-copy --tl circle-o --tr circle-o --bl # --br qrcode-e --header qrcode-e --encoded-size 20 --unencoded-size 12 --grey-level 80 --header-size 18 --content-margin-x 15 --content-margin-y 25 --seed 123 --dpi 600 --filename exam_high_res
 ```
 
 ### Flux de travail de génération
 
-1. Le processus commence par l'exécution du programme `create-copie` qui analyse les arguments de la ligne de commande via `gen_copies.cpp`.
+1. Le processus commence par l'exécution du programme `create-copy` qui analyse les arguments de la ligne de commande via `gen_copies.cpp`.
 2. Les arguments sont convertis en paramètres de style (`CopyStyleParams`) et en configuration de marqueurs (`CopyMarkerConfig`).
 3. La fonction `create_copy` dans `create_copy.cpp` est alors appelée avec ces paramètres.
 4. Cette fonction:
@@ -286,7 +286,7 @@ Spécifiez directement tous les paramètres dans votre commande :
 
 Exemple :
 ```sh
-./build-cmake/bench --benchmark gen-parse --nb-copies 5 --marker-config "(qrcode:enc,qrcode:enc,qrcode:enc,qrcode:enc,#)" --parser-type ZXING
+./build-cmake/bench --benchmark gen-parse --nb-copies 5 --marker-config "(qrcode-e,qrcode-e,qrcode-e,qrcode-e,#)" --parser-type ZXING
 ```
 
 #### 2. Mode interactif
@@ -313,10 +313,10 @@ Chaque ligne du fichier doit contenir un type de benchmark et ses options. Les l
 
 Exemple de fichier batch.txt :
 ```
-gen-parse --nb-copies 3 --marker-config "(qrcode:enc,qrcode:enc,qrcode:enc,qrcode:enc,#)"
-config-analysis --marker-config "(datamatrix:enc,datamatrix:enc,datamatrix:enc,datamatrix:enc,#)"
+gen-parse --nb-copies 3 --marker-config "(qrcode-e,qrcode-e,qrcode-e,qrcode-e,#)"
+config-analysis --marker-config "(datamatrix-e,datamatrix-e,datamatrix-e,datamatrix-e,#)"
 # Cette ligne est un commentaire
-gen-parse --nb-copies 2 --marker-config "(circle:out,circle:out,circle:out,circle:out,#)"
+gen-parse --nb-copies 2 --marker-config "(circle-o,circle-o,circle-o,circle-o,#)"
 ```
 
 #### Types de benchmark disponibles
@@ -370,7 +370,7 @@ Voici les différents types de benchmarks que vous pouvez exécuter :
 
    **Exemple d'utilisation** :
    ```sh
-   ./build-cmake/bench --benchmark limite-bench --nb-copies 3 --marker-config "(qrcode:enc,qrcode:enc,qrcode:enc,qrcode:enc,#)" --warmup-iterations 2
+   ./build-cmake/bench --benchmark limite-bench --nb-copies 3 --marker-config "(qrcode-e,qrcode-e,qrcode-e,qrcode-e,#)" --warmup-iterations 2
    ```
 
 ### Types de parseurs disponibles
@@ -393,14 +393,14 @@ Le système prend en charge plusieurs types de parseurs pour la détection et le
 
 Exemple d'utilisation avec un parseur spécifique :
 ```sh
-./build-cmake/bench --benchmark gen-parse --parser-type CIRCLE --marker-config "(circle:out,circle:out,circle:out,circle:out,#)"
+./build-cmake/bench --benchmark gen-parse --parser-type CIRCLE --marker-config "(circle-o,circle-o,circle-o,circle-o,#)"
 ```
 
 > **Note** : Tous les parseurs ne sont pas compatibles avec tous les types de marqueurs. Par exemple, le parseur CIRCLE ne fonctionnera correctement qu'avec des marqueurs de type cercle, et le parseur ARUCO avec des marqueurs ArUco.
 
 ### Options communes à tous les benchmarks
 
-- `--marker-config <config>` : Configuration des marqueurs (par défaut: `(qrcode:enc,qrcode:enc,qrcode:enc,qrcode:enc,#)`)
+- `--marker-config <config>` : Configuration des marqueurs (par défaut: `(qrcode-e,qrcode-e,qrcode-e,qrcode-e,#)`)
   > Format: (tl,tr,bl,br,header) où tl=top-left, tr=top-right, bl=bottom-left, br=bottom-right, header=en-tête.
   > Utilisez "#" pour les positions qui ne sont pas occupées par des marqueurs.
 - `--encoded-marker-size <N>` : Taille des marqueurs encodés en mm (par défaut: 13)
@@ -429,12 +429,12 @@ Les résultats des benchmarks sont sauvegardés dans le dossier `output/csv/` au
 
 #### Exemple 2 : Analyse de consommation d'encre pour un marqueur spécifique
 ```sh
-./build-cmake/bench --benchmark config-analysis --marker-config "(circle:out,circle:out,circle:out,circle:out,#)" --grey-level 50
+./build-cmake/bench --benchmark config-analysis --marker-config "(circle-o,circle-o,circle-o,circle-o,#)" --grey-level 50
 ```
 
 #### Exemple 3 : Benchmark complet avec options avancées
 ```sh
-./build-cmake/bench --benchmark gen-parse --nb-copies 20 --parser-type SHAPE --marker-config "(square,square,square,qrcode:enc,#)" --encoded-marker-size 20 --unencoded-marker-size 8 --warmup-iterations 2 --seed 42
+./build-cmake/bench --benchmark gen-parse --nb-copies 20 --parser-type SHAPE --marker-config "(square,square,square,qrcode-e,#)" --encoded-marker-size 20 --unencoded-marker-size 8 --warmup-iterations 2 --seed 42
 ```
 
 ## Module de modification d'images

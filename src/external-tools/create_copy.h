@@ -83,10 +83,10 @@ struct Marker {
      * @brief Analyse une spécification de marqueur et crée l'objet Marker correspondant
      *
      * Cette fonction prend une chaîne de caractères qui décrit un marqueur
-     * (par exemple "qrcode:enc" ou "circle:out") et retourne
+     * (par exemple "qrcode-e" ou "circle-o") et retourne
      * un objet Marker configuré selon cette spécification.
      *
-     * @param spec Chaîne de spécification du marqueur au format "type[:enc][:out]"
+     * @param spec Chaîne de spécification du marqueur au format "type[-e][-o]"
      * @return Marker Objet Marker configuré selon la spécification, ou marqueur vide si spec est vide ou "#"
      */
     static Marker parseMarker(const std::string& spec);

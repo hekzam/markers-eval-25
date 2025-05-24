@@ -16,8 +16,8 @@
   let sep = ","
   let data = parts.join(sep)
 
-  // Netoyyer le type : Enlever le suffixe "-enc" si présent
-  let type = type.split("-enc").at(0)
+  // Netoyyer le type : Enlever le suffixe "-e" si présent
+  let type = type.split("-e").at(0)
 
 
   let barcode_fns = (
