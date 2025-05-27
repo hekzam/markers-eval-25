@@ -317,28 +317,33 @@ Le fichier `all_config.json` contient une liste de paires `[configuration_marque
 
 ```sh
 # Exécuter le script de génération de batch
-python3 generate_batch.py
+python3 tools/generate_batch.py
 ```
 
 **Configuration du script :**
 
-Vous pouvez modifier les variables suivantes dans le script avant de l'exécuter :
+Vous pouvez activer ou désactiver différents types de benchmarks en modifiant les drapeaux booléens dans le script :
 
 ```python
-nb_copies_per_config = 20  # Nombre de copies pour chaque configuration
-header_marker_size = 10    # Taille du marqueur d'en-tête
-unencoded_marker_size = 8  # Taille du marqueur non encodé
-encoded_marker_size = 20   # Taille du marqueur encodé
-dpi = 200                  # Résolution en DPI pour la génération
+gen_parse_bench = False      # Benchmark gen-parse (génération et analyse)
+config_analysis_bench = True # Benchmark config-analysis (analyse de consommation d'encre)
+limite_bench = False         # Benchmark de limites de détection
+random_bench = True          # Mélange aléatoire des commandes
 ```
 
-**Types de benchmarks générés :**
+De plus, vous pouvez ajuster les paramètres suivants :
 
-Le script peut générer des commandes pour différents types de benchmarks :
-- `gen_parse_bench = True` : Active la génération de commandes pour le benchmark gen-parse
-- `config_analysis_bench = True` : Active la génération de commandes pour le benchmark config-analysis
-- `limite_bench = True` : Active la génération de commandes pour le benchmark limite
-- `random_bench = True` : Mélange aléatoirement l'ordre des commandes générées
+```python
+nb_copies_per_config = 100   # Nombre de copies pour chaque configuration
+header_marker_size = 15      # Taille du marqueur d'en-tête en mm
+unencoded_marker_size = 12   # Taille de base des marqueurs non encodés en mm
+shape_marker_size = 6        # Taille des marqueurs de forme en mm
+fiducial_marker_size = 8     # Taille des marqueurs fiduciaires en mm
+encoded_marker_size = 18     # Taille des marqueurs encodés en mm
+dpi = 200                    # Résolution en DPI pour la génération
+```
+
+Le script ajuste automatiquement la taille des marqueurs en fonction de leur type. Par exemple, les marqueurs de forme (circle, square, cross) utilisent `shape_marker_size`, tandis que les marqueurs fiduciaires (aruco, qreye, custom) utilisent `fiducial_marker_size`.
 
 **Résultat et utilisation :**
 
@@ -537,6 +542,26 @@ Vous pouvez contrôler le comportement du module via l'option `--seed` :
 ./build-cmake/bench --benchmark gen-parse --nb-copies 5 --seed 0
 ```
 
+## Analyse et visualisation des résultats
+
+Le projet inclut plusieurs outils d'analyse statistique pour visualiser et interpréter les résultats des benchmarks. Ces outils permettent de comparer les performances des différents types de marqueurs et parseurs.
+
+### Utilisation des scripts d'analyse
+
+Les analyses statistiques peuvent être lancées facilement à l'aide du script Python `launcher.py` qui se trouve dans le dossier `stats-analysis` :
+
+```sh
+cd stats-analysis
+python launcher.py --csv ../output/csv/benchmark_results.csv
+```
+
+Ce launcher vous propose un menu interactif avec les options suivantes :
+
+1. **Analyse intra-parseur** : Étudie en détail chaque parseur individuellement
+2. **Analyse inter-parseurs** : Compare les différents parseurs entre eux
+3. **Analyse limite** : Évalue les limites de détection en fonction des dégradations
+4. **Analyse de configuration** : Étudie la consommation d'encre et l'espace occupé
+
 ## Structure du projet
 
 ```
@@ -560,17 +585,19 @@ Vous pouvez contrôler le comportement du module via l'option `--seed` :
 │   ├── modifier_cli.cpp           # Outil de simulation de défauts d'image pour tester la robustesse des marqueurs
 │   └── gen_copies.cpp    # Interface entre les arguments CLI et le générateur de copies
 ├── tools/                     # Scripts et utilitaires
-│   ├── format.py              # Formatter de code (clang-format)
-│   └── pdf_noiser/            # Outils de simulation de défauts
-│       └── printer_emulator.py # Simulateur de défauts d'impression/scan en Python
+│   ├── generate_batch.py      # Générateur de fichiers batch pour les benchmarks
+│   ├── all_config.json        # Fichier de configuration pour les benchmarks
+│   └── format.py              # Formatter de code (clang-format)
 ├── typst/                     # Sources de templates Typst
 ├── stats-analysis/            # Scripts et outils d'analyse statistique
+│   ├── launcher.py            # Lancement des analyses statistiques
+│   ├── intra_parser_analysis.py # Analyse des performances par parseur
+│   ├── inter_parser_analysis.py # Analyse comparative entre parseurs
+│   └── config_analysis.py     # Analyse de la consommation d'encre et de l'espace occupé
 ├── copies/                    # Dossier de sortie pour les copies générées
 ├── output/                    # Dossier de sortie pour les résultats d'analyse
 ├── build-cmake/               # Répertoire de build CMake (généré)
-├── build/                     # Répertoire de build Meson (généré)
-├── README.md                  # Ce fichier
-└── LICENSE                    # Fichier de licence
+└── build/                     # Répertoire de build Meson (généré)
 ```
 
 ### Architecture du projet et guide d'extension
@@ -584,7 +611,7 @@ Le projet est organisé selon une architecture modulaire qui facilite l'ajout de
 3. **Système de benchmarking** - Évalue les performances des différents marqueurs et parseurs
 4. **Utilitaires partagés** - Fournit des fonctions communes utilisées par les différents modules
 
-Le flux de données typique est le suivant:
+Le flux de données typique est le suivant :
 ```
 [Générateur de copies] → [Copies avec marqueurs] → [Simulateur de défauts] → [Parseurs] → [Analyse de résultats]
 ```
@@ -799,12 +826,6 @@ let blocks = (
 **Positionnement avec marges** : Le contenu est encapsulé dans la fonction `content-with-margins()` qui applique les marges appropriées pour éviter les chevauchements avec les marqueurs placés dans les coins.
 
 **Contrôle via paramètres** : Le paramètre `should-generate-content` permet de générer des copies avec ou sans contenu. Ce mode "sans contenu" est particulièrement utile pour les tests et benchmarks qui se concentrent uniquement sur les marqueurs.
-
-## Références techniques
-
-- **OpenCV** : [https://opencv.org/](https://opencv.org/)
-- **Typst** : [https://typst.app/](https://typst.app/)
-- **ZXing** : [https://github.com/zxing/zxing](https://github.com/zxing/zxing)
 
 ## License
 
