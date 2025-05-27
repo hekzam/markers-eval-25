@@ -67,9 +67,10 @@ graphique_barres_encre <- function(donnees) {
          y = "Consommation d'encre (ml)") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
-      axis.text.x = element_text(angle = 45, hjust = 1)
+      axis.text.x = element_text(face = "bold", size = 9, angle = 45, hjust = 1),
+      axis.text.y = element_text(face = "bold", size = 9)
     ) +
     coord_flip()
   
@@ -100,7 +101,8 @@ graphique_barres_surface <- function(donnees) {
     theme(
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
-      axis.text.x = element_text(angle = 45, hjust = 1)
+      axis.text.x = element_text(face = "bold", size = 9, angle = 45, hjust = 1),
+      axis.text.y = element_text(face = "bold", size = 9)
     ) +
     coord_flip()
   
@@ -132,6 +134,8 @@ graphique_scatter_encre_surface <- function(donnees) {
     theme(
       plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.position = "none"  # Supprimer la légende car les labels sont déjà affichés
     ) +
     expand_limits(x = 0, y = 0) +
@@ -155,9 +159,10 @@ graphique_scatter_encre_surface <- function(donnees) {
   p_zoom <- ggplot(donnees_zoom, aes(x = Ink_Consumption_ml, y = Total_Markers_Area_cm2, color = Copy_Config)) +
     geom_point(size = 4, alpha = 0.8) +
     geom_text_repel(aes(label = Copy_Config), 
-                   size = 4,  
-                   box.padding = 1.0,  # Augmenter l'espace autour du texte
-                   point.padding = 0.5,
+                   size = 4,
+                   fontface = "bold",
+                   box.padding = 1.3,  # Augmenter l'espace autour du texte
+                   point.padding = 0.6,
                    force = 5,  # Plus de force de répulsion
                    max.iter = 5000,  # Plus d'itérations pour le placement
                    max.overlaps = Inf,  # Aucune limite sur les chevauchements
@@ -171,6 +176,8 @@ graphique_scatter_encre_surface <- function(donnees) {
     theme(
       plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       plot.margin = margin(0.5, 1, 0.5, 0.5, "cm"),  # Ajouter plus de marge à droite
       legend.position = "none"  # Supprimer la légende car les labels sont déjà affichés
     ) +
@@ -210,6 +217,8 @@ graphique_scatter_encre_surface <- function(donnees) {
     theme(
       plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       plot.margin = margin(0.5, 1, 0.5, 0.5, "cm"),
       legend.position = "none"
     ) +
@@ -264,7 +273,9 @@ graphique_densite_information <- function(donnees) {
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
-      axis.title = element_text(face = "bold", color = "darkblue")
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9)
     ) +
     coord_flip()
   

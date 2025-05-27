@@ -88,8 +88,10 @@ graphique_boxplot_temps <- function(donnees_list) {
     expand_limits(y = 0) +  # Affiche le zéro sur l'axe Y
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.position = "none"  # Masquer la légende car les couleurs sont redondantes avec l'axe x
     )
 
@@ -113,8 +115,10 @@ graphique_boxplot_temps <- function(donnees_list) {
          y = "Temps de parsing (ms)") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.position = "none"
     )
 
@@ -125,8 +129,8 @@ graphique_boxplot_temps <- function(donnees_list) {
   }
 
   # Enregistrer les deux versions
-  ggsave("analysis_results/inter_parseurs/boxplot_temps_execution.png", p, width = 10, height = 6, bg = "white")
-  ggsave("analysis_results/inter_parseurs/boxplot_temps_execution_scaled.png", p_scaled, width = 10, height = 6, bg = "white")
+  ggsave("analysis_results/inter_parseurs/boxplot_temps_execution.png", p, width = 12, height = 8, bg = "white")
+  ggsave("analysis_results/inter_parseurs/boxplot_temps_execution_scaled.png", p_scaled, width = 12, height = 8, bg = "white")
 
   return(list(normal = p, scaled = p_scaled))
 }
@@ -169,8 +173,10 @@ graphique_barres_performance <- function(donnees_list) {
            y = "Erreur de précision moyenne (pixels)") +
       theme_minimal() +
       theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        plot.title = element_text(face = "bold", size = 15, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
+        axis.text.x = element_text(face = "bold", size = 9),
+        axis.text.y = element_text(face = "bold", size = 9),
         legend.position = "none"
       ) +
       scale_y_continuous(limits = c(0, NA))
@@ -179,7 +185,7 @@ graphique_barres_performance <- function(donnees_list) {
     graphiques$precision <- p_precision
     
     # Enregistrer le graphique
-    ggsave("analysis_results/inter_parseurs/barres_erreur_precision.png", p_precision, width = 10, height = 6, bg = "white")
+    ggsave("analysis_results/inter_parseurs/barres_erreur_precision.png", p_precision, width = 12, height = 8, bg = "white")
     
     if (interactive()) {
       print(p_precision)
@@ -212,8 +218,10 @@ graphique_barres_performance <- function(donnees_list) {
       scale_y_continuous(limits = c(0, max(100, max(succes_parseurs$Taux_Succes, na.rm = TRUE) * 1.1))) +
       theme_minimal() +
       theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        plot.title = element_text(face = "bold", size = 15, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
+        axis.text.x = element_text(face = "bold", size = 9),
+        axis.text.y = element_text(face = "bold", size = 9),
         legend.position = "none"
       )
     
@@ -221,7 +229,7 @@ graphique_barres_performance <- function(donnees_list) {
     graphiques$succes <- p_succes
     
     # Enregistrer le graphique
-    ggsave("analysis_results/inter_parseurs/barres_taux_succes.png", p_succes, width = 10, height = 6, bg = "white")
+    ggsave("analysis_results/inter_parseurs/barres_taux_succes.png", p_succes, width = 12, height = 8, bg = "white")
     
     if (interactive()) {
       print(p_succes)
@@ -265,14 +273,15 @@ graphique_barres_performance <- function(donnees_list) {
         scale_y_continuous(limits = c(0, 100)) +
         theme_minimal() +
         theme(
-          plot.title = element_text(face = "bold", size = 14, color = "navy"),
+          plot.title = element_text(face = "bold", size = 15, color = "navy"),
           axis.title = element_text(face = "bold", color = "darkblue"),
-          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.text.x = element_text(face = "bold", size = 9, angle = 45, hjust = 1),
+          axis.text.y = element_text(face = "bold", size = 9),
           legend.title = element_text(face = "bold", color = "darkblue"),
           legend.position = "right"
         ) +
         coord_flip()
-      ggsave("analysis_results/inter_parseurs/barres_taux_succes_par_config.png", p_succes_config, width = 12, height = 7, bg = "white")
+      ggsave("analysis_results/inter_parseurs/barres_taux_succes_par_config.png", p_succes_config, width = 12, height = 8, bg = "white")
       graphiques$succes_config <- p_succes_config
     }
   }
@@ -329,8 +338,10 @@ graphique_scatter_temps_precision <- function(donnees_list) {
          color = "Parseur", shape = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
@@ -386,7 +397,7 @@ graphique_scatter_temps_precision <- function(donnees_list) {
   #          color = "Config") +
   #     theme_minimal() +
   #     theme(
-  #       plot.title = element_text(face = "bold", size = 14, color = "navy"),
+  #       plot.title = element_text(face = "bold", size = 15, color = "navy"),
   #       axis.title = element_text(face = "bold", color = "darkblue"),
   #       legend.title = element_text(face = "bold", color = "darkblue"),
   #       legend.position = "right"
@@ -431,7 +442,9 @@ graphique_jitter_temps_precision_sep <- function(donnees_list) {
          color = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
@@ -448,7 +461,9 @@ graphique_jitter_temps_precision_sep <- function(donnees_list) {
          color = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
@@ -466,15 +481,17 @@ graphique_jitter_temps_precision_sep <- function(donnees_list) {
          color = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
     expand_limits(y = 0)
 
-  ggsave("analysis_results/inter_parseurs/jitter_temps_par_parseur.png", p_jitter_temps, width = 10, height = 7, bg = "white")
-  ggsave("analysis_results/inter_parseurs/jitter_precision_par_parseur.png", p_jitter_precision, width = 10, height = 7, bg = "white")
-  ggsave("analysis_results/inter_parseurs/jitter_precision_par_parseur_scaled.png", p_jitter_precision_scaled, width = 10, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/jitter_temps_par_parseur.png", p_jitter_temps, width = 12, height = 8, bg = "white")
+  ggsave("analysis_results/inter_parseurs/jitter_precision_par_parseur.png", p_jitter_precision, width = 12, height = 8, bg = "white")
+  ggsave("analysis_results/inter_parseurs/jitter_precision_par_parseur_scaled.png", p_jitter_precision_scaled, width = 12, height = 8, bg = "white")
 
   if (interactive()) {
     print(p_jitter_temps)
@@ -499,14 +516,14 @@ graphique_violin_temps <- function(donnees_list) {
          y = "Temps de parsing (ms)") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "none"
     ) +
     expand_limits(y = 0)
   
   # Enregistrer le graphique
-  ggsave("analysis_results/inter_parseurs/violin_temps_execution.png", p, width = 10, height = 6, bg = "white")
+  ggsave("analysis_results/inter_parseurs/violin_temps_execution.png", p, width = 12, height = 8, bg = "white")
   
   if (interactive()) {
     print(p)
@@ -546,14 +563,16 @@ graphique_violin_temps <- function(donnees_list) {
            y = "Erreur de précision (pixels)") +
       theme_minimal() +
       theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        plot.title = element_text(face = "bold", size = 15, color = "navy"),
+        axis.text.x = element_text(face = "bold", size = 9),
+        axis.text.y = element_text(face = "bold", size = 9),
         axis.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "none"
       ) +
       expand_limits(y = 0)
 
     # Enregistrer le graphique non filtré
-    ggsave("analysis_results/inter_parseurs/violin_erreur_precision.png", p2, width = 10, height = 6, bg = "white")
+    ggsave("analysis_results/inter_parseurs/violin_erreur_precision.png", p2, width = 12, height = 8, bg = "white")
 
     # Créer aussi une version avec ylim pour montrer l'ensemble des données mais avec une limite visuelle (scaled)
     p3 <- ggplot(donnees, aes(x = Parser_Type, y = Precision_Error_Avg_px, fill = Parser_Type)) +
@@ -567,14 +586,16 @@ graphique_violin_temps <- function(donnees_list) {
            y = "Erreur de précision (pixels)") +
       theme_minimal() +
       theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        plot.title = element_text(face = "bold", size = 15, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
+        axis.text.x = element_text(face = "bold", size = 9),
+        axis.text.y = element_text(face = "bold", size = 9),
         legend.position = "none"
       ) +
       expand_limits(y = 0)
 
     # Enregistrer la version avec ylim
-    ggsave("analysis_results/inter_parseurs/violin_erreur_precision_scaled.png", p3, width = 10, height = 6, bg = "white")
+    ggsave("analysis_results/inter_parseurs/violin_erreur_precision_scaled.png", p3, width = 12, height = 8, bg = "white")
 
     if (interactive()) {
       print(p2)
@@ -657,16 +678,16 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
   if (nrow(pareto_points) > 1) {
     pareto_points <- pareto_points[order(pareto_points$Temps_Moyen, decreasing = FALSE), ]
     p <- p + geom_path(data = pareto_points, aes(x = Temps_Moyen, y = Precision_Moyenne), 
-                        color = "darkred", size = 1.2, alpha = 0.9, inherit.aes = FALSE)
+                        color = "darkred", size = 0.5, alpha = 0.9, inherit.aes = FALSE)
   }
   
   # Ajout des points APRÈS la ligne
-  p <- p + geom_point(size = 3.5, alpha = 0.9)
+  p <- p + geom_point(size = 4, alpha = 0.9)
   
   # Ajout des labels avec ggrepel pour éviter les chevauchements et débordements
   p <- p + ggrepel::geom_text_repel(
     aes(label = Label, color = Copy_Config), 
-    size = 3.5, 
+    size = 4, 
     fontface = "bold",
     box.padding = 0.5,
     point.padding = 0.3,
@@ -689,9 +710,12 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
          shape = "Statut") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
-      legend.position = "top"
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
+      plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
+      legend.position = "none"
     ) +
     expand_limits(x = 0, y = 0)
 
@@ -712,7 +736,7 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
 
   nom_fichier <- ifelse(scaled, "analysis_results/inter_parseurs/front_pareto_global_scaled.png", 
                          "analysis_results/inter_parseurs/front_pareto_global.png")
-  ggsave(nom_fichier, p, width = 13, height = 8, bg = "white")
+  ggsave(nom_fichier, p, width = 12, height = 8, bg = "white")
   if (interactive()) print(p)
   return(p)
 }
@@ -801,24 +825,24 @@ graphique_pareto_succes_precision <- function(donnees_list, scaled = FALSE) {
   if (nrow(pareto_points) > 1) {
     pareto_points <- pareto_points[order(pareto_points$Taux_Succes, decreasing = TRUE), ]
     p <- p + geom_path(data = pareto_points, aes(x = Taux_Succes, y = Precision_Moyenne), 
-                        color = "darkred", size = 1.2, alpha = 0.9, inherit.aes = FALSE)
+                        color = "darkred", size = 0.5, alpha = 0.9, inherit.aes = FALSE)
   }
   
   # Ajout des points
-  p <- p + geom_point(size = 3.5, alpha = 0.9)
+  p <- p + geom_point(size = 4, alpha = 0.9)
   
   # Ajout des labels
   p <- p + ggrepel::geom_text_repel(
     aes(label = Label, color = Copy_Config), 
-    size = 3.5, 
+    size = 4, 
     fontface = "bold",
     box.padding = 0.5,
     point.padding = 0.3,
     force = 2,
-    segment.color = NA,  # NA pour utiliser la même couleur que les labels
+    segment.color = NA,
     segment.alpha = 0.8,
     segment.size = 0.6,
-    max.overlaps = 30,
+    max.overlaps = 20,
     show.legend = FALSE
   )
   
@@ -839,9 +863,12 @@ graphique_pareto_succes_precision <- function(donnees_list, scaled = FALSE) {
          shape = "Statut") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
-      legend.position = "top"
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
+      plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
+      legend.position = "none"
     ) +
     expand_limits(x = 0, y = 0)
   
@@ -855,7 +882,7 @@ graphique_pareto_succes_precision <- function(donnees_list, scaled = FALSE) {
   # Enregistrer le graphique
   nom_fichier <- ifelse(scaled, "analysis_results/inter_parseurs/front_pareto_succes_precision_scaled.png", 
                          "analysis_results/inter_parseurs/front_pareto_succes_precision.png")
-  ggsave(nom_fichier, p, width = 13, height = 8, bg = "white")
+  ggsave(nom_fichier, p, width = 12, height = 8, bg = "white")
   
   if (interactive()) print(p)
   return(p)
@@ -925,15 +952,17 @@ graphique_erreurs_coins <- function(donnees_list) {
          fill = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
     expand_limits(y = 0)
 
   # Enregistrer le graphique
-  ggsave("analysis_results/inter_parseurs/comparaison_erreurs_coins.png", p, width = 12, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/comparaison_erreurs_coins.png", p, width = 12, height = 8, bg = "white")
 
   if (interactive()) {
     print(p)
@@ -951,15 +980,17 @@ graphique_erreurs_coins <- function(donnees_list) {
          fill = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
     expand_limits(y = 0)
   
   # Enregistrer le graphique à échelle ajustée
-  ggsave("analysis_results/inter_parseurs/comparaison_erreurs_coins_scaled.png", p_scaled, width = 12, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/comparaison_erreurs_coins_scaled.png", p_scaled, width = 12, height = 8, bg = "white")
   
   if (interactive()) {
     print(p_scaled)
@@ -992,15 +1023,17 @@ graphique_erreurs_coins <- function(donnees_list) {
          fill = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(face = "bold", size = 9),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
     expand_limits(y = 0)
   
   # Enregistrer le graphique
-  ggsave("analysis_results/inter_parseurs/moyennes_erreurs_coins.png", p2, width = 12, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/moyennes_erreurs_coins.png", p2, width = 12, height = 8, bg = "white")
   
   if (interactive()) {
     print(p2)
@@ -1112,14 +1145,15 @@ graphique_radar_performance <- function(donnees_list) {
          x = "Parseur", y = "Valeur", fill = "Métrique") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
-      axis.text.x = element_text(angle = 30, hjust = 1),
+      axis.text.x = element_text(face = "bold", size = 9, angle = 30, hjust = 1),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.position = "top",
       strip.text = element_text(face = "bold", size = 12)
     ) +
     expand_limits(y = 0)
-  ggsave("analysis_results/inter_parseurs/triple_boxplot_global.png", p, width = 12, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/triple_boxplot_global.png", p, width = 12, height = 8, bg = "white")
   if (interactive()) print(p)
   return(p)
 }
@@ -1201,16 +1235,17 @@ graphique_perf_par_config <- function(donnees_list) {
          fill = "Parseur") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
-      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.text.x = element_text(face = "bold", size = 9, angle = 45, hjust = 1),
+      axis.text.y = element_text(face = "bold", size = 9),
       legend.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
     coord_flip()
   
   # Enregistrer le graphique des temps
-  ggsave("analysis_results/inter_parseurs/barres_temps_par_config.png", p_temps, width = 12, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/barres_temps_par_config.png", p_temps, width = 12, height = 8, bg = "white")
   
   graphiques <- list(temps = p_temps)
   
@@ -1248,9 +1283,10 @@ graphique_perf_par_config <- function(donnees_list) {
            fill = "Parseur") +
       theme_minimal() +
       theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        plot.title = element_text(face = "bold", size = 15, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
-        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.x = element_text(face = "bold", size = 9, angle = 45, hjust = 1),
+        axis.text.y = element_text(face = "bold", size = 9),
         legend.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "right"
       ) +
@@ -1260,7 +1296,7 @@ graphique_perf_par_config <- function(donnees_list) {
     graphiques$precision <- p_precision
     
     # Enregistrer le graphique
-    ggsave("analysis_results/inter_parseurs/barres_precision_par_config.png", p_precision, width = 12, height = 7, bg = "white")
+    ggsave("analysis_results/inter_parseurs/barres_precision_par_config.png", p_precision, width = 12, height = 8, bg = "white")
     
     # Version avec erreurs de précision <= 25px
     stats_config_filtered <- stats_config %>% filter(Erreur_Moyenne <= 25)
@@ -1297,9 +1333,10 @@ graphique_perf_par_config <- function(donnees_list) {
              fill = "Parseur") +
         theme_minimal() +
         theme(
-          plot.title = element_text(face = "bold", size = 14, color = "navy"),
+          plot.title = element_text(face = "bold", size = 15, color = "navy"),
           axis.title = element_text(face = "bold", color = "darkblue"),
-          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.text.x = element_text(face = "bold", size = 9, angle = 45, hjust = 1),
+          axis.text.y = element_text(face = "bold", size = 9),
           legend.title = element_text(face = "bold", color = "darkblue"),
           legend.position = "right"
         ) +
@@ -1307,7 +1344,7 @@ graphique_perf_par_config <- function(donnees_list) {
         scale_y_continuous(limits = c(0, 25))
       
       # Enregistrer le graphique filtré
-      ggsave("analysis_results/inter_parseurs/barres_precision_par_config_25px.png", p_precision_scaled, width = 12, height = 7, bg = "white")
+      ggsave("analysis_results/inter_parseurs/barres_precision_par_config_25px.png", p_precision_scaled, width = 12, height = 8, bg = "white")
       graphiques$precision_25px <- p_precision_scaled
       
       if (interactive()) {
@@ -1348,7 +1385,7 @@ graphique_courbes_gaussiennes <- function(donnees_list) {
          y = "Densité") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "none",
       strip.text = element_text(face = "bold", size = 12)
@@ -1377,7 +1414,7 @@ graphique_courbes_gaussiennes <- function(donnees_list) {
          y = "Densité") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "none",
       strip.text = element_text(face = "bold", size = 12)
@@ -1406,7 +1443,7 @@ graphique_courbes_gaussiennes <- function(donnees_list) {
            y = "Densité") +
       theme_minimal() +
       theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        plot.title = element_text(face = "bold", size = 15, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "none",
         strip.text = element_text(face = "bold", size = 12)
@@ -1435,7 +1472,7 @@ graphique_courbes_gaussiennes <- function(donnees_list) {
            y = "Densité") +
       theme_minimal() +
       theme(
-        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        plot.title = element_text(face = "bold", size = 15, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
         legend.position = "none",
         strip.text = element_text(face = "bold", size = 12)
@@ -1476,7 +1513,7 @@ graphique_scatter_limite_ellipse <- function(donnees_list) {
          color = "Type de transformation", fill = "Type de transformation") +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      plot.title = element_text(face = "bold", size = 15, color = "navy"),
       axis.title = element_text(face = "bold", color = "darkblue"),
       legend.position = "right"
     ) +
