@@ -83,11 +83,50 @@ generer_barres_precision_par_config <- function(donnees, nom_parseur) {
       axis.text.x = element_text(angle = 45, hjust = 1)
     ) +
     scale_y_continuous(limits = c(0, NA))
+  
+  # Version scaled avec seulement les erreurs <= 25px
+  stats_config_scaled <- stats_config %>% filter(Erreur_Moyenne <= 25)
+  
+  # Vérifier s'il y a des données après filtrage
+  if(nrow(stats_config_scaled) > 0) {
+    p_scaled <- ggplot(stats_config_scaled, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Copy_Config)) +
+      geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+      geom_errorbar(aes(
+        ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
+        ymax = Erreur_Moyenne + Erreur_Ecart_Type
+      ),
+      width = 0.2) +
+      scale_fill_brewer(palette = "Set2") +
+      labs(title = paste0("Erreur moyenne de précision par configuration - ", nom_parseur, " (≤ 25px)"),
+           subtitle = "Affichage limité aux configurations avec erreur moyenne ≤ 25 pixels",
+           x = "Configuration",
+           y = "Erreur moyenne (pixels)",
+           fill = "Configuration") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        axis.title = element_text(face = "bold", color = "darkblue"),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      ) +
+      scale_y_continuous(limits = c(0, 25))
+    
+    # Sauvegarder la version scaled
+    dossier_parseur <- paste0("analysis_results/", nom_parseur)
+    ggsave(paste0(dossier_parseur, "/barres_precision_par_config_", nom_parseur, "_scaled_25px.png"), 
+           p_scaled, width = 12, height = 7, bg = "white")
+    
+    if (interactive()) print(p_scaled)
+  } else {
+    cat("Version scaled non générée : aucune configuration avec erreur moyenne ≤ 25px pour", nom_parseur, "\n")
+    p_scaled <- NULL
+  }
+  
   # Sauvegarder dans le dossier du parseur
   dossier_parseur <- paste0("analysis_results/", nom_parseur)
   ggsave(paste0(dossier_parseur, "/barres_precision_par_config_", nom_parseur, ".png"), p, width = 12, height = 7, bg = "white")
   if (interactive()) print(p)
-  return(p)
+  
+  return(list(normal = p, scaled = p_scaled))
 }
 
 # Nouvelle fonction pour générer les scatter plots temps vs précision pour un parseur

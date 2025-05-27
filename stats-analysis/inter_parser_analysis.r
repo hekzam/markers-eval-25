@@ -428,14 +428,34 @@ graphique_jitter_temps_precision_sep <- function(donnees_list) {
     ) +
     expand_limits(y = 0)
 
+  # Version avec erreur de précision <= 100 pixels
+  p_jitter_precision_scaled <- ggplot(donnees %>% filter(Precision_Error_Avg_px != -1, Precision_Error_Avg_px <= 25),
+                              aes(x = Parser_Type, y = Precision_Error_Avg_px, color = Parser_Type)) +
+    geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.7) +
+    scale_color_manual(values = COULEURS_PARSEURS) +
+    labs(title = "Jitter plot : Précision par parseur (erreurs ≤ 100px)",
+         subtitle = "Affichage limité aux erreurs de précision ≤ 100 pixels",
+         x = "Parseur",
+         y = "Erreur de précision moyenne (pixels)",
+         color = "Parseur") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    ) +
+    expand_limits(y = 0)
+
   ggsave("analysis_results/inter_parseurs/jitter_temps_par_parseur.png", p_jitter_temps, width = 10, height = 7, bg = "white")
   ggsave("analysis_results/inter_parseurs/jitter_precision_par_parseur.png", p_jitter_precision, width = 10, height = 7, bg = "white")
+  ggsave("analysis_results/inter_parseurs/jitter_precision_par_parseur_scaled.png", p_jitter_precision_scaled, width = 10, height = 7, bg = "white")
 
   if (interactive()) {
     print(p_jitter_temps)
     print(p_jitter_precision)
+    print(p_jitter_precision_scaled)
   }
-  return(list(jitter_temps = p_jitter_temps, jitter_precision = p_jitter_precision))
+  return(list(jitter_temps = p_jitter_temps, jitter_precision = p_jitter_precision, jitter_precision_scaled = p_jitter_precision_scaled))
 }
 
 # 5. Violin plots pour comparer la distribution des temps d'exécution
@@ -560,6 +580,16 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
       Precision_Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
       .groups = "drop"
     )
+    
+  # Si version scaled, filtrer uniquement les configurations avec précision <= 25px
+  if (scaled) {
+    stats <- stats %>% filter(Precision_Moyenne <= 25)
+    if (nrow(stats) == 0) {
+      cat("Aucune configuration n'a une erreur de précision moyenne <= 25px\n")
+      return(NULL)
+    }
+  }
+  
   # Calcul du front de Pareto (minimiser X et Y)
   is_dominated <- function(i) {
     any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Precision_Moyenne < stats$Precision_Moyenne[i])
@@ -585,7 +615,7 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
     geom_text(aes(label = Label, color = Copy_Config), hjust = -0.1, vjust = 0.5, size = 3, show.legend = FALSE) +
     scale_color_manual(values = palette_configs, name = "Configuration") +
     scale_shape_manual(values = c("Dominé" = 16, "Front de Pareto" = 17), name = "Statut") +
-    labs(title = ifelse(scaled, "Front de Pareto global (échelle limitée) : Temps vs Précision", "Front de Pareto global : Temps vs Précision"),
+    labs(title = ifelse(scaled, "Front de Pareto global (précision ≤ 25px) : Temps vs Précision", "Front de Pareto global : Temps vs Précision"),
          x = "Temps moyen de parsing (ms)",
          y = "Erreur de précision moyenne (px, plus bas = mieux)",
          color = "Configuration",
