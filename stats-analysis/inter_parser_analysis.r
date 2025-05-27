@@ -149,7 +149,11 @@ graphique_barres_performance <- function(donnees_list) {
         Erreur_Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
         Erreur_Ecart_Type = sd(Precision_Error_Avg_px, na.rm = TRUE),
         .groups = "drop"
-      )
+      ) %>%
+      arrange(Erreur_Moyenne)  # Trier par erreur moyenne croissante
+    
+    # Réordonner le facteur Parser_Type selon l'erreur moyenne
+    precision_parseurs$Parser_Type <- factor(precision_parseurs$Parser_Type, levels = precision_parseurs$Parser_Type)
     
     # Créer le graphique à barres de précision
     p_precision <- ggplot(precision_parseurs, aes(x = Parser_Type, y = Erreur_Moyenne, fill = Parser_Type)) +
@@ -160,7 +164,7 @@ graphique_barres_performance <- function(donnees_list) {
       ), width = 0.2) +
       scale_fill_manual(values = COULEURS_PARSEURS) +
       labs(title = "Comparaison de l'erreur de précision moyenne entre parseurs",
-           subtitle = "Erreur moyenne en pixels avec écart-type",
+           subtitle = "Erreur moyenne en pixels avec écart-type (ordre croissant)",
            x = "Type de parseur",
            y = "Erreur de précision moyenne (pixels)") +
       theme_minimal() +
@@ -190,7 +194,11 @@ graphique_barres_performance <- function(donnees_list) {
       summarise(
         Taux_Succes = sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100,
         .groups = "drop"
-      )
+      ) %>%
+      arrange(Taux_Succes)  # Trier par taux de succès croissant
+    
+    # Réordonner le facteur Parser_Type selon le taux de succès
+    succes_parseurs$Parser_Type <- factor(succes_parseurs$Parser_Type, levels = succes_parseurs$Parser_Type)
     
     # Créer le graphique à barres de taux de succès
     p_succes <- ggplot(succes_parseurs, aes(x = Parser_Type, y = Taux_Succes, fill = Parser_Type)) +
@@ -198,7 +206,7 @@ graphique_barres_performance <- function(donnees_list) {
       geom_text(aes(label = paste0(round(Taux_Succes, 1), "%")), vjust = -0.5) +
       scale_fill_manual(values = COULEURS_PARSEURS) +
       labs(title = "Comparaison du taux de succès entre parseurs",
-           subtitle = "Pourcentage de parsing réussi",
+           subtitle = "Pourcentage de parsing réussi (ordre croissant)",
            x = "Type de parseur",
            y = "Taux de succès (%)") +
       scale_y_continuous(limits = c(0, max(100, max(succes_parseurs$Taux_Succes, na.rm = TRUE) * 1.1))) +
@@ -227,14 +235,31 @@ graphique_barres_performance <- function(donnees_list) {
         summarise(
           Taux_Succes = sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100,
           .groups = "drop"
-        )
+        ) %>%
+        arrange(Taux_Succes)  # Trier par taux de succès croissant
+    
+      # Calculer la moyenne de taux de succès par configuration pour le tri
+      moyennes_par_config <- succes_config %>%
+        group_by(Copy_Config) %>%
+        summarise(Taux_Moyen = mean(Taux_Succes, na.rm = TRUE), .groups = "drop") %>%
+        arrange(Taux_Moyen)
+      
+      # Définir l'ordre des configurations selon le taux moyen de succès
+      succes_config$Copy_Config <- factor(succes_config$Copy_Config, 
+                                          levels = moyennes_par_config$Copy_Config)
+      
+      # Pour chaque configuration, trier les parseurs par taux de succès
+      succes_config <- succes_config %>%
+        group_by(Copy_Config) %>%
+        mutate(Parser_Type = factor(Parser_Type, levels = Parser_Type[order(Taux_Succes)])) %>%
+        ungroup()
       
       # Créer le graphique à barres groupées
       p_succes_config <- ggplot(succes_config, aes(x = Copy_Config, y = Taux_Succes, fill = Parser_Type)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
         scale_fill_manual(values = COULEURS_PARSEURS) +
         labs(title = "Taux de succès par configuration et par parseur",
-             subtitle = "Comparaison du pourcentage de parsing réussi",
+             subtitle = "Comparaison du pourcentage de parsing réussi (ordre croissant par taux moyen)",
              x = "Configuration de copie",
              y = "Taux de succès (%)") +
         scale_y_continuous(limits = c(0, 100)) +
@@ -563,7 +588,6 @@ graphique_violin_temps <- function(donnees_list) {
 }
 
 # 6. Front de Pareto global : temps/précision pour chaque (Parser_Type, Copy_Config)
-# Un point = une combinaison unique (Parser_Type, Copy_Config)
 graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled = FALSE) {
   donnees <- donnees_list$donnees
   if (!donnees_list$has_precision) {
@@ -605,9 +629,24 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
   configs <- unique(stats$Copy_Config)
   n_configs <- length(configs)
   if (n_configs <= 8) {
-    palette_configs <- setNames(RColorBrewer::brewer.pal(n_configs, "Set2"), configs)
+    # Utiliser une palette plus foncée et contrastée (Dark2 au lieu de Set2)
+    palette_configs <- setNames(RColorBrewer::brewer.pal(n_configs, "Dark2"), configs)
   } else {
-    palette_configs <- setNames(colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_configs), configs)
+    # Utiliser une palette personnalisée avec des couleurs plus foncées
+    # Combine plusieurs palettes pour avoir suffisamment de couleurs contrastées
+    palettes_base <- c(RColorBrewer::brewer.pal(8, "Dark2"),
+                      RColorBrewer::brewer.pal(8, "Set1"),
+                      RColorBrewer::brewer.pal(min(n_configs-16, 8), "Paired"))
+    
+    # Si besoin de plus de couleurs, compléter avec une interpolation de couleurs
+    if (n_configs > length(palettes_base)) {
+      palette_configs <- setNames(
+        colorRampPalette(palettes_base)(n_configs),
+        configs
+      )
+    } else {
+      palette_configs <- setNames(palettes_base[1:n_configs], configs)
+    }
   }
 
   # Initialisation du graphique
@@ -618,22 +657,23 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
   if (nrow(pareto_points) > 1) {
     pareto_points <- pareto_points[order(pareto_points$Temps_Moyen, decreasing = FALSE), ]
     p <- p + geom_path(data = pareto_points, aes(x = Temps_Moyen, y = Precision_Moyenne), 
-                        color = "red", size = 0.8, alpha = 0.7, inherit.aes = FALSE)
+                        color = "darkred", size = 1.2, alpha = 0.9, inherit.aes = FALSE)
   }
   
   # Ajout des points APRÈS la ligne
-  p <- p + geom_point(size = 3, alpha = 0.85)
+  p <- p + geom_point(size = 3.5, alpha = 0.9)
   
   # Ajout des labels avec ggrepel pour éviter les chevauchements et débordements
   p <- p + ggrepel::geom_text_repel(
     aes(label = Label, color = Copy_Config), 
-    size = 3, 
+    size = 3.5, 
     fontface = "bold",
     box.padding = 0.5,
     point.padding = 0.3,
     force = 2,
-    segment.color = "grey50",
-    segment.alpha = 0.6,
+    segment.color = NA,  # NA pour utiliser la même couleur que les labels
+    segment.alpha = 0.8,
+    segment.size = 0.6,
     max.overlaps = 20,
     show.legend = FALSE
   )
@@ -677,91 +717,126 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
   return(p)
 }
 
-# 6c. Pareto optimisation (front de Pareto) temps/précision ou temps/fiabilité pour tous les couples parseur/config
-# Un point par (parseur, config), front de Pareto global
-graphique_pareto_temps_parseur_config <- function(donnees_list) {
-  # Vérifier si le package ggrepel est installé, sinon l'installer
-  if (!requireNamespace("ggrepel", quietly = TRUE)) {
-    install.packages("ggrepel")
-  }
-  library(ggrepel)
-  
-  donnees <- donnees_list$donnees
-  if (!donnees_list$has_config) {
-    cat("Front de Pareto global parseur/config non disponible : données de configuration manquantes\n")
+# 6b. Front de Pareto : taux de succès vs précision pour chaque (Parser_Type, Copy_Config)
+graphique_pareto_succes_precision <- function(donnees_list, scaled = FALSE) {
+  # Vérifier si les données de précision et de succès existent
+  if (!donnees_list$has_precision || !donnees_list$has_success) {
+    cat("Front de Pareto succès vs précision non disponible : données manquantes\n")
     return(NULL)
   }
-  # Calculer les moyennes par couple (parseur, config)
-  stats <- donnees %>%
+  
+  donnees <- donnees_list$donnees
+  
+  # Calculer les statistiques par configuration et parseur, comme dans graphique_perf_par_config
+  stats_config <- donnees %>%
     group_by(Parser_Type, Copy_Config) %>%
     summarise(
-      Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
-      Precision_Moyenne = if ("Precision_Error_Avg_px" %in% colnames(donnees)) 
-                          mean(Precision_Error_Avg_px[Precision_Error_Avg_px != -1], na.rm = TRUE) else NA,
-      Fiabilite = if ("Parsing_Success_Effective" %in% colnames(donnees)) 
-                 sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100 else NA,
+      Taux_Succes = sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100,
       .groups = "drop"
     )
-  # Choix des axes : priorité à la précision si dispo, sinon fiabilité
-  if (!all(is.na(stats$Precision_Moyenne))) {
-    xvar <- "Temps_Moyen"
-    yvar <- "Precision_Moyenne"
-    xlabel <- "Temps moyen de parsing (ms)"
-    ylabel <- "Erreur de précision moyenne (px, plus bas = mieux)"
-    titre <- "Front de Pareto global : Temps vs Précision (tous parseurs/configs)"
-    # Plus bas = mieux pour les deux axes
-    is_dominated <- function(i) {
-      any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Precision_Moyenne < stats$Precision_Moyenne[i])
+  
+  # Pour les mesures de précision, utiliser seulement les cas où le parsing a réussi
+  precision_config <- donnees %>% 
+    filter(Parsing_Success_Effective == TRUE, Precision_Error_Avg_px != -1) %>%
+    group_by(Parser_Type, Copy_Config) %>%
+    summarise(
+      Precision_Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Joindre les deux ensembles de données
+  stats <- left_join(stats_config, precision_config, by = c("Parser_Type", "Copy_Config"))
+  
+  # Remplacer les NA dans Precision_Moyenne par une valeur par défaut élevée (ex: 100) 
+  # pour les cas où le taux de succès est 0%
+  stats <- stats %>%
+    mutate(Precision_Moyenne = ifelse(is.na(Precision_Moyenne), 100, Precision_Moyenne))
+  
+  # Si version scaled, filtrer sur les deux critères : précision <= 25px ET taux de succès >= 75%
+  if (scaled) {
+    stats <- stats %>% filter(Precision_Moyenne <= 25, Taux_Succes >= 75)
+    if (nrow(stats) == 0) {
+      cat("Aucune configuration n'a une erreur de précision moyenne <= 25px ET un taux de succès >= 75%\n")
+      return(NULL)
     }
-    front <- !sapply(1:nrow(stats), is_dominated)
-  } else if (!all(is.na(stats$Fiabilite))) {
-    xvar <- "Temps_Moyen"
-    yvar <- "Fiabilite"
-    xlabel <- "Temps moyen de parsing (ms)"
-    ylabel <- "Taux de succès (%)"
-    titre <- "Front de Pareto global : Temps vs Fiabilité (tous parseurs/configs)"
-    # Plus bas temps, plus haut taux de succès
-    is_dominated <- function(i) {
-      any(stats$Temps_Moyen < stats$Temps_Moyen[i] & stats$Fiabilite > stats$Fiabilite[i])
-    }
-    front <- !sapply(1:nrow(stats), is_dominated)
-  } else {
-    stop("Impossible de générer le front de Pareto : ni précision ni fiabilité disponibles.")
   }
+  
+  # Calcul du front de Pareto (maximiser succès, minimiser erreur)
+  is_dominated <- function(i) {
+    any(stats$Taux_Succes > stats$Taux_Succes[i] & stats$Precision_Moyenne <= stats$Precision_Moyenne[i] |
+        stats$Taux_Succes >= stats$Taux_Succes[i] & stats$Precision_Moyenne < stats$Precision_Moyenne[i])
+  }
+  
+  front <- !sapply(1:nrow(stats), is_dominated)
   stats$Pareto <- ifelse(front, "Front de Pareto", "Dominé")
-  # Pour l'affichage, concaténer parseur et config
+  
+  # Ajout du label à afficher à côté du point
   stats$Label <- paste0(stats$Parser_Type, " | ", stats$Copy_Config)
   
-  # Initialisation du graphique
-  p <- ggplot(stats, aes_string(x = xvar, y = yvar, color = "Pareto"))
-  
-  # Relier les points du front de Pareto EN PREMIER PLAN (arrière-plan)
-  pareto_points <- stats[front, ]
-  if (nrow(pareto_points) > 1) {
-    pareto_points <- pareto_points[order(pareto_points[[xvar]], decreasing = FALSE), ]
-    p <- p + geom_path(data = pareto_points, aes_string(x = xvar, y = yvar), 
-                       color = "red", size = 1.2, alpha = 0.7)
+  # Palette de couleurs pour les configurations (utiliser la même palette que pour les autres graphiques)
+  configs <- unique(stats$Copy_Config)
+  n_configs <- length(configs)
+  if (n_configs <= 8) {
+    palette_configs <- setNames(RColorBrewer::brewer.pal(n_configs, "Dark2"), configs)
+  } else {
+    palettes_base <- c(RColorBrewer::brewer.pal(8, "Dark2"),
+                      RColorBrewer::brewer.pal(8, "Set1"),
+                      RColorBrewer::brewer.pal(min(n_configs-16, 8), "Paired"))
+    
+    if (n_configs > length(palettes_base)) {
+      palette_configs <- setNames(
+        colorRampPalette(palettes_base)(n_configs),
+        configs
+      )
+    } else {
+      palette_configs <- setNames(palettes_base[1:n_configs], configs)
+    }
   }
   
-  # Ajouter les points APRÈS la ligne
-  p <- p + geom_point(size = 4, alpha = 0.8)
+  # Initialisation du graphique
+  p <- ggplot(stats, aes(x = Taux_Succes, y = Precision_Moyenne, color = Copy_Config, shape = Pareto))
   
-  # Ajouter les labels avec ggrepel pour éviter les chevauchements et débordements
+  # Tracé du front de Pareto
+  pareto_points <- stats[front, ]
+  if (nrow(pareto_points) > 1) {
+    pareto_points <- pareto_points[order(pareto_points$Taux_Succes, decreasing = TRUE), ]
+    p <- p + geom_path(data = pareto_points, aes(x = Taux_Succes, y = Precision_Moyenne), 
+                        color = "darkred", size = 1.2, alpha = 0.9, inherit.aes = FALSE)
+  }
+  
+  # Ajout des points
+  p <- p + geom_point(size = 3.5, alpha = 0.9)
+  
+  # Ajout des labels
   p <- p + ggrepel::geom_text_repel(
-    aes_string(label = "Label"), 
+    aes(label = Label, color = Copy_Config), 
+    size = 3.5, 
     fontface = "bold",
-    size = 5,
     box.padding = 0.5,
     point.padding = 0.3,
     force = 2,
-    segment.color = "grey50",
-    segment.alpha = 0.6,
-    max.overlaps = 20
+    segment.color = NA,  # NA pour utiliser la même couleur que les labels
+    segment.alpha = 0.8,
+    segment.size = 0.6,
+    max.overlaps = 30,
+    show.legend = FALSE
   )
   
+  # Titre adapté selon la version
+  titre <- if (scaled) {
+    "Front de Pareto (précision ≤ 25px, succès ≥ 75%) : Succès vs Précision"
+  } else {
+    "Front de Pareto : Succès vs Précision"
+  }
+  
   # Compléter le graphique
-  p <- p + scale_color_manual(values = c("Front de Pareto" = "red", "Dominé" = "grey")) +
-    labs(title = titre, x = xlabel, y = ylabel, color = "Statut") +
+  p <- p + scale_color_manual(values = palette_configs, name = "Configuration") +
+    scale_shape_manual(values = c("Dominé" = 16, "Front de Pareto" = 17), name = "Statut") +
+    labs(title = titre,
+         x = "Taux de succès (%)",
+         y = "Erreur de précision moyenne (px, plus bas = mieux)",
+         color = "Configuration",
+         shape = "Statut") +
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 14, color = "navy"),
@@ -769,9 +844,19 @@ graphique_pareto_temps_parseur_config <- function(donnees_list) {
       legend.position = "top"
     ) +
     expand_limits(x = 0, y = 0)
-
-  ggsave("analysis_results/inter_parseurs/pareto_temps_moyens_global_parseur_config.png", 
-         p, width = 13, height = 8, bg = "white")
+  
+  # Définir les limites des axes selon la version
+  if (scaled) {
+    p <- p + coord_cartesian(xlim = c(80, 100), ylim = c(0, 4))
+  } else {
+    p <- p + scale_x_continuous(limits = c(0, 100))
+  }
+  
+  # Enregistrer le graphique
+  nom_fichier <- ifelse(scaled, "analysis_results/inter_parseurs/front_pareto_succes_precision_scaled.png", 
+                         "analysis_results/inter_parseurs/front_pareto_succes_precision.png")
+  ggsave(nom_fichier, p, width = 13, height = 8, bg = "white")
+  
   if (interactive()) print(p)
   return(p)
 }
@@ -888,13 +973,20 @@ graphique_erreurs_coins <- function(donnees_list) {
     summarise(
       Erreur_Moyenne = mean(Erreur, na.rm = TRUE),
       .groups = "drop"
-    )
+    ) %>%
+    arrange(Coin, Erreur_Moyenne)  # Trier par coin puis par erreur moyenne
+    
+  # Pour chaque coin, réordonner les parseurs selon l'erreur moyenne
+  moyennes_coins <- moyennes_coins %>%
+    group_by(Coin) %>%
+    mutate(Parser_Type = factor(Parser_Type, levels = Parser_Type[order(Erreur_Moyenne)])) %>%
+    ungroup()
   
   p2 <- ggplot(moyennes_coins, aes(x = Coin, y = Erreur_Moyenne, fill = Parser_Type)) +
     geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
     scale_fill_manual(values = COULEURS_PARSEURS) +
     labs(title = "Erreur moyenne par coin et par parseur",
-         subtitle = "Comparaison de la précision à chaque coin du marqueur",
+         subtitle = "Comparaison de la précision à chaque coin du marqueur (ordre croissant par coin)",
          x = "Position",
          y = "Erreur moyenne (pixels)",
          fill = "Parseur") +
@@ -1079,15 +1171,31 @@ graphique_perf_par_config <- function(donnees_list) {
     stats_config <- left_join(stats_config, succes_config, by = c("Parser_Type", "Copy_Config"))
   }
   
+  # Calculer des moyennes par configuration pour le tri
+  moyennes_temps_par_config <- stats_config %>%
+    group_by(Copy_Config) %>%
+    summarise(Temps_Global = mean(Temps_Moyen, na.rm = TRUE), .groups = "drop") %>%
+    arrange(Temps_Global)
+  
+  # Définir l'ordre des configurations selon le temps moyen global
+  stats_config$Copy_Config <- factor(stats_config$Copy_Config, 
+                                     levels = moyennes_temps_par_config$Copy_Config)
+  
+  # Trier les données pour le graphique des temps moyens
+  stats_config_temps <- stats_config %>%
+    group_by(Copy_Config) %>%
+    mutate(Parser_Type = factor(Parser_Type, levels = Parser_Type[order(Temps_Moyen)])) %>%
+    ungroup()
+  
   # Graphique en grille pour les temps moyens par configuration
-  p_temps <- ggplot(stats_config, aes(x = Copy_Config, y = Temps_Moyen, fill = Parser_Type)) +
+  p_temps <- ggplot(stats_config_temps, aes(x = Copy_Config, y = Temps_Moyen, fill = Parser_Type)) +
     geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
     geom_errorbar(aes(ymin = Temps_Moyen - Temps_Ecart_Type, 
                      ymax = Temps_Moyen + Temps_Ecart_Type),
                  position = position_dodge(width = 0.9), width = 0.2) +
     scale_fill_manual(values = COULEURS_PARSEURS) +
     labs(title = "Temps moyen de parsing par configuration",
-         subtitle = "Avec barres d'erreur représentant l'écart-type",
+         subtitle = "Avec barres d'erreur représentant l'écart-type (ordre croissant par temps moyen global)",
          x = "Configuration",
          y = "Temps moyen (ms)",
          fill = "Parseur") +
@@ -1108,7 +1216,24 @@ graphique_perf_par_config <- function(donnees_list) {
   
   # Si les données de précision existent, créer le graphique correspondant
   if (donnees_list$has_precision) {
-    p_precision <- ggplot(stats_config, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Parser_Type)) +
+    # Calculer des moyennes par configuration pour le tri
+    moyennes_erreur_par_config <- stats_config %>%
+      group_by(Copy_Config) %>%
+      summarise(Erreur_Globale = mean(Erreur_Moyenne, na.rm = TRUE), .groups = "drop") %>%
+      arrange(Erreur_Globale)
+    
+    # Redéfinir l'ordre des configurations selon l'erreur moyenne globale
+    stats_config_precision <- stats_config
+    stats_config_precision$Copy_Config <- factor(stats_config_precision$Copy_Config, 
+                                              levels = moyennes_erreur_par_config$Copy_Config)
+    
+    # Trier les données pour le graphique des erreurs de précision
+    stats_config_precision <- stats_config_precision %>%
+      group_by(Copy_Config) %>%
+      mutate(Parser_Type = factor(Parser_Type, levels = Parser_Type[order(Erreur_Moyenne)])) %>%
+      ungroup()
+    
+    p_precision <- ggplot(stats_config_precision, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Parser_Type)) +
       geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
       geom_errorbar(aes(
         ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
@@ -1117,7 +1242,7 @@ graphique_perf_par_config <- function(donnees_list) {
       position = position_dodge(width = 0.9), width = 0.2) +
       scale_fill_manual(values = COULEURS_PARSEURS) +
       labs(title = "Erreur moyenne de précision par configuration",
-           subtitle = "Avec barres d'erreur représentant l'écart-type",
+           subtitle = "Avec barres d'erreur représentant l'écart-type (ordre croissant par erreur moyenne globale)",
            x = "Configuration",
            y = "Erreur moyenne (pixels)",
            fill = "Parseur") +
@@ -1132,14 +1257,31 @@ graphique_perf_par_config <- function(donnees_list) {
       coord_flip() +
       scale_y_continuous(limits = c(0, NA))
     
+    graphiques$precision <- p_precision
+    
     # Enregistrer le graphique
     ggsave("analysis_results/inter_parseurs/barres_precision_par_config.png", p_precision, width = 12, height = 7, bg = "white")
-    graphiques$precision <- p_precision
     
     # Version avec erreurs de précision <= 25px
     stats_config_filtered <- stats_config %>% filter(Erreur_Moyenne <= 25)
     
     if (nrow(stats_config_filtered) > 0) {
+      # Calculer des moyennes par configuration pour le tri (uniquement pour les données filtrées)
+      moyennes_erreur_filtrees <- stats_config_filtered %>%
+        group_by(Copy_Config) %>%
+        summarise(Erreur_Globale = mean(Erreur_Moyenne, na.rm = TRUE), .groups = "drop") %>%
+        arrange(Erreur_Globale)
+      
+      # Redéfinir l'ordre des configurations selon l'erreur moyenne globale filtrée
+      stats_config_filtered$Copy_Config <- factor(stats_config_filtered$Copy_Config, 
+                                               levels = moyennes_erreur_filtrees$Copy_Config)
+      
+      # Trier les données filtrées
+      stats_config_filtered <- stats_config_filtered %>%
+        group_by(Copy_Config) %>%
+        mutate(Parser_Type = factor(Parser_Type, levels = Parser_Type[order(Erreur_Moyenne)])) %>%
+        ungroup()
+      
       p_precision_scaled <- ggplot(stats_config_filtered, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Parser_Type)) +
         geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
         geom_errorbar(aes(
@@ -1149,7 +1291,7 @@ graphique_perf_par_config <- function(donnees_list) {
         position = position_dodge(width = 0.9), width = 0.2) +
         scale_fill_manual(values = COULEURS_PARSEURS) +
         labs(title = "Erreur moyenne de précision par configuration (≤ 25px)",
-             subtitle = "Configurations avec erreur moyenne ≤ 25 pixels",
+             subtitle = "Configurations avec erreur ≤ 25 pixels (ordre croissant par erreur moyenne globale)",
              x = "Configuration",
              y = "Erreur moyenne (pixels)",
              fill = "Parseur") +
@@ -1364,6 +1506,8 @@ analyse_comparative_inter_parseurs <- function(chemin_csv) {
     violin_temps = graphique_violin_temps(donnees_list),
     front_pareto_global = graphique_pareto_temps_global(donnees_list, lisser = FALSE, scaled = FALSE),
     front_pareto_global_scaled = graphique_pareto_temps_global(donnees_list, lisser = FALSE, scaled = TRUE),
+    front_pareto_succes_precision = graphique_pareto_succes_precision(donnees_list, scaled = FALSE),
+    front_pareto_succes_precision_scaled = graphique_pareto_succes_precision(donnees_list, scaled = TRUE),
     erreurs_coins = graphique_erreurs_coins(donnees_list),
     tableau_performances = generer_tableau_performances(donnees_list),
     radar_performance = graphique_radar_performance(donnees_list),
@@ -1373,7 +1517,6 @@ analyse_comparative_inter_parseurs <- function(chemin_csv) {
     scatter_limite_ellipse = graphique_scatter_limite_ellipse(donnees_list) # Ajout du plot bench limite
   )
   
-
   # Retourner la liste des résultats
   return(resultats)
 }
