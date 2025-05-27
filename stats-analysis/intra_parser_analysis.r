@@ -46,6 +46,146 @@ filtrer_par_parseur <- function(donnees, nom_parseur) {
   return(donnees_filtrees)
 }
 
+# Nouvelle fonction pour générer le graphique barres_precision_par_config pour un parseur
+generer_barres_precision_par_config <- function(donnees, nom_parseur) {
+  # Vérifier la présence des colonnes nécessaires
+  if (!("Copy_Config" %in% colnames(donnees)) || !("Precision_Error_Avg_px" %in% colnames(donnees))) {
+    cat("Graphique barres_precision_par_config non généré : colonnes manquantes pour", nom_parseur, "\n")
+    return(NULL)
+  }
+  # Filtrer les valeurs aberrantes (-1)
+  donnees_precision <- donnees %>% filter(Precision_Error_Avg_px != -1)
+  # Calculer les statistiques par configuration
+  stats_config <- donnees_precision %>%
+    group_by(Copy_Config) %>%
+    summarise(
+      Erreur_Moyenne = mean(Precision_Error_Avg_px, na.rm = TRUE),
+      Erreur_Ecart_Type = sd(Precision_Error_Avg_px, na.rm = TRUE),
+      .groups = "drop"
+    )
+  # Créer le graphique
+  p <- ggplot(stats_config, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Copy_Config)) +
+    geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+    geom_errorbar(aes(
+      ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
+      ymax = Erreur_Moyenne + Erreur_Ecart_Type
+    ),
+    width = 0.2) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(title = paste0("Erreur moyenne de précision par configuration - ", nom_parseur),
+         x = "Configuration",
+         y = "Erreur moyenne (pixels)",
+         fill = "Configuration") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    ) +
+    scale_y_continuous(limits = c(0, NA))
+  
+  # Version scaled avec seulement les erreurs <= 25px
+  stats_config_scaled <- stats_config %>% filter(Erreur_Moyenne <= 25)
+  
+  # Vérifier s'il y a des données après filtrage
+  if(nrow(stats_config_scaled) > 0) {
+    p_scaled <- ggplot(stats_config_scaled, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Copy_Config)) +
+      geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+      geom_errorbar(aes(
+        ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
+        ymax = Erreur_Moyenne + Erreur_Ecart_Type
+      ),
+      width = 0.2) +
+      scale_fill_brewer(palette = "Set2") +
+      labs(title = paste0("Erreur moyenne de précision par configuration - ", nom_parseur, " (≤ 25px)"),
+           subtitle = "Affichage limité aux configurations avec erreur moyenne ≤ 25 pixels",
+           x = "Configuration",
+           y = "Erreur moyenne (pixels)",
+           fill = "Configuration") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14, color = "navy"),
+        axis.title = element_text(face = "bold", color = "darkblue"),
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      ) +
+      scale_y_continuous(limits = c(0, 25))
+    
+    # Sauvegarder la version scaled
+    dossier_parseur <- paste0("analysis_results/", nom_parseur)
+    ggsave(paste0(dossier_parseur, "/barres_precision_par_config_", nom_parseur, "_scaled_25px.png"), 
+           p_scaled, width = 12, height = 7, bg = "white")
+    
+    if (interactive()) print(p_scaled)
+  } else {
+    cat("Version scaled non générée : aucune configuration avec erreur moyenne ≤ 25px pour", nom_parseur, "\n")
+    p_scaled <- NULL
+  }
+  
+  # Sauvegarder dans le dossier du parseur
+  dossier_parseur <- paste0("analysis_results/", nom_parseur)
+  ggsave(paste0(dossier_parseur, "/barres_precision_par_config_", nom_parseur, ".png"), p, width = 12, height = 7, bg = "white")
+  if (interactive()) print(p)
+  
+  return(list(normal = p, scaled = p_scaled))
+}
+
+# Nouvelle fonction pour générer les scatter plots temps vs précision pour un parseur
+generer_scatter_temps_vs_precision <- function(donnees, nom_parseur) {
+  if (!("Precision_Error_Avg_px" %in% colnames(donnees)) || !("Parsing_Time_ms" %in% colnames(donnees))) {
+    cat("Scatter plot temps vs précision non généré : colonnes manquantes pour", nom_parseur, "\n")
+    return(NULL)
+  }
+  if (!("Copy_Config" %in% colnames(donnees))) {
+    cat("Scatter plot temps vs précision non généré : colonne Copy_Config manquante pour", nom_parseur, "\n")
+    return(NULL)
+  }
+  donnees_valides <- donnees %>% filter(!is.na(Parsing_Time_ms), !is.na(Precision_Error_Avg_px), Precision_Error_Avg_px != -1)
+  if (nrow(donnees_valides) == 0) return(NULL)
+  dossier_parseur <- paste0("analysis_results/", nom_parseur)
+
+  # Scatter plot complet
+  p <- ggplot(donnees_valides, aes(x = Parsing_Time_ms, y = Precision_Error_Avg_px, color = Copy_Config)) +
+    geom_point(size = 3, alpha = 0.7) +
+    scale_color_brewer(palette = "Set2") +
+    labs(title = paste0("Temps vs Précision pour ", nom_parseur),
+         subtitle = "Toutes les configurations (tous points, outliers inclus)",
+         x = "Temps de parsing (ms)",
+         y = "Erreur de précision moyenne (pixels)",
+         color = "Config") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, color = "navy"),
+      axis.title = element_text(face = "bold", color = "darkblue"),
+      legend.title = element_text(face = "bold", color = "darkblue"),
+      legend.position = "right"
+    )
+  ggsave(paste0(dossier_parseur, "/scatter_temps_vs_precision_", nom_parseur, ".png"), p, width = 10, height = 8, bg = "white")
+
+  # Scatter plot scaled (zoom sur la zone centrale)
+  Q1_temps <- quantile(donnees_valides$Parsing_Time_ms, 0.25, na.rm = TRUE)
+  Q3_temps <- quantile(donnees_valides$Parsing_Time_ms, 0.75, na.rm = TRUE)
+  IQR_temps <- Q3_temps - Q1_temps
+  min_temps <- Q1_temps - 1.5 * IQR_temps
+  max_temps <- Q3_temps + 1.5 * IQR_temps
+
+  Q1_precision <- quantile(donnees_valides$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
+  Q3_precision <- quantile(donnees_valides$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
+  IQR_precision <- Q3_precision - Q1_precision
+  min_precision <- Q1_precision - 1.5 * IQR_precision
+  max_precision <- Q3_precision + 1.5 * IQR_precision
+
+  p_scaled <- p +
+    coord_cartesian(xlim = c(min_temps, max_temps), ylim = c(min_precision, max_precision)) +
+    labs(subtitle = "Zoom sur la zone centrale (Q1-1.5*IQR à Q3+1.5*IQR)")
+  ggsave(paste0(dossier_parseur, "/scatter_temps_vs_precision_", nom_parseur, "_scaled.png"), p_scaled, width = 10, height = 8, bg = "white")
+
+  if (interactive()) {
+    print(p)
+    print(p_scaled)
+  }
+  return(list(normal = p, scaled = p_scaled))
+}
+
 # Fonction pour analyser les données d'un parseur spécifique
 analyser_donnees_parseur <- function(donnees, nom_parseur) {
   cat(paste("\nAnalyse du parseur:", nom_parseur, "\n"))
@@ -90,31 +230,15 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
   # Calculer la moyenne et l'écart-type du temps de parsing
   temps_moyen <- mean(donnees$Parsing_Time_ms, na.rm = TRUE)
   ecart_type <- sd(donnees$Parsing_Time_ms, na.rm = TRUE)
-  
-  # 1. Graphique linéaire du temps d'exécution par numéro de copie
+    # 1. Graphique des temps d'exécution par copie
   p1 <- ggplot(donnees, aes(x = Numero_Copie, y = Parsing_Time_ms)) +
-    geom_point(color = "darkblue", size = 3) +
-    labs(title = paste("Temps de parsing pour chaque copie -", nom_parseur),
-         subtitle = "Évolution du temps de traitement",
+    geom_line(color = "darkblue", alpha = 0.7) +
+    geom_point(color = "darkblue", alpha = 0.7) +
+    labs(title = paste("Temps d'exécution par copie -", nom_parseur),
+         subtitle = "Évolution du temps de parsing",
          x = "Numéro de copie",
          y = "Temps de parsing (ms)") +
-    expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
-    mon_theme
-  
-  # 2. Comparaison avec la moyenne
-  p2 <- ggplot(donnees, aes(x = Numero_Copie, y = Parsing_Time_ms)) +
-    geom_hline(yintercept = temps_moyen, linetype = "dashed", color = "orangered", size = 1) +
-    geom_ribbon(aes(ymin = temps_moyen - ecart_type, ymax = temps_moyen + ecart_type), 
-                fill = "lightblue", alpha = 0.3) +
-    geom_point(size = 3, aes(color = Parsing_Time_ms > temps_moyen)) +
-    scale_color_manual(values = c("darkgreen", "red"),
-                       labels = c("Inférieur à la moyenne", "Supérieur à la moyenne"),
-                       name = "Performance") +
-    labs(title = paste("Comparaison des temps par rapport à la moyenne -", nom_parseur),
-         subtitle = paste("Temps moyen:", round(temps_moyen, 5), "ms. Écart-type:", round(ecart_type, 5), "ms"),
-         x = "Numéro de copie",
-         y = "Temps de parsing (ms)") +
-    expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
+    expand_limits(y = 0) +
     mon_theme
   
   # 3. Histogramme de distribution des temps
@@ -126,59 +250,7 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
          x = "Temps de parsing (ms)",
          y = "Nombre de copies") +
     expand_limits(x = 0, y = 0) +  # Ajout pour faire apparaître le zéro sur les deux axes
-    mon_theme
-  
- # 4. Temps d'exécution par groupe de copies (groupé dynamiquement)
-  # Calculer la taille de groupe optimale (nombre total de copies / 5)
-  taille_groupe <- ceiling(nrow(donnees) / 5)
-  
-  # S'assurer que la taille de groupe est au moins 1
-  taille_groupe <- max(1, taille_groupe)
-  
-  # Calculer le nombre d'intervalles nécessaires
-  max_copie <- max(donnees$Numero_Copie, na.rm = TRUE)
-  breaks <- seq(0, max_copie + taille_groupe, by = taille_groupe)
-  num_intervals <- length(breaks) - 1
-  
-  # Créer des groupes de taille dynamique avec le bon nombre d'étiquettes
-  donnees$Groupe_Copie <- cut(donnees$Numero_Copie, 
-                             breaks = breaks, 
-                             include.lowest = TRUE, right = FALSE,
-                             labels = paste("Groupe", 1:num_intervals))
-  
-  p4 <- ggplot(donnees, aes(x = Groupe_Copie, y = Parsing_Time_ms, fill = Groupe_Copie)) +
-    geom_boxplot(alpha = 0.7) +
-    geom_jitter(width = 0.2, height = 0, size = 2, alpha = 0.7) +
-    labs(title = paste("Comparaison des temps de parsing par groupe de copies -", nom_parseur),
-         subtitle = paste("Analyse par tranches de", taille_groupe, "copies"),
-         x = "Groupe de copies",
-         y = "Temps de parsing (ms)") +
-    scale_fill_brewer(palette = "Blues") +
-    expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
-    mon_theme +
-    theme(legend.position = "none")
-  
-  # 5. Nouvelle analyse - Graphique de précision moyenne d'erreur
-  if ("Precision_Error_Avg_px" %in% colnames(donnees)) {
-    p5 <- ggplot(donnees, aes(x = Numero_Copie, y = Precision_Error_Avg_px)) +
-      geom_point(color = "darkred", size = 3) +
-      geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
-      labs(title = paste("Erreur de précision moyenne par copie -", nom_parseur),
-           subtitle = "Évaluation de la précision de détection",
-           x = "Numéro de copie",
-           y = "Erreur moyenne (pixels)") +
-      expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
-      mon_theme
-    
-    # Sauvegarder le graphique d'erreur de précision
-    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_precision_erreur_moyenne.png"), p5, width = 10, height = 6, bg = "white")
-    
-    if (interactive()) {
-      print(p5)
-    }
-  }
-  
-  # 6. Nouvelle analyse - Comparaison des erreurs aux quatre coins
+    mon_theme  # 6. Nouvelle analyse - Comparaison des erreurs aux quatre coins
   if (all(c("Precision_Error_TopLeft_px", "Precision_Error_TopRight_px", 
             "Precision_Error_BottomLeft_px", "Precision_Error_BottomRight_px") %in% colnames(donnees))) {
     
@@ -198,58 +270,36 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
       labs(title = paste("Erreur de précision par coin -", nom_parseur),
            subtitle = "Comparaison des quatre coins du marqueur",
            x = "Position",
-           y = "Erreur (pixels)") +
-      scale_fill_brewer(palette = "Set1") +
+           y = "Erreur (pixels)") +      scale_fill_brewer(palette = "Set1") +
       expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
       mon_theme
     
-    # Sauvegarder le graphique de comparaison des coins
+    # Créer une version scaled (zoom sur la zone centrale)
+    Q1_erreur <- quantile(donnees_coins$Erreur, 0.25, na.rm = TRUE)
+    Q3_erreur <- quantile(donnees_coins$Erreur, 0.75, na.rm = TRUE)
+    IQR_erreur <- Q3_erreur - Q1_erreur
+    min_erreur <- Q1_erreur - 1.5 * IQR_erreur
+    max_erreur <- Q3_erreur + 1.5 * IQR_erreur
+
+    p6_scaled <- p6 +
+      coord_cartesian(ylim = c(min_erreur, max_erreur)) +
+      labs(subtitle = "Zoom sur la zone centrale (Q1-1.5*IQR à Q3+1.5*IQR)")
+    
+    # Sauvegarder les deux versions du graphique
     ggsave(paste0(dossier_parseur, "/", nom_parseur, "_precision_erreur_coins.png"), p6, width = 10, height = 6, bg = "white")
+    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_precision_erreur_coins_scaled.png"), p6_scaled, width = 10, height = 6, bg = "white")
     
     if (interactive()) {
       print(p6)
+      print(p6_scaled)
     }
   }
-  
-  # 7. Nouvelle analyse - Taux de succès du parsing
-  if ("Parsing_Success" %in% colnames(donnees)) {
-    # Convertir en facteur pour assurer le bon affichage
-    donnees$Parsing_Success <- as.factor(donnees$Parsing_Success)
-    
-    # Calculer le pourcentage de succès
-    taux_succes <- sum(donnees$Parsing_Success == TRUE, na.rm = TRUE) / nrow(donnees) * 100
-    
-    p7 <- ggplot(donnees, aes(x = Parsing_Success, fill = Parsing_Success)) +
-      geom_bar() +
-      geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +
-      labs(title = paste("Taux de succès du parsing -", nom_parseur),
-           subtitle = paste0("Pourcentage de succès: ", round(taux_succes, 2), "%"),
-           x = "Parsing réussi",
-           y = "Nombre de copies") +
-      scale_fill_manual(values = c("FALSE" = "red", "TRUE" = "green"),
-                      name = "Résultat") +
-      expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
-      mon_theme
-    
-    # Sauvegarder le graphique de taux de succès
-    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_taux_succes.png"), p7, width = 8, height = 6, bg = "white")
-    
-    if (interactive()) {
-      print(p7)
-    }
-  }
-  
-  # Enregistrer les graphiques dans le dossier du parseur
-  ggsave(paste0(dossier_parseur, "/", nom_parseur, "_temps_execution_copies.png"), p1, width = 10, height = 6, bg = "white")
-  ggsave(paste0(dossier_parseur, "/", nom_parseur, "_comparaison_moyenne.png"), p2, width = 10, height = 6, bg = "white")
+    # Enregistrer les graphiques dans le dossier du parseurggsave(paste0(dossier_parseur, "/", nom_parseur, "_temps_execution_copies.png"), p1, width = 10, height = 6, bg = "white")
   ggsave(paste0(dossier_parseur, "/", nom_parseur, "_distribution_temps.png"), p3, width = 8, height = 6, bg = "white")
-  ggsave(paste0(dossier_parseur, "/", nom_parseur, "_comparison_groupes.png"), p4, width = 8, height = 6, bg = "white")
   
   if (interactive()) {
     print(p1)
-    print(p2)
     print(p3)
-    print(p4)
   }
   
   # Statistiques complémentaires
@@ -310,6 +360,8 @@ analyser_donnees_parseur <- function(donnees, nom_parseur) {
   sink()
   
   # Retourner les données pour d'autres analyses potentielles
+  generer_barres_precision_par_config(donnees, nom_parseur)
+  generer_scatter_temps_vs_precision(donnees, nom_parseur)
   return(donnees)
 }
 
@@ -397,18 +449,30 @@ analyser_impact_config_parseur <- function(donnees, nom_parseur) {
         y = "Erreur de précision moyenne (pixels)"
       ) +
       expand_limits(y = 0) +  # Ajout pour faire apparaître le zéro sur l'axe Y
-      theme_minimal() +
-      theme(
+      theme_minimal() +      theme(
         plot.title = element_text(face = "bold", size = 14, color = "navy"),
         axis.title = element_text(face = "bold", color = "darkblue"),
         axis.text.x = element_text(angle = 45, hjust = 1)
       )
     
+    # Créer une version scaled (zoom sur la zone centrale)
+    Q1_erreur <- quantile(donnees$Precision_Error_Avg_px, 0.25, na.rm = TRUE)
+    Q3_erreur <- quantile(donnees$Precision_Error_Avg_px, 0.75, na.rm = TRUE)
+    IQR_erreur <- Q3_erreur - Q1_erreur
+    min_erreur <- Q1_erreur - 1.5 * IQR_erreur
+    max_erreur <- Q3_erreur + 1.5 * IQR_erreur
+
+    p2_scaled <- p2 +
+      coord_cartesian(ylim = c(min_erreur, max_erreur)) +
+      labs(subtitle = "Zoom sur la zone centrale (Q1-1.5*IQR à Q3+1.5*IQR)")
+    
     if (interactive()) {
       print(p2)
+      print(p2_scaled)
     }
     
     ggsave(paste0(dossier_parseur, "/", nom_parseur, "_impact_config_precision.png"), p2, width = 10, height = 7, bg = "white")
+    ggsave(paste0(dossier_parseur, "/", nom_parseur, "_impact_config_precision_scaled.png"), p2_scaled, width = 10, height = 7, bg = "white")
   }
   
   if (interactive()) {

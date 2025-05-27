@@ -74,6 +74,7 @@
               rPackages.fs
               rPackages.RColorBrewer
               rPackages.gridExtra
+              rPackages.ggrepel
             ];
 
             installPhase = ''
