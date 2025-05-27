@@ -53,32 +53,38 @@ def lancer_script_r(script_path, csv_path):
 
 def afficher_menu():
     """
-    Affiche un menu pour choisir entre les trois scripts.
+    Affiche un menu pour choisir entre les scripts disponibles.
     """
-    print("\n===== MENU DE SÉLECTION DES PARSERS =====")
+    print("\n===== MENU DE SÉLECTION DES ANALYSES =====")
     print("1. Lancer intra_parser.r")
     print("2. Lancer inter_parser.r") 
     print("3. Lancer limite.r")
+    print("4. Lancer config_analysis.r")
     print("q. Quitter")
-    choix = input("\nEntrez votre choix (1, 2, 3 ou q) : ")
+    choix = input("\nEntrez votre choix (1, 2, 3, 4 ou q) : ")
     return choix
 
 def main():
     # Créer un analyseur d'arguments
     parser = argparse.ArgumentParser(description="Lance l'analyse R sur le fichier CSV.")
     parser.add_argument("--csv", help="Spécifier un fichier CSV", default="../output/csv/test1.csv")
-    parser.add_argument("--script", help="Spécifier le script à lancer (intra/inter/limite)", choices=["intra", "inter", "limite"])
-    parser.add_argument("--mode", help="Mode d'exécution: interactif ou direct", choices=["interactif", "direct"], default="interactif")
+    parser.add_argument("--script", help="Spécifier le script à lancer (intra/inter/limite/config)", 
+                        choices=["intra", "inter", "limite", "config"])
+    parser.add_argument("--mode", help="Mode d'exécution: interactif ou direct", 
+                        choices=["interactif", "direct"], default="interactif")
     args = parser.parse_args()
     
     # Fichier CSV 
     csv_principal = args.csv
+    
+    # Fichier CSV spécifique pour config_analysis
+    csv_config = "config-analysis.csv"
 
     # Répertoire de ce script
     script_dir = Path(__file__).parent.resolve()
     
     # Vérifier si le fichier CSV existe
-    if not os.path.exists(script_dir / csv_principal):
+    if not os.path.exists(script_dir / csv_principal) and args.script != "config":
         print(f"[ERREUR] Le fichier CSV principal '{script_dir / csv_principal}' est introuvable.")
         return
    
@@ -87,14 +93,20 @@ def main():
         # Exécution directe si le script est spécifié
         if args.script == "intra":
             script_principal = "intra_parser_analysis.r"
+            csv_file = csv_principal
         elif args.script == "inter":
             script_principal = "inter_parser_analysis.r"
+            csv_file = csv_principal
+        elif args.script == "config":
+            script_principal = "config_analysis.r"
+            csv_file = csv_config
         else:  # limite
             script_principal = "limite.r"
+            csv_file = csv_principal
         
         # Exécuter le script spécifié
         print(f"\nLANCEMENT DE L'ANALYSE ({args.script})")
-        success = lancer_script_r(script_dir / script_principal, script_dir / csv_principal)
+        success = lancer_script_r(script_dir / script_principal, script_dir / csv_file)
         
         if success:
             print("\nL'analyse a été complétée avec succès!")
@@ -131,6 +143,15 @@ def main():
                     print("\nL'analyse limite a été complétée avec succès!")
                 else:
                     print("\nL'analyse limite a échoué.")
+                
+            elif choix == "4":
+                script_principal = "config_analysis.r"
+                success = lancer_script_r(script_dir / script_principal, script_dir / csv_config)
+                
+                if success:
+                    print("\nL'analyse des configurations a été complétée avec succès!")
+                else:
+                    print("\nL'analyse des configurations a échoué.")
                 
             elif choix.lower() == "q":
                 print("\nFin du programme. Au revoir!")
