@@ -41,7 +41,7 @@ def get_marker_size(config_str):
     else:
         return unencoded_marker_size
 
-gen_parse_bench = True     # Drapeau pour activer/désactiver le benchmark gen-parse
+gen_parse_bench = False     # Drapeau pour activer/désactiver le benchmark gen-parse
 
 if gen_parse_bench:
     all_batch = []
@@ -56,12 +56,11 @@ if gen_parse_bench:
         line.append(f"gen-parse --nb-copies 1 {"--warmup-iterations 1" if first else ""} --seed {random.randint(0,10000)} --parser-type {parser} --header-marker-size {header_marker_size} --marker-config {config_} --unencoded-marker-size {marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename gen-parse.csv --csv-mode append\n")
         first = False
 
-config_analysis_bench = False
+config_analysis_bench = True
 if config_analysis_bench:
     for config_ in set_config:
         marker_size = get_marker_size(config_)
-        line.append(f"config-analysis --header-marker-size {header_marker_size} --marker-config {config_} --unencoded-marker-size {marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename config-analysis.csv {"" if first else "--csv-mode append"}\n")
-        first = False
+        line.append(f"config-analysis --header-marker-size {header_marker_size} --marker-config {config_} --unencoded-marker-size {marker_size} --encoded-marker-size {encoded_marker_size} --dpi {dpi} --csv-filename config-analysis.csv --csv-mode append\n")
 
 limite_bench = False
 if limite_bench:
