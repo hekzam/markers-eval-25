@@ -8,6 +8,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(fs)
+library(ggrepel)
 library(RColorBrewer)  # Pour plus d'options de couleurs
 library(gridExtra)     # Pour organiser plusieurs graphiques
 #library(fmsb)         # Pour les graphiiques en radar (décommenter si nécessaire)
@@ -609,13 +610,39 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
     palette_configs <- setNames(colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_configs), configs)
   }
 
-  p <- ggplot(stats, aes(x = Temps_Moyen, y = Precision_Moyenne, color = Copy_Config, shape = Pareto)) +
-    geom_point(size = 3, alpha = 0.85) +
-    # Ajout des labels à côté des points, couleur identique au point
-    geom_text(aes(label = Label, color = Copy_Config), hjust = -0.1, vjust = 0.5, size = 3, show.legend = FALSE) +
-    scale_color_manual(values = palette_configs, name = "Configuration") +
+  # Initialisation du graphique
+  p <- ggplot(stats, aes(x = Temps_Moyen, y = Precision_Moyenne, color = Copy_Config, shape = Pareto))
+  
+  # Tracé du front de Pareto (ligne fine rouge) EN PREMIER PLAN (arrière-plan)
+  pareto_points <- stats[front, ]
+  if (nrow(pareto_points) > 1) {
+    pareto_points <- pareto_points[order(pareto_points$Temps_Moyen, decreasing = FALSE), ]
+    p <- p + geom_path(data = pareto_points, aes(x = Temps_Moyen, y = Precision_Moyenne), 
+                        color = "red", size = 0.8, alpha = 0.7, inherit.aes = FALSE)
+  }
+  
+  # Ajout des points APRÈS la ligne
+  p <- p + geom_point(size = 3, alpha = 0.85)
+  
+  # Ajout des labels avec ggrepel pour éviter les chevauchements et débordements
+  p <- p + ggrepel::geom_text_repel(
+    aes(label = Label, color = Copy_Config), 
+    size = 3, 
+    fontface = "bold",
+    box.padding = 0.5,
+    point.padding = 0.3,
+    force = 2,
+    segment.color = "grey50",
+    segment.alpha = 0.6,
+    max.overlaps = 20,
+    show.legend = FALSE
+  )
+  
+  # Compléter le graphique
+  p <- p + scale_color_manual(values = palette_configs, name = "Configuration") +
     scale_shape_manual(values = c("Dominé" = 16, "Front de Pareto" = 17), name = "Statut") +
-    labs(title = ifelse(scaled, "Front de Pareto global (précision ≤ 25px) : Temps vs Précision", "Front de Pareto global : Temps vs Précision"),
+    labs(title = ifelse(scaled, "Front de Pareto global (précision ≤ 25px) : Temps vs Précision", 
+                        "Front de Pareto global : Temps vs Précision"),
          x = "Temps moyen de parsing (ms)",
          y = "Erreur de précision moyenne (px, plus bas = mieux)",
          color = "Configuration",
@@ -627,13 +654,6 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
       legend.position = "top"
     ) +
     expand_limits(x = 0, y = 0)
-
-  # Tracé du front de Pareto (ligne fine rouge)
-  pareto_points <- stats[front, ]
-  if (nrow(pareto_points) > 1) {
-    pareto_points <- pareto_points[order(pareto_points$Temps_Moyen, decreasing = FALSE), ]
-    p <- p + geom_path(data = pareto_points, aes(x = Temps_Moyen, y = Precision_Moyenne), color = "red", size = 0.8, inherit.aes = FALSE)
-  }
 
   # Version scaled : limite l'axe X et Y à Q3+1.5*IQR
   if (scaled) {
@@ -650,7 +670,8 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
     p <- p + coord_cartesian(xlim = c(min_x, max_x), ylim = c(min_y, max_y))
   }
 
-  nom_fichier <- ifelse(scaled, "analysis_results/inter_parseurs/front_pareto_global_scaled.png", "analysis_results/inter_parseurs/front_pareto_global.png")
+  nom_fichier <- ifelse(scaled, "analysis_results/inter_parseurs/front_pareto_global_scaled.png", 
+                         "analysis_results/inter_parseurs/front_pareto_global.png")
   ggsave(nom_fichier, p, width = 13, height = 8, bg = "white")
   if (interactive()) print(p)
   return(p)
@@ -658,8 +679,13 @@ graphique_pareto_temps_global <- function(donnees_list, lisser = FALSE, scaled =
 
 # 6c. Pareto optimisation (front de Pareto) temps/précision ou temps/fiabilité pour tous les couples parseur/config
 # Un point par (parseur, config), front de Pareto global
-
 graphique_pareto_temps_parseur_config <- function(donnees_list) {
+  # Vérifier si le package ggrepel est installé, sinon l'installer
+  if (!requireNamespace("ggrepel", quietly = TRUE)) {
+    install.packages("ggrepel")
+  }
+  library(ggrepel)
+  
   donnees <- donnees_list$donnees
   if (!donnees_list$has_config) {
     cat("Front de Pareto global parseur/config non disponible : données de configuration manquantes\n")
@@ -670,8 +696,10 @@ graphique_pareto_temps_parseur_config <- function(donnees_list) {
     group_by(Parser_Type, Copy_Config) %>%
     summarise(
       Temps_Moyen = mean(Parsing_Time_ms, na.rm = TRUE),
-      Precision_Moyenne = if ("Precision_Error_Avg_px" %in% colnames(donnees)) mean(Precision_Error_Avg_px[Precision_Error_Avg_px != -1], na.rm = TRUE) else NA,
-      Fiabilite = if ("Parsing_Success_Effective" %in% colnames(donnees)) sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100 else NA,
+      Precision_Moyenne = if ("Precision_Error_Avg_px" %in% colnames(donnees)) 
+                          mean(Precision_Error_Avg_px[Precision_Error_Avg_px != -1], na.rm = TRUE) else NA,
+      Fiabilite = if ("Parsing_Success_Effective" %in% colnames(donnees)) 
+                 sum(Parsing_Success_Effective == TRUE, na.rm = TRUE) / n() * 100 else NA,
       .groups = "drop"
     )
   # Choix des axes : priorité à la précision si dispo, sinon fiabilité
@@ -703,11 +731,36 @@ graphique_pareto_temps_parseur_config <- function(donnees_list) {
   stats$Pareto <- ifelse(front, "Front de Pareto", "Dominé")
   # Pour l'affichage, concaténer parseur et config
   stats$Label <- paste0(stats$Parser_Type, " | ", stats$Copy_Config)
-  # Plot
-  p <- ggplot(stats, aes_string(x = xvar, y = yvar, color = "Pareto", label = "Label")) +
-    geom_point(size = 4, alpha = 0.8) +
-    geom_text(vjust = -1, fontface = "bold", size = 3) +
-    scale_color_manual(values = c("Front de Pareto" = "red", "Dominé" = "grey")) +
+  
+  # Initialisation du graphique
+  p <- ggplot(stats, aes_string(x = xvar, y = yvar, color = "Pareto"))
+  
+  # Relier les points du front de Pareto EN PREMIER PLAN (arrière-plan)
+  pareto_points <- stats[front, ]
+  if (nrow(pareto_points) > 1) {
+    pareto_points <- pareto_points[order(pareto_points[[xvar]], decreasing = FALSE), ]
+    p <- p + geom_path(data = pareto_points, aes_string(x = xvar, y = yvar), 
+                       color = "red", size = 1.2, alpha = 0.7)
+  }
+  
+  # Ajouter les points APRÈS la ligne
+  p <- p + geom_point(size = 4, alpha = 0.8)
+  
+  # Ajouter les labels avec ggrepel pour éviter les chevauchements et débordements
+  p <- p + ggrepel::geom_text_repel(
+    aes_string(label = "Label"), 
+    fontface = "bold",
+    size = 5,
+    box.padding = 0.5,
+    point.padding = 0.3,
+    force = 2,
+    segment.color = "grey50",
+    segment.alpha = 0.6,
+    max.overlaps = 20
+  )
+  
+  # Compléter le graphique
+  p <- p + scale_color_manual(values = c("Front de Pareto" = "red", "Dominé" = "grey")) +
     labs(title = titre, x = xlabel, y = ylabel, color = "Statut") +
     theme_minimal() +
     theme(
@@ -717,13 +770,8 @@ graphique_pareto_temps_parseur_config <- function(donnees_list) {
     ) +
     expand_limits(x = 0, y = 0)
 
-  # Relier les points du front de Pareto
-  pareto_points <- stats[front, ]
-  if (nrow(pareto_points) > 1) {
-    pareto_points <- pareto_points[order(pareto_points[[xvar]], decreasing = FALSE), ]
-    p <- p + geom_path(data = pareto_points, aes_string(x = xvar, y = yvar), color = "red", size = 1.2)
-  }
-  ggsave("analysis_results/inter_parseurs/pareto_temps_moyens_global_parseur_config.png", p, width = 13, height = 8, bg = "white")
+  ggsave("analysis_results/inter_parseurs/pareto_temps_moyens_global_parseur_config.png", 
+         p, width = 13, height = 8, bg = "white")
   if (interactive()) print(p)
   return(p)
 }
@@ -1087,6 +1135,45 @@ graphique_perf_par_config <- function(donnees_list) {
     # Enregistrer le graphique
     ggsave("analysis_results/inter_parseurs/barres_precision_par_config.png", p_precision, width = 12, height = 7, bg = "white")
     graphiques$precision <- p_precision
+    
+    # Version avec erreurs de précision <= 25px
+    stats_config_filtered <- stats_config %>% filter(Erreur_Moyenne <= 25)
+    
+    if (nrow(stats_config_filtered) > 0) {
+      p_precision_scaled <- ggplot(stats_config_filtered, aes(x = Copy_Config, y = Erreur_Moyenne, fill = Parser_Type)) +
+        geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+        geom_errorbar(aes(
+          ymin = pmax(Erreur_Moyenne - Erreur_Ecart_Type, 0),
+          ymax = Erreur_Moyenne + Erreur_Ecart_Type
+        ),
+        position = position_dodge(width = 0.9), width = 0.2) +
+        scale_fill_manual(values = COULEURS_PARSEURS) +
+        labs(title = "Erreur moyenne de précision par configuration (≤ 25px)",
+             subtitle = "Configurations avec erreur moyenne ≤ 25 pixels",
+             x = "Configuration",
+             y = "Erreur moyenne (pixels)",
+             fill = "Parseur") +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(face = "bold", size = 14, color = "navy"),
+          axis.title = element_text(face = "bold", color = "darkblue"),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_text(face = "bold", color = "darkblue"),
+          legend.position = "right"
+        ) +
+        coord_flip() +
+        scale_y_continuous(limits = c(0, 25))
+      
+      # Enregistrer le graphique filtré
+      ggsave("analysis_results/inter_parseurs/barres_precision_par_config_25px.png", p_precision_scaled, width = 12, height = 7, bg = "white")
+      graphiques$precision_25px <- p_precision_scaled
+      
+      if (interactive()) {
+        print(p_precision_scaled)
+      }
+    } else {
+      cat("Aucune configuration n'a une erreur de précision moyenne ≤ 25px\n")
+    }
   }
   
   if (interactive()) {
