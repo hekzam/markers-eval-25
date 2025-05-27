@@ -1,6 +1,6 @@
 project('hekzam-marqueurs', 'cpp',
         version : '0.1.0',
-        default_options : ['cpp_std=c++17'])
+        default_options : ['cpp_std=c++20'])
 
 opencv_dep = dependency('opencv4')
 json_dep = dependency('nlohmann_json')

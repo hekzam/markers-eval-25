@@ -1,6 +1,9 @@
 [
     ["(qrcode-e,qrcode-e,qrcode-e,qrcode-e,#)", "ZXING"],
     ["(pdf417-e,pdf417-e,pdf417-e,pdf417-e,#)", "ZXING"],
+    ["(datamatrix-e,datamatrix-e,datamatrix-e,datamatrix-e,#)", "ZXING"],
+    ["(datamatrix,datamatrix,datamatrix,qrcode-e,#)", "ZXING"],
+    ["(aruco,aruco,aruco,qrcode-e,#)", "ARUCO"],
     ["(aztec-e,aztec-e,aztec-e,aztec-e,#)", "ZXING"],
     ["(qrcode,qrcode,qrcode,qrcode-e,#)", "ZXING"],
     ["(microqr,microqr,microqr,qrcode-e,#)", "ZXING"],
@@ -16,11 +19,7 @@
     ["(custom,custom,custom,qrcode-e,#)", "SHAPE"],
     ["(aruco,aruco,aruco,qrcode-e,#)", "SHAPE"],
     ["(circle,circle,circle,circle,qrcode-e)", "CENTER_PARSER"],
-    ["(circle-o,circle-o,circle-o,circle-o,qrcode-e)", "CENTER_PARSER"],
     ["(circle,circle,circle,circle,pdf417-e)", "CENTER_PARSER"],
-    ["(circle-o,circle-o,circle-o,circle-o,pdf417-e)", "CENTER_PARSER"],
     ["(circle,circle,circle,circle,code128-e)", "CENTER_PARSER"],
-    ["(circle-o,circle-o,circle-o,circle-o,code128-e)", "CENTER_PARSER"],
-    ["(circle,circle,circle,circle,rmqr-e)", "CENTER_PARSER"],
-    ["(circle-o,circle-o,circle-o,circle-o,rmqr-e)", "CENTER_PARSER"]
+    ["(circle,circle,circle,circle,rmqr-e)", "CENTER_PARSER"]
 ]
